@@ -1,0 +1,5 @@
+name: test_tbd
+channels:
+  - conda-forge
+dependencies:
+  - mlflow
