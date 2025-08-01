@@ -7,27 +7,36 @@ x-airflow-common:
     dockerfile: "./docker/airflow/Dockerfile"
   environment:
     &airflow-common-env
+    # NOTE: The following secret can be commited to .git as it is only for local development.
+    AIRFLOW__API_AUTH__JWT_SECRET: 'dkWAUJ756yP9oJhTXhG0nj-wTvRJMoSTioGFHECuO0k'
+    AIRFLOW__API__BASE_URL: http://localhost:8080
+
     AIRFLOW__CORE__AUTH_MANAGER: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__FERNET_KEY: ''
-    # NOTE: The following secret can be commited to .git as it is only for local development.
-    AIRFLOW__API_AUTH__JWT_SECRET: 'daWAUJ756yP9oJhTXhG0nj-wTvRJMoSTioGFHECuO0k'
+
     AIRFLOW__CORE__LOAD_EXAMPLES: false
+
     AIRFLOW__LOGGING__LOGGING_LEVEL: 'DEBUG'
+
+    AIRFLOW__DAG_PROCESSOR__REFRESH_INTERVAL: 0
+
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow/airflow
-    MLFLOW_TRACKING_URI: http://mlflow:5000
+
     AWS_ACCESS_KEY_ID: minio
     AWS_SECRET_ACCESS_KEY: minio123
     MLFLOW_S3_ENDPOINT_URL: http://minio:9000
-    AIRFLOW__API__BASE_URL: http://localhost:8080
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+
     PYTHONPATH: /opt/airflow/tech_talk_demo:/opt/airflow/dags:${PYTHONPATH}
     PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/bin:/usr/bin:/bin:${PATH}
     LD_LIBRARY_PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/lib:/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
-    AIRFLOW__CORE__DEFAULT_PYTHON_INTERPRETER: /home/airflow/.local/share/mamba/envs/tech_talk_demo/bin/python
     PYTHONNOUSERSITE: 1
+
   user: "${AIRFLOW_UID:-50000}:0"
+
   volumes:
     - ../../dags:/opt/airflow/dags
     - ../../plugins:/opt/airflow/plugins
@@ -162,6 +171,7 @@ services:
         condition: service_healthy
 
   airflow-triggerer:
+    container_name: airflow-triggerer
     <<: *airflow-common
     command: triggerer
     healthcheck:
