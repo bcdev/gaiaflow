@@ -24,7 +24,7 @@ ruff = "*"
 [tool.pixi.tasks]
 test = "pytest tests"
 format = "isort src/gaiaflow && ruff format src/gaiaflow"
-check = "ruff check src/gaiaflow"
+check = "ruff check src/gaiaflow --fix"
 typecheck = "mypy src/gaiaflow"
 
 [tool.pixi.dependencies]
@@ -33,6 +33,11 @@ fsspec = ">=2025.7.0,<2026"
 pixi-pycharm = ">=0.0.8,<0.0.9"
 "ruamel.yaml" = ">=0.18.14,<0.19"
 psutil = ">=7.0.0,<8"
+pyyaml = ">=6.0.2,<7"
+apache-airflow = ">=3.0.3,<4"
+apache-airflow-providers-cncf-kubernetes = ">=10.6.2,<11"
+apache-airflow-providers-amazon = ">=9.11.0,<10"
+apache-airflow-providers-fab = ">=2.3.1,<3"
 
 [project.scripts]
 gaiaflow = "gaiaflow.cli:app"

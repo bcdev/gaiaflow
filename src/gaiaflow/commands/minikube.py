@@ -1,14 +1,10 @@
-import json
 from pathlib import Path
-from typing import List
 
 import fsspec
 import typer
 
-from ..managers.minikube_manager import MinikubeManager
-
-from ..utils import (get_gaiaflow_path, get_gaialfow_version,
-                     save_project_state, parse_key_value_pairs)
+from gaiaflow.managers.minikube_manager import MinikubeManager
+from gaiaflow.utils import parse_key_value_pairs
 
 app = typer.Typer()
 fs = fsspec.filesystem("file")
@@ -26,6 +22,8 @@ def start(
     ),
 ):
     """"""
+    MinikubeManager(action="start", force_new=force_new)
+
 
 @app.command(help="Stop Gaiaflow production-like services.")
 def stop(
@@ -98,5 +96,15 @@ def create_secrets(
     ),
 ):
     secret_data = parse_key_value_pairs(data)
-    print(secret_data)
+    print(secret_data, name)
 
+
+@app.command(
+    help="Clean Gaiaflow production-like services. This will only remove the "
+    "minikube speicifc things. To remove local docker stuff, use the dev mode."
+)
+def clean(
+    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
+    prune: bool = typer.Option(False, "--prune", help=""),
+):
+    """"""

@@ -1,17 +1,27 @@
+import json
 import os
 import platform
+import shutil
 import socket
 import subprocess
-import sys
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import List, Literal, Optional
 
+import fsspec
 import psutil
-import typer
+from ruamel.yaml import YAML
 
-from ..utils import handle_error, log, run
+from gaiaflow.constants import ACTIONS, GAIAFLOW_STATE_FILE
+from gaiaflow.managers.base_manager import BaseGaiaflowManager
+from gaiaflow.utils import (
+    create_directory,
+    delete_project_state,
+    find_python_packages,
+    handle_error,
+    log_error,
+    log_info,
+    run,
+)
 
 
 class Service(str, Enum):
@@ -34,58 +44,69 @@ _MLFLOW_SERVICES = ["mlflow", "postgres-mlflow"]
 
 _MINIO_SERVICES = ["minio", "minio_client"]
 
+_IMAGES = [
+    "docker-compose-airflow-apiserver:latest",
+    "docker-compose-airflow-scheduler:latest",
+    "docker-compose-airflow-dag-processor:latest",
+    "docker-compose-airflow-triggerer:latest",
+    "docker-compose-airflow-init:latest",
+    "docker-compose-mlflow:latest",
+    "minio/mc:latest",
+    "minio/minio:latest",
+    "postgres:13",
+]
 
-class MlopsManager:
+_VOLUMES = [
+    "docker-compose_postgres-db-volume-airflow",
+    "docker-compose_postgres-db-volume-mlflow",
+]
+
+
+class MlopsManager(BaseGaiaflowManager):
+    """Manager class to Start/Stop/Restart MLOps Docker services."""
+
     def __init__(
         self,
-        gaiaflow_path: str,
-        user_project_path: str,
-        force_new: bool = False,
-        action: str = None,
+        gaiaflow_path: Path,
+        user_project_path: Path,
+        action: ACTIONS,
         service: Service = None,
         cache: bool = False,
         jupyter_port: int = 8895,
         delete_volume: bool = False,
         docker_build: bool = False,
+        force_new: bool = False,
+        prune: bool = False,
     ):
-        self.action = action
+        super().__init__(
+            gaiaflow_path=gaiaflow_path,
+            user_project_path=user_project_path,
+            action=action,
+            force_new=force_new,
+            prune=prune,
+        )
         self.service = service
         self.cache = cache
         self.jupyter_port = jupyter_port
         self.delete_volume = delete_volume
         self.docker_build = docker_build
         self.os_type = platform.system().lower()
-        current_dir = Path(__file__).resolve().parent
-        self.project_root = current_dir
-        self.gaiaflow_path = gaiaflow_path
-        self.user_project_path = user_project_path
-        self.force_new = force_new
+        self.project_root = Path(__file__).resolve().parent
+        self.fs = fsspec.filesystem("file")
 
-        if action == "stop":
-            self.cleanup()
+        if self.action == "stop":
+            self.stop()
 
-        if action == "restart":
-            self.cleanup()
+        if self.action == "restart":
+            self.stop()
             self.start()
 
-        if action == "start":
+        if self.action == "start":
             self.start()
 
-    def create_directory(self, dir_name):
-        if not os.path.exists(dir_name):
-            try:
-                os.makedirs(dir_name, exist_ok=True)
-                log(f"Created directory: {dir_name}")
-            except Exception as e:
-                handle_error(f"Failed to create {dir_name} directory: {e}")
-        else:
-            log(f"Directory {dir_name} already exists")
-
-        try:
-            os.chmod(dir_name, 0o777)
-            log(f"Set permissions for {dir_name}")
-        except Exception:
-            log(f"Warning: Could not set permissions for {dir_name}")
+        if self.action == "clean":
+            self.stop()
+            self.cleanup()
 
     def check_port(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -93,13 +114,13 @@ class MlopsManager:
                 handle_error(f"Port {self.jupyter_port} is already in use.")
 
     def stop_jupyter(self):
-        log(f"Attempting to stop Jupyter processes on port {self.jupyter_port}")
+        log_info(f"Attempting to stop Jupyter processes on port {self.jupyter_port}")
         for proc in psutil.process_iter(attrs=["pid", "name", "cmdline"]):
             try:
                 cmdline = proc.info.get("cmdline") or []
                 name = proc.info.get("name") or ""
                 if any("jupyter-lab" in arg for arg in cmdline) or "jupyter" in name:
-                    log(f"Terminating process {proc.pid} ({name})")
+                    log_info(f"Terminating process {proc.pid} ({name})")
                     proc.terminate()
                     proc.wait(timeout=5)
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
@@ -130,35 +151,35 @@ class MlopsManager:
         else:
             cmd = base_cmd + actions
 
-        log(f"Running: {' '.join(cmd)}")
+        log_info(f"Running: {' '.join(cmd)}")
         run(cmd, f"Error running docker compose {actions}")
 
-    def cleanup(self):
-        log("Shutting down Gaiaflow services...")
+    def stop(self):
+        log_info("Shutting down Gaiaflow services...")
         if self.service == "jupyter":
             self.stop_jupyter()
         elif self.service is None:
             down_cmd = ["down"]
             if self.delete_volume:
-                log("Removing volumes with shutdown")
+                log_info("Removing volumes with shutdown")
                 down_cmd.append("-v")
             self.docker_compose_action(down_cmd, self.service)
             self.stop_jupyter()
         else:
             down_cmd = ["down"]
             if self.delete_volume:
-                log("Removing volumes with shutdown")
+                log_info("Removing volumes with shutdown")
                 down_cmd.append("-v")
             self.docker_compose_action(down_cmd, self.service)
 
-        log("Cleanup complete")
+        log_info("Stopped Gaiaflow services successfully")
 
     def start_jupyter(self):
-        log("Starting Jupyter Lab...")
+        log_info("Starting Jupyter Lab...")
         cmd = ["jupyter", "lab", "--ip=0.0.0.0", f"--port={self.jupyter_port}"]
         subprocess.Popen(cmd)
 
-    def update_env_file_with_airflow_uid(self, env_path=".env"):
+    def update_env_file_with_airflow_uid(self, env_path):
         if self.os_type == "linux":
             uid = str(os.getuid())
         else:
@@ -184,32 +205,31 @@ class MlopsManager:
         with open(env_path, "w") as f:
             f.writelines(new_lines)
 
-        print(f"Set AIRFLOW_UID={uid} in {env_path}")
+        log_info(f"Set AIRFLOW_UID={uid} in {env_path}")
 
     def create_gaiaflow_context(self, force_new: bool = False):
         if force_new:
             shutil.rmtree(self.gaiaflow_path)
-        fs.makedirs(self.gaiaflow_path, exist_ok=True)
+        self.fs.makedirs(self.gaiaflow_path, exist_ok=True)
 
-        script_dir = Path(__file__).parent.resolve()
-        docker_dir = script_dir.parent / "docker"
+        package_dir = Path(__file__).parent.parent.resolve()
+        docker_dir = package_dir.parent / "docker"
 
         shutil.copytree(docker_dir, self.gaiaflow_path / "docker", dirs_exist_ok=True)
-        shutil.copy(script_dir.parent / ".env", self.gaiaflow_path / ".env")
+        shutil.copy(package_dir.parent / ".env", self.gaiaflow_path / ".env")
         shutil.copy(
-            user_project_path / "environment.yml",
+            self.user_project_path / "environment.yml",
             self.gaiaflow_path / "environment.yml",
         )
+        log_info(f"Gaiaflow context created at {self.gaiaflow_path}")
 
     def update_files(self):
         yaml = YAML()
         yaml.preserve_quotes = True
 
-        print("gaiaflow_path", self.gaiaflow_path)
         compose_path = (
             self.gaiaflow_path / "docker" / "docker-compose" / "docker-compose.yml"
         )
-        print("compose_path", compose_path)
 
         with open(compose_path) as f:
             compose_data = yaml.load(f)
@@ -222,12 +242,10 @@ class MlopsManager:
             return env_yaml.get("name")
 
         env_name = get_env_name_from_yml(env_file)
-        print(env_name)
 
         x_common = compose_data.get("x-airflow-common", {})
         original_vols = x_common.get("volumes", [])
         new_volumes = []
-        print("original_vols", original_vols)
         for vol in original_vols:
             parts = vol.split(":", 1)
             if len(parts) == 2:
@@ -250,7 +268,7 @@ class MlopsManager:
 
         result = [f"/opt/airflow/{item}" for item in python_packages]
         pythonpath_entry = ":".join(result)
-        print("python_packages", python_packages, pythonpath_entry)
+        log_info("Found and mounting following python packages " + str(python_packages))
         env_updates = {
             "PYTHONPATH": f"{pythonpath_entry}:/opt/airflow/dags:${{PYTHONPATH}}",
             "PATH": f"/home/airflow/.local/share/mamba/envs/{env_name}/bin:/usr/bin:/bin:${{PATH}}",
@@ -263,12 +281,15 @@ class MlopsManager:
             yaml.dump(compose_data, f)
 
     def start(self):
-        log("Starting Gaiaflow services")
-        log("Setting up directories and gaiaflow context...")
-        self.create_directory("../logs")
-        self.create_directory("../data")
-        self.update_env_file_with_airflow_uid()
+        log_info("Starting Gaiaflow services")
+        log_info("Setting up directories...")
+        create_directory(f"{self.user_project_path}/logs")
+        create_directory(f"{self.user_project_path}/data")
+        log_info("Updating .env file...")
+        self.update_env_file_with_airflow_uid(f"{self.user_project_path}/.env")
+        log_info("Creating gaiaflow context...")
         self.create_gaiaflow_context(self.force_new)
+        log_info("Updating gaiaflow context with user project information...")
         self.update_files()
 
         if self.service == "jupyter" or self.service is None:
@@ -279,7 +300,7 @@ class MlopsManager:
             if not self.cache:
                 build_cmd.append("--no-cache")
 
-            log("Building Docker images")
+            log_info("Building Docker images")
             self.docker_compose_action(build_cmd, self.service)
 
         if self.service is None:
@@ -289,3 +310,34 @@ class MlopsManager:
             self.start_jupyter()
         else:
             self.docker_compose_action(["up", "-d"], service=self.service)
+
+    def cleanup(self):
+        try:
+            log_info("Attempting deleting Gaiaflow context at {self.gaiaflow_path}")
+            shutil.rmtree(self.gaiaflow_path)
+        except FileNotFoundError:
+            log_error(f"Gaiaflow context not found at {self.gaiaflow_path}")
+        try:
+            log_info(
+                f"Attempting deleting Gaiaflow project state at {GAIAFLOW_STATE_FILE}"
+            )
+            delete_project_state(self.gaiaflow_path)
+        except (json.JSONDecodeError, FileNotFoundError):
+            raise
+        if self.prune:
+            run(
+                ["docker", "builder", "prune", "-a", "-f"],
+                "Error pruning docker build cache",
+            )
+            run(
+                ["docker", "network", "rm", "docker-compose_ml-network"],
+                "Error removing docker network",
+            )
+            for image in _IMAGES:
+                run(["docker", "rmi", "-f", image], f"Error deleting image {image}")
+            for volume in _VOLUMES:
+                run(
+                    ["docker", "volume", "rm", volume],
+                    f"Error removing volume {volume}",
+                )
+        log_info("Gaiaflow cleanup complete!")

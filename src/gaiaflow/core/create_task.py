@@ -1,7 +1,7 @@
 import json
+from enum import Enum
 
-from airflow.providers.cncf.kubernetes.operators.pod import \
-    KubernetesPodOperator
+from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from airflow.providers.standard.operators.python import PythonOperator
 from kubernetes.client import V1EnvFromSource, V1SecretReference
 
@@ -12,11 +12,12 @@ class Environment(Enum):
     PROD = "prod"
 
 
-TASK_REGISTRY = {
-    Environment.DEV: _create_python_task,
-    Environment.PROD: _create_kubernetes_task,
-    Environment.PROD_LOCAL: _create_kubernetes_task,
-}
+# TASK_REGISTRY = {
+#     Environment.DEV: _create_python_task,
+#     Environment.PROD: _create_kubernetes_task,
+#     Environment.PROD_LOCAL: _create_kubernetes_task,
+# }
+
 
 class XComConfig:
     def __init__(self, task: str, key: str = "return_value"):
@@ -26,17 +27,18 @@ class XComConfig:
     def to_dict(self) -> dict:
         return {"task": self.task, "key": self.key}
 
+
 def create_task(
-        task_id: str,
-        func_path: str,
-        func_kwargs: dict = None,
-        image: str = None,
-        env: str = "dev",
-        func_kwargs_from_tasks: dict = None,
-        secrets: list = None,
-        env_vars: dict = None,
-        retries: int = 3,
-        **operator_kwargs
+    task_id: str,
+    func_path: str,
+    func_kwargs: dict = None,
+    image: str = None,
+    env: str = "dev",
+    func_kwargs_from_tasks: dict = None,
+    secrets: list = None,
+    env_vars: dict = None,
+    retries: int = 3,
+    **operator_kwargs,
 ):
     """
     Create an Airflow task that can run in different environments.
@@ -77,9 +79,7 @@ def create_task(
         "kwargs": func_kwargs,
     }
 
-
-
-    if func_kwargs_from_tasks_dict:
+    if func_kwargs_from_tasks:
         func_kwargs_from_tasks_dict = {
             k: (v.to_dict() if isinstance(v, XComConfig) else XComConfig(v).to_dict())
             for k, v in func_kwargs_from_tasks.items()
@@ -187,15 +187,15 @@ def create_task(
 
 
 def _create_python_task(
-        task_id: str,
-        func_path: str,
-        func_args: list,
-        func_kwargs: dict,
-        func_args_from_tasks: list,
-        func_kwargs_from_tasks: dict,
-        xcom_push: bool,
-        retries: int,
-        **operator_kwargs
+    task_id: str,
+    func_path: str,
+    func_args: list,
+    func_kwargs: dict,
+    func_args_from_tasks: list,
+    func_kwargs_from_tasks: dict,
+    xcom_push: bool,
+    retries: int,
+    **operator_kwargs,
 ) -> PythonOperator:
     from .runner import run
 
@@ -217,27 +217,28 @@ def _create_python_task(
         op_kwargs=full_kwargs,
         do_xcom_push=xcom_push,
         retries=retries,
-        **operator_kwargs
+        **operator_kwargs,
     )
 
 
 def _create_kubernetes_task(
-        task_id: str,
-        func_path: str,
-        func_args: list,
-        func_kwargs: dict,
-        func_args_from_tasks: list,
-        func_kwargs_from_tasks: dict,
-        image: str,
-        secrets: Optional[List[str]],
-        env_vars: dict,
-        xcom_push: bool,
-        retries: int,
-        in_cluster: bool,
-        **operator_kwargs
+    task_id: str,
+    func_path: str,
+    func_args: list,
+    func_kwargs: dict,
+    func_args_from_tasks: list,
+    func_kwargs_from_tasks: dict,
+    image: str,
+    secrets: Optional[List[str]],
+    env_vars: dict,
+    xcom_push: bool,
+    retries: int,
+    in_cluster: bool,
+    **operator_kwargs,
 ) -> KubernetesPodOperator:
-
-    xcom_pull_results = _build_xcom_templates(func_args_from_tasks, func_kwargs_from_tasks)
+    xcom_pull_results = _build_xcom_templates(
+        func_args_from_tasks, func_kwargs_from_tasks
+    )
 
     task_env_vars = _build_env_vars(
         func_path=func_path,
@@ -246,7 +247,7 @@ def _create_kubernetes_task(
         func_args_from_tasks=func_args_from_tasks,
         func_kwargs_from_tasks=func_kwargs_from_tasks,
         xcom_pull_results=xcom_pull_results,
-        custom_env_vars=env_vars
+        custom_env_vars=env_vars,
     )
 
     env_from = _build_env_from_secrets(secrets) if secrets else None
@@ -264,7 +265,7 @@ def _create_kubernetes_task(
         in_cluster=in_cluster,
         do_xcom_push=xcom_push,
         retries=retries,
-        **operator_kwargs
+        **operator_kwargs,
     )
 
 
@@ -275,18 +276,18 @@ def _build_xcom_templates(func_kwargs_from_tasks: dict) -> dict:
         source_task = pull_config["task"]
         key = pull_config.get("key", "return_value")
         xcom_pull_results[source_task] = (
-                "{{ ti.xcom_pull(task_ids='" + source_task + "', key='" + key + "') }}"
+            "{{ ti.xcom_pull(task_ids='" + source_task + "', key='" + key + "') }}"
         )
 
     return xcom_pull_results
 
 
 def _build_env_vars(
-        func_path: str,
-        func_kwargs: dict,
-        func_kwargs_from_tasks: dict,
-        xcom_pull_results: dict,
-        custom_env_vars: dict
+    func_path: str,
+    func_kwargs: dict,
+    func_kwargs_from_tasks: dict,
+    xcom_pull_results: dict,
+    custom_env_vars: dict,
 ) -> dict:
     default_env_vars = {
         "FUNC_PATH": func_path,
@@ -302,6 +303,5 @@ def _build_env_vars(
 
 def _build_env_from_secrets(secrets: List[str]) -> List[V1EnvFromSource]:
     return [
-        V1EnvFromSource(secret_ref=V1SecretReference(name=secret))
-        for secret in secrets
+        V1EnvFromSource(secret_ref=V1SecretReference(name=secret)) for secret in secrets
     ]

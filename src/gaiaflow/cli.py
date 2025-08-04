@@ -1,13 +1,18 @@
 from importlib.metadata import version
 
 import typer
-from ruamel.yaml import YAML
 
 from .commands import minikube, mlops
 
 pkg_version = version("gaiaflow")
 
-app = typer.Typer(add_completion=False)
+app = typer.Typer(
+    add_completion=False,
+    help="Gaiaflow CLI is a manager tool "
+    "to allow you to create/destroy your local MLOps infrastructure that "
+    "mirrors closely to the actual production systems for easier and faster "
+    "local development, iteration and testing.",
+)
 
 app.add_typer(mlops.app, name="dev", help="Manage Gaiaflow development services.")
 app.add_typer(

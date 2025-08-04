@@ -4,6 +4,13 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import fsspec
+import typer
+
+from gaiaflow.constants import GAIAFLOW_STATE_FILE
+
+fs = fsspec.filesystem("file")
+
 
 def get_gaialfow_version() -> str:
     try:
@@ -28,11 +35,11 @@ def find_python_packages(base_path: Path):
     return outer_packages
 
 
-def log(message: str):
+def log_info(message: str):
     print(f"\033[0;34m[{datetime.now().strftime('%H:%M:%S')}]\033[0m {message}")
 
 
-def error(message: str):
+def log_error(message: str):
     print(f"\033[0;31mERROR:\033[0m {message}", file=sys.stderr)
 
 
@@ -40,36 +47,47 @@ def run(command: list, error_message: str):
     try:
         subprocess.call(command)
     except Exception:
-        log(error_message)
+        log_info(error_message)
         raise
 
 
 def handle_error(message: str):
-    error(f"Error: {message}")
+    log_error(f"Error: {message}")
     sys.exit(1)
 
 
 def get_state_file() -> Path:
-    """Get the path to the state file."""
-    config_dir = Path.home() / ".gaiaflow"
-    config_dir.mkdir(exist_ok=True)
-    return config_dir / "state.json"
+    return GAIAFLOW_STATE_FILE
 
 
 def save_project_state(project_path: Path, gaiaflow_path: Path):
-    """Save the current project state."""
     state_file = get_state_file()
-    state = {
+    try:
+        if state_file.exists():
+            with state_file.open("r") as f:
+                state = json.load(f)
+        else:
+            state = {}
+    except (json.JSONDecodeError, FileNotFoundError):
+        state = {}
+
+    key = str(gaiaflow_path)
+    if key in state:
+        typer.echo(
+            f"State for '{gaiaflow_path}' already exists. Skipping save.", err=True
+        )
+        return
+
+    state[key] = {
         "project_path": str(project_path),
-        "gaiaflow_path": str(gaiaflow_path),
         "gaiaflow_version": get_gaialfow_version(),
     }
+
     with open(state_file, "w") as f:
         json.dump(state, f, indent=2)
 
 
 def load_project_state() -> dict | None:
-    """Load the current project state."""
     state_file = get_state_file()
     if not state_file.exists():
         return None
@@ -81,22 +99,46 @@ def load_project_state() -> dict | None:
         return None
 
 
-def get_gaiaflow_path() -> Path:
-    """Get the gaiaflow path from state or raise error."""
+def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) -> bool:
     state = load_project_state()
     if not state:
+        return False
+
+    key = str(gaiaflow_path)
+    if key not in state:
+        return False
+
+    if check_fs and not gaiaflow_path.exists():
         typer.echo(
-            "No active Gaiaflow project found. Please run 'start' first.", err=True
+            f"Gaiaflow path exists in state but not on disk: {gaiaflow_path}", err=True
         )
-        raise typer.Exit(1)
+        return False
 
-    gaiaflow_path = Path(state["gaiaflow_path"])
-    print(gaiaflow_path)
-    if not gaiaflow_path.exists():
-        typer.echo(f"Gaiaflow installation not found at {gaiaflow_path}", err=True)
-        raise typer.Exit(1)
+    return True
 
-    return gaiaflow_path
+
+def delete_project_state(gaiaflow_path: Path):
+    state_file = get_state_file()
+    print("state_file", state_file)
+    if not state_file.exists():
+        log_error(
+            "State file not found at ~/.gaiaflow/state.json. Please run the services."
+        )
+        return
+
+    try:
+        with open(state_file, "r") as f:
+            state = json.load(f)
+
+        print("found!", state.get("gaiaflow_path"), state)
+        key = str(gaiaflow_path)
+        if key in state:
+            del state[key]
+            with state_file.open("w") as f:
+                json.dump(state, f, indent=2)
+    except (json.JSONDecodeError, FileNotFoundError):
+        raise
+
 
 def parse_key_value_pairs(pairs: list[str]) -> dict:
     data = {}
@@ -106,3 +148,20 @@ def parse_key_value_pairs(pairs: list[str]) -> dict:
         key, value = pair.split("=", 1)
         data[key] = value
     return data
+
+
+def create_directory(dir_name):
+    if not fs.exists(dir_name):
+        try:
+            fs.makedirs(dir_name, exist_ok=True)
+            log_info(f"Created directory: {dir_name}")
+        except Exception as e:
+            handle_error(f"Failed to create {dir_name} directory: {e}")
+    else:
+        log_info(f"Directory {dir_name} already exists")
+
+    try:
+        fs.chmod(dir_name, 0o777)
+        log_info(f"Set permissions for {dir_name}")
+    except Exception:
+        log_info(f"Warning: Could not set permissions for {dir_name}")

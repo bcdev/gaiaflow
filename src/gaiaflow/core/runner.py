@@ -8,6 +8,7 @@ import ast
 import importlib
 import json
 import os
+from typing import Any
 
 from airflow.models.taskinstance import TaskInstance
 from airflow.utils.context import Context
@@ -17,7 +18,7 @@ def run(
     func_path: str | None = None,
     kwargs: dict[str, str] | None = None,
     xcom_pull_tasks: dict | None = None,
-    **context: Context
+    **context: Context,
 ) -> dict[str, str]:
     env = os.environ.get("ENV", "dev")
     print(f"## Runner running in {env} mode ##")
@@ -33,9 +34,7 @@ def run(
                     if not isinstance(pulled_val, dict)
                     else pulled_val.get(arg_key)
                 )
-            print(
-                f"[XCom] [dev] Pulled {kwargs}"
-            )
+            print(f"[XCom] [dev] Pulled {kwargs}")
     else:
         xcom_pull_tasks = json.loads(os.environ.get("XCOM_PULL_TASKS", "{}"))
         func_path = os.environ.get("FUNC_PATH", "")
@@ -70,20 +69,20 @@ def run(
 
     return result
 
+
 def _write_xcom_result(result: Any) -> None:
     try:
         xcom_dir = "/airflow/xcom"
         os.makedirs(xcom_dir, exist_ok=True)
 
         with open(f"{xcom_dir}/return.json", "w") as f:
-            json.dump(
-                result, f
-            )
+            json.dump(result, f)
 
         print("Result written to XCom successfully")
     except Exception as e:
         print(f"Failed to write XCom result: {e}")
         raise
+
 
 if __name__ == "__main__":
     run()
