@@ -33,7 +33,7 @@ class MinikubeManager(BaseGaiaflowManager):
             local: bool = False,
     ):
         self.minikube_profile = "airflow"
-        self.docker_image_name = "gaiaflow_test_pl:v1"
+        self.docker_image_name = "gaiaflow_test_pl:v5"
         self.os_type = platform.system().lower()
         self.local = local
 
@@ -220,17 +220,21 @@ class MinikubeManager(BaseGaiaflowManager):
             log_error(f"Dockerfile not found at {dockerfile_path}")
             return
         log_info(f"Updating dockerfile at {dockerfile_path}")
-        MinikubeManager._add_copy_statements_to_dockerfile(dockerfile_path,
-                                               find_python_packages(self.user_project_path))
-        log_info(f"Building Docker image [{self.docker_image_name}]...")
+        # MinikubeManager._add_copy_statements_to_dockerfile(dockerfile_path,
+        #                                        find_python_packages(self.user_project_path))
+
 
         if self.local:
+            log_info(f"Building Docker image [{self.docker_image_name}] "
+                     "locally")
             run(
                 ["docker", "build", "-t", self.docker_image_name, "-f",
                  dockerfile_path, "../../"],
                 "Error building docker image.",
             )
         else:
+            log_info(f"Building Docker image [{self.docker_image_name}] in "
+                     "minikube context")
             result = subprocess.run(
                 ["minikube", "-p", self.minikube_profile, "docker-env", "--shell", "bash"],
                 stdout=subprocess.PIPE,
@@ -245,7 +249,8 @@ class MinikubeManager(BaseGaiaflowManager):
                     except ValueError:
                         continue
             run(
-                ["docker", "build", "-t", self.docker_image_name, "."],
+                ["docker", "build", "-t", self.docker_image_name, "-f",
+                 dockerfile_path, "../../"],
                 "Error building docker image inside minikube cluster.",
                 env=env,
             )
