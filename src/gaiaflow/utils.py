@@ -43,9 +43,9 @@ def log_error(message: str):
     print(f"\033[0;31mERROR:\033[0m {message}", file=sys.stderr)
 
 
-def run(command: list, error_message: str):
+def run(command: list, error_message: str, env = None):
     try:
-        subprocess.call(command)
+        subprocess.call(command, env=env)
     except Exception:
         log_info(error_message)
         raise
@@ -89,6 +89,7 @@ def save_project_state(project_path: Path, gaiaflow_path: Path):
 
 def load_project_state() -> dict | None:
     state_file = get_state_file()
+    print("state_file", state_file)
     if not state_file.exists():
         return None
 
@@ -134,9 +135,9 @@ def delete_project_state(gaiaflow_path: Path):
         key = str(gaiaflow_path)
         if key in state:
             del state[key]
-            with state_file.open("w") as f:
+            with open(state_file, "w") as f:
                 json.dump(state, f, indent=2)
-    except (json.JSONDecodeError, FileNotFoundError):
+    except (json.JSONDecodeError, FileNotFoundError, Exception):
         raise
 
 
@@ -165,3 +166,14 @@ def create_directory(dir_name):
         log_info(f"Set permissions for {dir_name}")
     except Exception:
         log_info(f"Warning: Could not set permissions for {dir_name}")
+
+
+def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
+    user_project_path = Path(project_path).resolve()
+    if not user_project_path.exists():
+        raise FileNotFoundError(f"{user_project_path} not found")
+    version = get_gaialfow_version()
+    project_name = str(user_project_path).split("/")[-1]
+    gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
+
+    return gaiaflow_path, user_project_path

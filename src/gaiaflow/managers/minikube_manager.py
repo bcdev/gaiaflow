@@ -2,66 +2,63 @@ import os
 import platform
 import shutil
 import subprocess
-import sys
-from datetime import datetime
+from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, Union
 
 import typer
 import yaml
 
-from gaiaflow.constants import ACTIONS
+from gaiaflow.constants import BaseActions, ExtendedActions
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
-from gaiaflow.utils import log_error, log_info, run
+from gaiaflow.managers.mlops_manager import MlopsManager
+from gaiaflow.utils import log_error, log_info, run, find_python_packages
 
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 
 
+MinikubeActions = Union[BaseActions, ExtendedActions]
+
+
 class MinikubeManager(BaseGaiaflowManager):
     def __init__(
-        self,
-        gaiaflow_path: Path,
-        user_project_path: Path,
-        action: ACTIONS,
-        force_new: bool = False,
-        build_only: bool = False,
-        create_config_only: bool = False,
-        secret_data: dict =None,
-        secret_name: str = "",
-        prune: bool = False,
+            self,
+            gaiaflow_path: Path,
+            user_project_path: Path,
+            action: MinikubeActions,
+            force_new: bool = False,
+            secret_data: dict = None,
+            secret_name: str = "",
+            prune: bool = False,
+            local: bool = False,
     ):
+        self.minikube_profile = "airflow"
+        self.docker_image_name = "gaiaflow_test_pl:v1"
+        self.os_type = platform.system().lower()
+        self.local = local
+
         super().__init__(
             gaiaflow_path=gaiaflow_path,
             user_project_path=user_project_path,
             action=action,
             force_new=force_new,
-            prune=prune
+            prune=prune,
         )
 
-        if secret_data is None:
-            secret_data = {}
-
-        self.minikube_profile = "airflow"
-        self.docker_image_name = "DOCKER_IMAGE_NAME"
-        self.build_only = build_only
-        self.os_type = platform.system().lower()
-
-        if action == "stop":
-            self.stop_minikube()
-        elif action == "restart":
-            self.stop_minikube()
-            self.start_minikube()
-        elif action == "start":
-            self.start_minikube()
-        elif build_only:
+        if action == ExtendedActions.DOCKERIZE:
             self.build_docker_image()
-        elif create_config_only:
+
+        if action == ExtendedActions.CREATE_CONFIG:
             self.create_kube_config_inline()
-        elif secret_data != {}:
+
+        if action == ExtendedActions.CREATE_SECRET:
             self.create_secrets(secret_name, secret_data)
 
-    def start_minikube(self):
-        # TODO: Use force_new and stop docker services
+    def start(self):
+        if self.force_new:
+            self.cleanup()
+        MlopsManager(self.gaiaflow_path, self.user_project_path,
+                     action=BaseActions.STOP)
         log_info(f"Checking Minikube cluster [{self.minikube_profile}] status...")
         try:
             result = subprocess.run(
@@ -78,67 +75,49 @@ class MinikubeManager(BaseGaiaflowManager):
             log_info(
                 f"Minikube cluster [{self.minikube_profile}] is not running. Starting..."
             )
-
-            run(
-                [
-                    "minikube",
-                    "start",
-                    "--profile",
-                    self.minikube_profile,
-                    "--driver=docker",
-                    "--cpus=4",
-                    "--memory=4g",
-                ],
-                f"Error starting minikube profile [{self.minikube_profile}]",
-            )
+            try:
+                run(
+                    [
+                        "minikube",
+                        "start",
+                        "--profile",
+                        self.minikube_profile,
+                        "--driver=docker",
+                        "--cpus=4",
+                        "--memory=4g",
+                    ],
+                    f"Error starting minikube profile [{self.minikube_profile}]",
+                )
+            except subprocess.CalledProcessError:
+                log_info("Cleaning up and starting again...")
+                self.cleanup()
+                self.start()
 
         self.create_kube_config_inline()
-        self.restart_docker_compose()
+        MlopsManager(
+            self.gaiaflow_path,
+            self.user_project_path,
+            action=BaseActions.START,
+            prod_local=True,
+            force_new=self.force_new
+        )
 
-    def stop_minikube(self):
+    def stop(self):
         log_info(f"Stopping minikube profile [{self.minikube_profile}]...")
         try:
             run(
                 ["minikube", "stop", "--profile", self.minikube_profile],
                 f"Error stopping minikube profile [{self.minikube_profile}]",
             )
+            log_info(f"Stopped minikube profile [{self.minikube_profile}]")
         except Exception as e:
             log_info(str(e))
-            log_info(f"Deleting profile {self.minikube_profile}")
-        run(
-            ["minikube", "delete", "--profile", self.minikube_profile],
-            f"Error deleting minikube profile [{self.minikube_profile}]",
-        )
-        log_info(f"Stopped minikube profile [{self.minikube_profile}]")
 
-    def build_docker_image(self):
-        if not Path("Dockerfile").exists():
-            log_error(f"Dockerfile not found at {Path('Dockerfile')}")
-        log_info(f"Building Docker image [{self.docker_image_name}]...")
-
-        result = subprocess.run(
-            ["minikube", "-p", self.minikube_profile, "docker-env", "--shell", "bash"],
-            stdout=subprocess.PIPE,
-            check=True,
-        )
-        env = os.environ.copy()
-        for line in result.stdout.decode().splitlines():
-            if line.startswith("export "):
-                try:
-                    key, value = line.replace("export ", "").split("=", 1)
-                    env[key.strip()] = value.strip('"')
-                except ValueError:
-                    continue
-        run(
-            ["docker", "build", "-t", self.docker_image_name, "."],
-            "Error building docker image.",
-            env=env,
-        )
 
     def create_kube_config_inline(self):
         kube_config = Path.home() / ".kube" / "config"
         backup_config = kube_config.with_suffix(".backup")
-        filename = "../kube_config_inline"
+        filename = f"{self.gaiaflow_path / 'docker'}/kube_config_inline"
 
         if self.os_type == "windows" and kube_config.exists():
             log_info("Detected Windows: patching kube config with host.docker.internal")
@@ -171,6 +150,7 @@ class MinikubeManager(BaseGaiaflowManager):
                     "--minify",
                     "--raw",
                 ],
+                cwd=self.gaiaflow_path / "docker",
                 stdout=f,
             )
 
@@ -197,6 +177,78 @@ class MinikubeManager(BaseGaiaflowManager):
             shutil.copy(backup_config, kube_config)
             backup_config.unlink()
             log_info("Reverted kube config to original state.")
+
+    @staticmethod
+    def _add_copy_statements_to_dockerfile(
+            dockerfile_path: str, local_packages: list[str]
+    ):
+        with open(dockerfile_path, "r") as f:
+            lines = f.readlines()
+
+        env_index = next(
+            (i for i, line in enumerate(lines) if line.strip().startswith("ENV")),
+            None,
+        )
+
+        entrypoint_index = next(
+            (
+                i
+                for i, line in enumerate(lines)
+                if line.strip().startswith("ENTRYPOINT")
+            ),
+            None,
+        )
+
+        if entrypoint_index is None:
+            raise ValueError("No ENTRYPOINT found in Dockerfile.")
+
+        copy_lines = [f"COPY {pkg} ./{pkg}\n" for pkg in local_packages]
+
+        updated_lines = (
+            lines[: env_index + 1]
+            + copy_lines  #
+            + lines[entrypoint_index:]
+        )
+        with open(dockerfile_path, "w") as f:
+            f.writelines(updated_lines)
+
+        print("Dockerfile updated with COPY statements.")
+
+    def build_docker_image(self):
+        dockerfile_path = self.gaiaflow_path / "docker" / "user-package"/ "Dockerfile"
+        if not (dockerfile_path.exists()):
+            log_error(f"Dockerfile not found at {dockerfile_path}")
+            return
+        log_info(f"Updating dockerfile at {dockerfile_path}")
+        MinikubeManager._add_copy_statements_to_dockerfile(dockerfile_path,
+                                               find_python_packages(self.user_project_path))
+        log_info(f"Building Docker image [{self.docker_image_name}]...")
+
+        if self.local:
+            run(
+                ["docker", "build", "-t", self.docker_image_name, "-f",
+                 dockerfile_path, "../../"],
+                "Error building docker image.",
+            )
+        else:
+            result = subprocess.run(
+                ["minikube", "-p", self.minikube_profile, "docker-env", "--shell", "bash"],
+                stdout=subprocess.PIPE,
+                check=True,
+            )
+            env = os.environ.copy()
+            for line in result.stdout.decode().splitlines():
+                if line.startswith("export "):
+                    try:
+                        key, value = line.replace("export ", "").split("=", 1)
+                        env[key.strip()] = value.strip('"')
+                    except ValueError:
+                        continue
+            run(
+                ["docker", "build", "-t", self.docker_image_name, "."],
+                "Error building docker image inside minikube cluster.",
+                env=env,
+            )
 
     def create_secrets(self, secret_name: str, secret_data: dict[str, Any]):
         log_info(f"Checking if secret [{secret_name}] exists...")
@@ -232,9 +284,9 @@ class MinikubeManager(BaseGaiaflowManager):
                 create_cmd.append(f"--from-literal={k}={v}")
             subprocess.check_call(create_cmd)
 
-    def start(self):
+    def _start(self):
         log_info("Starting full setup...")
-        self.start_minikube()
+        self.start()
         self.build_docker_image()
         self.create_kube_config_inline()
         self.create_secrets(
@@ -246,73 +298,55 @@ class MinikubeManager(BaseGaiaflowManager):
         )
         log_info(f"Minikube cluster [{self.minikube_profile}] is ready!")
 
-    def restart_docker_compose(self):
-        log_info("Restarting Docker Compose services...")
+
+
+    def cleanup(self):
+        log_info(f"Deleting minikube profile: {self.minikube_profile}")
         run(
-            [
-                "docker",
-                "compose",
-                "-f",
-                "docker/docker-compose/docker-compose.yml",
-                "down",
-            ],
-            "Error running docker compose down",
+            ["minikube", "delete", "--profile", self.minikube_profile],
+            f"Error deleting minikube profile [{self.minikube_profile}]",
         )
-        run(
-            [
-                "docker",
-                "compose",
-                "-f",
-                "docker/docker-compose/docker-compose.yml",
-                "-f",
-                "docker/docker-compose/docker-compose-minikube-network.yml",
-                "up",
-                "-d",
-            ],
-            "Error running docker compose up",
-        )
+        log_info("Minikube Cleanup complete")
 
 
-app = typer.Typer()
-
-
-@app.command()
-def manage(
-    stop: bool = typer.Option(False, "--stop", "-s", help="Stop minikube cluster"),
-    restart: bool = typer.Option(
-        False, "--restart", "-r", help="Restart minikube cluster"
-    ),
-    start: bool = typer.Option(False, "--start", help="Start minikube cluster"),
-    build_only: bool = typer.Option(
-        False, "--build-only", help="Only build docker image inside minikube"
-    ),
-    create_config_only: bool = typer.Option(
-        False, "--create-config-only", help="Create inline config for Docker compose."
-    ),
-    create_secrets: bool = typer.Option(
-        False, "--create-secrets", help="Create secrets for pods (Deprecated)"
-    ),
-):
-    print("pwd", os.getcwd())
-    manager = MinikubeManager()
-
-    if stop:
-        manager.stop_minikube()
-    elif restart:
-        manager.stop_minikube()
-        manager.start_minikube()
-    elif start:
-        manager.start_minikube()
-    elif build_only:
-        manager.build_docker_image()
-    elif create_config_only:
-        manager.create_kube_config_inline()
-
-    if create_secrets:
-        manager.create_secrets(
-            secret_name="my-minio-creds",
-            secret_data={
-                "AWS_ACCESS_KEY_ID": "minio",
-                "AWS_SECRET_ACCESS_KEY": "minio123",
-            },
-        )
+#
+# @app.command()
+# def manage(
+#     stop: bool = typer.Option(False, "--stop", "-s", help="Stop minikube cluster"),
+#     restart: bool = typer.Option(
+#         False, "--restart", "-r", help="Restart minikube cluster"
+#     ),
+#     start: bool = typer.Option(False, "--start", help="Start minikube cluster"),
+#     build_only: bool = typer.Option(
+#         False, "--build-only", help="Only build docker image inside minikube"
+#     ),
+#     create_config_only: bool = typer.Option(
+#         False, "--create-config-only", help="Create inline config for Docker compose."
+#     ),
+#     create_secrets: bool = typer.Option(
+#         False, "--create-secrets", help="Create secrets for pods (Deprecated)"
+#     ),
+# ):
+#     print("pwd", os.getcwd())
+#     manager = MinikubeManager()
+#
+#     if stop:
+#         manager.stop()
+#     elif restart:
+#         manager.stop()
+#         manager.start()
+#     elif start:
+#         manager.start()
+#     elif build_only:
+#         manager.build_docker_image()
+#     elif create_config_only:
+#         manager.create_kube_config_inline()
+#
+#     if create_secrets:
+#         manager.create_secrets(
+#             secret_name="my-minio-creds",
+#             secret_data={
+#                 "AWS_ACCESS_KEY_ID": "minio",
+#                 "AWS_SECRET_ACCESS_KEY": "minio123",
+#             },
+#         )

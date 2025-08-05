@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from gaiaflow.constants import ACTIONS
+from gaiaflow.constants import BaseActions
 
 
 class BaseGaiaflowManager(ABC):
@@ -9,15 +9,28 @@ class BaseGaiaflowManager(ABC):
         self,
         gaiaflow_path: Path,
         user_project_path: Path,
-        action: ACTIONS,
+        action: BaseActions,
         force_new: bool = False,
-        prune: bool = False
+        prune: bool = False,
     ):
         self.gaiaflow_path = gaiaflow_path
         self.user_project_path = user_project_path
         self.action = action
         self.force_new = force_new
         self.prune = prune
+
+        if self.action == BaseActions.STOP:
+            self.stop()
+
+        if self.action == BaseActions.RESTART:
+            self.restart()
+
+        if self.action == BaseActions.START:
+            self.start()
+
+        if self.action == BaseActions.CLEANUP:
+            self.stop()
+            self.cleanup()
 
     @abstractmethod
     def start(self):
@@ -40,8 +53,6 @@ class BaseGaiaflowManager(ABC):
     def cleanup(self):
         """Cleanup the services provided by the manager.
 
-        It should use the `prune` flag to permanently delete the services
+        It can use the `prune` flag to permanently delete the services
         provided by the manager.
         """
-
-

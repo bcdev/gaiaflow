@@ -6,8 +6,8 @@ import typer
 
 from gaiaflow.managers.mlops_manager import MlopsManager, Service
 from gaiaflow.utils import (
+    create_gaiaflow_context_path,
     gaiaflow_path_exists_in_state,
-    get_gaialfow_version,
     save_project_state,
 )
 
@@ -22,10 +22,10 @@ def start(
         False,
         "--force-new",
         "-f",
-        help="If you need a "
-        "fresh gaiaflow installation. "
-        "NOTE. Currently it only removes "
-        "the current version of Gaiaflow.",
+        help="If you need a fresh gaiaflow installation. "
+        "NOTE. It only removes the current version of Gaiaflow. If you need "
+             "to remove the docker related stuff, use the cleanup --prune "
+             "command",
     ),
     service: List[Service] = typer.Option(
         None,
@@ -45,15 +45,9 @@ def start(
     ),
 ):
     typer.echo(f"Selected Gaiaflow services: {service}")
-    user_project_path = Path(project_path).resolve()
-    if not user_project_path.exists():
-        raise FileNotFoundError(f"{user_project_path} not found")
-
-    version = get_gaialfow_version()
-    project_name = str(user_project_path).split("/")[-1]
-    gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
+    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
     gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
-    if gaiaflow_path_exists:
+    if not gaiaflow_path_exists:
         save_project_state(user_project_path, gaiaflow_path)
     else:
         typer.echo(
@@ -104,13 +98,7 @@ def stop(
     ),
 ):
     """"""
-    user_project_path = Path(project_path).resolve()
-    if not user_project_path.exists():
-        raise FileNotFoundError(f"{user_project_path} not found")
-
-    version = get_gaialfow_version()
-    project_name = str(user_project_path).split("/")[-1]
-    gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
+    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
     gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -164,13 +152,7 @@ def restart(
     ),
 ):
     """"""
-    user_project_path = Path(project_path).resolve()
-    if not user_project_path.exists():
-        raise FileNotFoundError(f"{user_project_path} not found")
-
-    version = get_gaialfow_version()
-    project_name = str(user_project_path).split("/")[-1]
-    gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
+    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
     gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -207,25 +189,20 @@ def restart(
     "gaiaflow static context directory from the /tmp folder and "
     "also remove the state for this project."
 )
-def clean(
+def cleanup(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     prune: bool = typer.Option(
         False, "--prune", help="Prune Docker image, network and cache"
     ),
 ):
-    user_project_path = Path(project_path).resolve()
-    if not user_project_path.exists():
-        raise FileNotFoundError(f"{user_project_path} not found")
-    version = get_gaialfow_version()
-    project_name = str(user_project_path).split("/")[-1]
-    gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
+    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
     gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
     MlopsManager(
         Path(gaiaflow_path),
         Path(user_project_path),
-        action="clean",
+        action="cleanup",
         prune=prune,
     )
 
