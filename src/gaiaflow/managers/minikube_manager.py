@@ -2,17 +2,15 @@ import os
 import platform
 import shutil
 import subprocess
-from enum import Enum
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Union
 
-import typer
 import yaml
 
 from gaiaflow.constants import BaseActions, ExtendedActions
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
-from gaiaflow.utils import log_error, log_info, run, find_python_packages
+from gaiaflow.managers.utils import log_error, log_info, run
 
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 
@@ -22,18 +20,18 @@ MinikubeActions = Union[BaseActions, ExtendedActions]
 
 class MinikubeManager(BaseGaiaflowManager):
     def __init__(
-            self,
-            gaiaflow_path: Path,
-            user_project_path: Path,
-            action: MinikubeActions,
-            force_new: bool = False,
-            secret_data: dict = None,
-            secret_name: str = "",
-            prune: bool = False,
-            local: bool = False,
+        self,
+        gaiaflow_path: Path,
+        user_project_path: Path,
+        action: MinikubeActions,
+        force_new: bool = False,
+        secret_data: dict = None,
+        secret_name: str = "",
+        prune: bool = False,
+        local: bool = False,
     ):
         self.minikube_profile = "airflow"
-        self.docker_image_name = "gaiaflow_test_pl:v5"
+        self.docker_image_name = "gaiaflow_test_pl:v16"
         self.os_type = platform.system().lower()
         self.local = local
 
@@ -57,8 +55,9 @@ class MinikubeManager(BaseGaiaflowManager):
     def start(self):
         if self.force_new:
             self.cleanup()
-        MlopsManager(self.gaiaflow_path, self.user_project_path,
-                     action=BaseActions.STOP)
+        MlopsManager(
+            self.gaiaflow_path, self.user_project_path, action=BaseActions.STOP
+        )
         log_info(f"Checking Minikube cluster [{self.minikube_profile}] status...")
         try:
             result = subprocess.run(
@@ -99,7 +98,7 @@ class MinikubeManager(BaseGaiaflowManager):
             self.user_project_path,
             action=BaseActions.START,
             prod_local=True,
-            force_new=self.force_new
+            force_new=self.force_new,
         )
 
     def stop(self):
@@ -112,7 +111,6 @@ class MinikubeManager(BaseGaiaflowManager):
             log_info(f"Stopped minikube profile [{self.minikube_profile}]")
         except Exception as e:
             log_info(str(e))
-
 
     def create_kube_config_inline(self):
         kube_config = Path.home() / ".kube" / "config"
@@ -180,7 +178,7 @@ class MinikubeManager(BaseGaiaflowManager):
 
     @staticmethod
     def _add_copy_statements_to_dockerfile(
-            dockerfile_path: str, local_packages: list[str]
+        dockerfile_path: str, local_packages: list[str]
     ):
         with open(dockerfile_path, "r") as f:
             lines = f.readlines()
@@ -215,7 +213,7 @@ class MinikubeManager(BaseGaiaflowManager):
         print("Dockerfile updated with COPY statements.")
 
     def build_docker_image(self):
-        dockerfile_path = self.gaiaflow_path / "docker" / "user-package"/ "Dockerfile"
+        dockerfile_path = self.gaiaflow_path / "docker" / "user-package" / "Dockerfile"
         if not (dockerfile_path.exists()):
             log_error(f"Dockerfile not found at {dockerfile_path}")
             return
@@ -223,20 +221,33 @@ class MinikubeManager(BaseGaiaflowManager):
         # MinikubeManager._add_copy_statements_to_dockerfile(dockerfile_path,
         #                                        find_python_packages(self.user_project_path))
 
-
         if self.local:
-            log_info(f"Building Docker image [{self.docker_image_name}] "
-                     "locally")
+            log_info(f"Building Docker image [{self.docker_image_name}] locally")
             run(
-                ["docker", "build", "-t", self.docker_image_name, "-f",
-                 dockerfile_path, "../../"],
+                [
+                    "docker",
+                    "build",
+                    "-t",
+                    self.docker_image_name,
+                    "-f",
+                    dockerfile_path,
+                    "../../",
+                ],
                 "Error building docker image.",
             )
         else:
-            log_info(f"Building Docker image [{self.docker_image_name}] in "
-                     "minikube context")
+            log_info(
+                f"Building Docker image [{self.docker_image_name}] in minikube context"
+            )
             result = subprocess.run(
-                ["minikube", "-p", self.minikube_profile, "docker-env", "--shell", "bash"],
+                [
+                    "minikube",
+                    "-p",
+                    self.minikube_profile,
+                    "docker-env",
+                    "--shell",
+                    "bash",
+                ],
                 stdout=subprocess.PIPE,
                 check=True,
             )
@@ -249,8 +260,15 @@ class MinikubeManager(BaseGaiaflowManager):
                     except ValueError:
                         continue
             run(
-                ["docker", "build", "-t", self.docker_image_name, "-f",
-                 dockerfile_path, "../../"],
+                [
+                    "docker",
+                    "build",
+                    "-t",
+                    self.docker_image_name,
+                    "-f",
+                    dockerfile_path,
+                    "../../",
+                ],
                 "Error building docker image inside minikube cluster.",
                 env=env,
             )
@@ -302,8 +320,6 @@ class MinikubeManager(BaseGaiaflowManager):
             },
         )
         log_info(f"Minikube cluster [{self.minikube_profile}] is ready!")
-
-
 
     def cleanup(self):
         log_info(f"Deleting minikube profile: {self.minikube_profile}")

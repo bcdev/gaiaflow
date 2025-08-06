@@ -43,7 +43,7 @@ def log_error(message: str):
     print(f"\033[0;31mERROR:\033[0m {message}", file=sys.stderr)
 
 
-def run(command: list, error_message: str, env = None):
+def run(command: list, error_message: str, env=None):
     try:
         subprocess.call(command, env=env)
     except Exception:

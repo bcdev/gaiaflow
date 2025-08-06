@@ -5,7 +5,7 @@ import fsspec
 import typer
 
 from gaiaflow.managers.mlops_manager import MlopsManager, Service
-from gaiaflow.utils import (
+from gaiaflow.managers.utils import (
     create_gaiaflow_context_path,
     gaiaflow_path_exists_in_state,
     save_project_state,
@@ -24,8 +24,8 @@ def start(
         "-f",
         help="If you need a fresh gaiaflow installation. "
         "NOTE. It only removes the current version of Gaiaflow. If you need "
-             "to remove the docker related stuff, use the cleanup --prune "
-             "command",
+        "to remove the docker related stuff, use the cleanup --prune "
+        "command",
     ),
     service: List[Service] = typer.Option(
         None,

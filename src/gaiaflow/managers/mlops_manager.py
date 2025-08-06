@@ -13,16 +13,15 @@ from ruamel.yaml import YAML
 
 from gaiaflow.constants import GAIAFLOW_STATE_FILE, BaseActions
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
-from gaiaflow.utils import (
+from gaiaflow.managers.utils import (
     create_directory,
     delete_project_state,
     find_python_packages,
+    gaiaflow_path_exists_in_state,
     handle_error,
     log_error,
     log_info,
     run,
-    create_gaiaflow_context_path,
-    gaiaflow_path_exists_in_state,
     save_project_state,
 )
 
@@ -80,7 +79,7 @@ class MlopsManager(BaseGaiaflowManager):
         docker_build: bool = False,
         force_new: bool = False,
         prune: bool = False,
-            prod_local: bool = False,
+        prod_local: bool = False,
     ):
         self.service = service
         self.cache = cache
@@ -99,7 +98,6 @@ class MlopsManager(BaseGaiaflowManager):
             force_new=force_new,
             prune=prune,
         )
-
 
     def _check_port(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -264,7 +262,9 @@ class MlopsManager(BaseGaiaflowManager):
                 dst_path = f"/opt/airflow/{child.name}"
                 new_volumes.append(f"{child.resolve()}:{dst_path}")
 
-        new_volumes.append(f"{self.gaiaflow_path / 'docker'}/kube_config_inline:/home/airflow/.kube/config")
+        new_volumes.append(
+            f"{self.gaiaflow_path / 'docker'}/kube_config_inline:/home/airflow/.kube/config"
+        )
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes
 
@@ -306,9 +306,11 @@ class MlopsManager(BaseGaiaflowManager):
 
             save_project_state(self.user_project_path, self.gaiaflow_path)
         else:
-            log_info("Gaiaflow project already exists at "
-                     f"{self.gaiaflow_path}, "
-                     "skipping creating new context.")
+            log_info(
+                "Gaiaflow project already exists at "
+                f"{self.gaiaflow_path}, "
+                "skipping creating new context."
+            )
 
         if self.service == "jupyter" or self.service is None:
             self._check_port()

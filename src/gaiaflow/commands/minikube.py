@@ -4,8 +4,8 @@ import fsspec
 import typer
 
 from gaiaflow.constants import BaseActions
-from gaiaflow.managers.minikube_manager import MinikubeManager, ExtendedActions
-from gaiaflow.utils import (
+from gaiaflow.managers.minikube_manager import ExtendedActions, MinikubeManager
+from gaiaflow.managers.utils import (
     create_gaiaflow_context_path,
     gaiaflow_path_exists_in_state,
     parse_key_value_pairs,
@@ -90,7 +90,7 @@ def dockerize(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=ExtendedActions.DOCKERIZE,
-        local=local
+        local=local,
     )
 
 
@@ -98,7 +98,9 @@ def dockerize(
     help="Create a config file for Airflow to talk to Kubernetes "
     "cluster. To be used only when debugging required."
 )
-def create_config(project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),):
+def create_config(
+    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
+):
     gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
     gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
@@ -112,7 +114,8 @@ def create_config(project_path: Path = typer.Option(..., "--path", "-p", help="P
 
 
 @app.command(help="Create secrets to provide to the production-like environment.")
-def create_secret(project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
+def create_secret(
+    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     name: str = typer.Option(..., "--name", help="Name of the secret"),
     data: list[str] = typer.Option(
         ..., "--data", help="Secret data as key=value pairs"
@@ -130,7 +133,7 @@ def create_secret(project_path: Path = typer.Option(..., "--path", "-p", help="P
         user_project_path=user_project_path,
         action=ExtendedActions.CREATE_SECRET,
         secret_name=name,
-        secret_data=secret_data
+        secret_data=secret_data,
     )
 
 

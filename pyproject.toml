@@ -38,6 +38,7 @@ apache-airflow = ">=3.0.3,<4"
 apache-airflow-providers-cncf-kubernetes = ">=10.6.2,<11"
 apache-airflow-providers-amazon = ">=9.11.0,<10"
 apache-airflow-providers-fab = ">=2.3.1,<3"
+apache-airflow-providers-docker = ">=4.4.2,<5"
 
 [project.scripts]
 gaiaflow = "gaiaflow.cli:app"
