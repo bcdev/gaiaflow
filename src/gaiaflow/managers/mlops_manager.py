@@ -11,7 +11,13 @@ import fsspec
 import psutil
 from ruamel.yaml import YAML
 
-from gaiaflow.constants import GAIAFLOW_STATE_FILE, BaseActions
+from gaiaflow.constants import (
+    GAIAFLOW_STATE_FILE,
+    BaseActions,
+    AIRFLOW_SERVICES,
+    MLFLOW_SERVICES,
+    MINIO_SERVICES,
+)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.utils import (
     create_directory,
@@ -32,19 +38,6 @@ class Service(str, Enum):
     minio = "minio"
     jupyter = "jupyter"
 
-
-_AIRFLOW_SERVICES = [
-    "airflow-apiserver",
-    "airflow-scheduler",
-    "airflow-init",
-    "airflow-dag-processor",
-    "airflow-triggerer",
-    "postgres-airflow",
-]
-
-_MLFLOW_SERVICES = ["mlflow", "postgres-mlflow"]
-
-_MINIO_SERVICES = ["minio", "minio_client"]
 
 _IMAGES = [
     "docker-compose-airflow-apiserver:latest",
@@ -120,9 +113,9 @@ class MlopsManager(BaseGaiaflowManager):
     @staticmethod
     def _docker_services_for(component):
         services = {
-            "airflow": _AIRFLOW_SERVICES,
-            "mlflow": _MLFLOW_SERVICES,
-            "minio": _MINIO_SERVICES,
+            "airflow": AIRFLOW_SERVICES,
+            "mlflow": MLFLOW_SERVICES,
+            "minio": MINIO_SERVICES,
         }
         return services.get(component, [])
 
@@ -264,6 +257,10 @@ class MlopsManager(BaseGaiaflowManager):
 
         new_volumes.append(
             f"{self.gaiaflow_path / 'docker'}/kube_config_inline:/home/airflow/.kube/config"
+        )
+        # TODO: For windows not needed?
+        new_volumes.append(
+            "/var/run/docker.sock:/var/run/docker.sock"
         )
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes

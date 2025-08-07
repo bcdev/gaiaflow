@@ -35,6 +35,9 @@ x-airflow-common:
     LD_LIBRARY_PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/lib:/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
     PYTHONNOUSERSITE: 1
 
+    # TODO: Figure out for windows (maybe tcp://host.docker.internal:2375?)
+    DOCKER_HOST: unix:///var/run/docker.sock
+
   user: "${AIRFLOW_UID:-50000}:0"
 
   volumes:
@@ -44,7 +47,6 @@ x-airflow-common:
     - ../../data:/opt/airflow/data
     - ../../tech_talk:/opt/airflow/tech_talk
     - ../../.env:/opt/airflow/.env
-#    - ../../kube_config_inline:/home/airflow/.kube/config
 
   extra_hosts:
     - "host.docker.internal:host-gateway"

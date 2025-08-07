@@ -316,14 +316,14 @@ class Environment(Enum):
     DEV = "dev"
     PROD_LOCAL = "prod_local"
     PROD = "prod"
-    DOCKER = "docker"
+    DEV_DOCKER = "dev_docker"
 
 
 OPERATOR_MAP = {
     Environment.DEV: DevTaskOperator,
     Environment.PROD: ProdLocalTaskOperator,
     Environment.PROD_LOCAL: ProdTaskOperator,
-    Environment.DOCKER: DockerTaskOperator,
+    Environment.DEV_DOCKER: DockerTaskOperator,
 }
 
 
@@ -363,11 +363,11 @@ def create_task(
         for k, v in func_kwargs_from_tasks.items()
     }
 
-    strategy_cls = OPERATOR_MAP.get(environment)
-    if not strategy_cls:
-        raise ValueError(f"No task creation strategy defined for {environment}")
+    operator_cls = OPERATOR_MAP.get(environment)
+    if not operator_cls:
+        raise ValueError(f"No task creation operator defined for {environment}")
 
-    strategy = strategy_cls(
+    operator = operator_cls(
         task_id=task_id,
         func_path=func_path,
         func_args=func_args,
@@ -382,4 +382,4 @@ def create_task(
         environment=environment,
     )
 
-    return strategy.create_task()
+    return operator.create_task()

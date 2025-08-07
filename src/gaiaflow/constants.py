@@ -17,3 +17,19 @@ class ExtendedActions(str, Enum):
     DOCKERIZE = "dockerize"
     CREATE_CONFIG = "create_config"
     CREATE_SECRET = "create_secret"
+
+AIRFLOW_SERVICES = [
+    "airflow-apiserver",
+    "airflow-scheduler",
+    "airflow-init",
+    "airflow-dag-processor",
+    "airflow-triggerer",
+    "postgres-airflow",
+]
+
+MLFLOW_SERVICES = ["mlflow", "postgres-mlflow"]
+
+MINIO_SERVICES = ["minio", "minio_client"]
+
+DEFAULT_MINIO_AWS_ACCESS_KEY_ID = "minio"
+DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY = "minio123"

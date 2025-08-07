@@ -8,6 +8,7 @@ import ast
 import importlib
 import json
 import os
+import pickle
 from typing import Any
 
 from airflow.models.taskinstance import TaskInstance
@@ -127,7 +128,9 @@ def run(
         # This is needed when we use KubernetesPodOperator and want to
         # share information via XCOM.
         _write_xcom_result(result)
-
+    if os.environ.gmethodet("ENV") == "dev_docker":
+        with open("/tmp/script.out", "wb+") as tmp:
+            pickle.dump(result, tmp)
     return result
 
 

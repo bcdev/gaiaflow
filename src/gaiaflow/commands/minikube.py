@@ -67,7 +67,16 @@ def restart(
         "fresh production-like environment installation. ",
     ),
 ):
-    """"""
+    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        typer.echo("Please create a project with Gaiaflow before running this command.")
+        return
+    MinikubeManager(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=BaseActions.RESTART,
+    )
 
 
 @app.command(help="Containerize your package into a docker image.")

@@ -7,7 +7,13 @@ from typing import Any, Union
 
 import yaml
 
-from gaiaflow.constants import BaseActions, ExtendedActions
+from gaiaflow.constants import (
+    BaseActions,
+    ExtendedActions,
+    AIRFLOW_SERVICES,
+    MLFLOW_SERVICES,
+    MINIO_SERVICES,
+)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
 from gaiaflow.managers.utils import log_error, log_info, run
@@ -31,6 +37,7 @@ class MinikubeManager(BaseGaiaflowManager):
         local: bool = False,
     ):
         self.minikube_profile = "airflow"
+        # TODO: get the docker image name automatically
         self.docker_image_name = "gaiaflow_test_pl:v16"
         self.os_type = platform.system().lower()
         self.local = local
@@ -327,47 +334,9 @@ class MinikubeManager(BaseGaiaflowManager):
             ["minikube", "delete", "--profile", self.minikube_profile],
             f"Error deleting minikube profile [{self.minikube_profile}]",
         )
+        for service in AIRFLOW_SERVICES + MLFLOW_SERVICES + MINIO_SERVICES:
+            run(["docker", "network", "disconnect", self.minikube_profile,
+                 service], f"Error disconnecting network from service: {service}")
+        run(["docker", "network", "rm", "-f", "airflow"],
+            "Error removing  airflow docker network")
         log_info("Minikube Cleanup complete")
-
-
-#
-# @app.command()
-# def manage(
-#     stop: bool = typer.Option(False, "--stop", "-s", help="Stop minikube cluster"),
-#     restart: bool = typer.Option(
-#         False, "--restart", "-r", help="Restart minikube cluster"
-#     ),
-#     start: bool = typer.Option(False, "--start", help="Start minikube cluster"),
-#     build_only: bool = typer.Option(
-#         False, "--build-only", help="Only build docker image inside minikube"
-#     ),
-#     create_config_only: bool = typer.Option(
-#         False, "--create-config-only", help="Create inline config for Docker compose."
-#     ),
-#     create_secrets: bool = typer.Option(
-#         False, "--create-secrets", help="Create secrets for pods (Deprecated)"
-#     ),
-# ):
-#     print("pwd", os.getcwd())
-#     manager = MinikubeManager()
-#
-#     if stop:
-#         manager.stop()
-#     elif restart:
-#         manager.stop()
-#         manager.start()
-#     elif start:
-#         manager.start()
-#     elif build_only:
-#         manager.build_docker_image()
-#     elif create_config_only:
-#         manager.create_kube_config_inline()
-#
-#     if create_secrets:
-#         manager.create_secrets(
-#             secret_name="my-minio-creds",
-#             secret_data={
-#                 "AWS_ACCESS_KEY_ID": "minio",
-#                 "AWS_SECRET_ACCESS_KEY": "minio123",
-#             },
-#         )

@@ -12,6 +12,7 @@ class BaseGaiaflowManager(ABC):
         action: BaseActions,
         force_new: bool = False,
         prune: bool = False,
+        **kwargs,
     ):
         self.gaiaflow_path = gaiaflow_path
         self.user_project_path = user_project_path
@@ -20,20 +21,20 @@ class BaseGaiaflowManager(ABC):
         self.prune = prune
 
         if self.action == BaseActions.STOP:
-            self.stop()
+            self.stop(**kwargs)
 
         if self.action == BaseActions.RESTART:
-            self.restart()
+            self.restart(**kwargs)
 
         if self.action == BaseActions.START:
-            self.start()
+            self.start(**kwargs)
 
         if self.action == BaseActions.CLEANUP:
-            self.stop()
-            self.cleanup()
+            self.stop(**kwargs)
+            self.cleanup(**kwargs)
 
     @abstractmethod
-    def start(self):
+    def start(self, **kwargs):
         """Start the services provided by the manager.
 
         It can use the `force_new` variable to start a fresh set of services
@@ -41,16 +42,16 @@ class BaseGaiaflowManager(ABC):
         """
 
     @abstractmethod
-    def stop(self):
+    def stop(self, **kwargs):
         """Stop the services provided by the manager."""
 
-    def restart(self):
+    def restart(self, **kwargs):
         """Restart the services provided by the manager."""
-        self.stop()
-        self.start()
+        self.stop(**kwargs)
+        self.start(**kwargs)
 
     @abstractmethod
-    def cleanup(self):
+    def cleanup(self, **kwargs):
         """Cleanup the services provided by the manager.
 
         It can use the `prune` flag to permanently delete the services
