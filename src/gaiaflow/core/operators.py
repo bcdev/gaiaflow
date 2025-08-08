@@ -1,13 +1,16 @@
 import json
 import platform
+from datetime import datetime
 
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.providers.standard.operators.python import PythonOperator
+from kubernetes.client import V1ResourceRequirements
 
 from gaiaflow.constants import (
     DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
     DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
+    RESOURCE_PROFILES
 )
 
 from .utils import (
@@ -132,6 +135,26 @@ class ProdLocalTaskOperator(BaseTaskOperator):
         }
         env_from = build_env_from_secrets(self.secrets or [])
 
+
+        profile_name = self.params.get(
+            "resource_profile", "low"
+        )
+        profile = RESOURCE_PROFILES.get(profile_name)
+        if profile is None:
+            raise ValueError(f"Unknown resource profile: {profile_name}")
+
+        resources = V1ResourceRequirements(
+            requests={
+                "cpu": profile["request_cpu"],
+                "memory": profile["request_memory"],
+            },
+            limits={
+                "cpu": profile["limit_cpu"],
+                "memory": profile["limit_memory"],
+                # "gpu": profile.get["limit_gpu"],
+            },
+        )
+
         return KubernetesPodOperator(
             task_id=self.task_id,
             image=self.image,
@@ -145,6 +168,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             do_xcom_push=True,
             retries=self.retries,
             params=self.params,
+            container_resources=resources,
         )
 
 
@@ -202,11 +226,14 @@ class DockerTaskOperator(BaseTaskOperator):
             **mlflow_env_vars,
             **minio_env_vars,
         }
+
         safe_image_name = self.image.replace(":", "_").replace("/", "_")
+
         return DockerOperator(
             task_id=self.task_id,
             image=self.image,
-            container_name=safe_image_name + "_" + self.task_id + "_container",
+            container_name=safe_image_name + "_" + self.task_id + "_" +
+                           datetime.now().strftime("%Y%m%d%H%M%S") +  "_container",
             api_version="auto",
             auto_remove="success",
             command=["python", "-m", "gaiaflow.core.runner"],
@@ -217,6 +244,5 @@ class DockerTaskOperator(BaseTaskOperator):
             do_xcom_push=True,
             retrieve_output=True,
             retrieve_output_path="/tmp/script.out",
-            # tty=True,
             xcom_all=False,
         )

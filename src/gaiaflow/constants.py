@@ -34,3 +34,35 @@ MINIO_SERVICES = ["minio", "minio_client"]
 
 DEFAULT_MINIO_AWS_ACCESS_KEY_ID = "minio"
 DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY = "minio123"
+
+# TODO: Talk with Tejas/Norman (currently contains random values)
+RESOURCE_PROFILES = {
+    "low": {
+        "request_cpu": "250m",
+        "limit_cpu": "500m",
+        "request_memory": "512Mi",
+        "limit_memory": "1Gi",
+        "limit_gpu": "0",
+    },
+    "medium": {
+        "request_cpu": "500m",
+        "limit_cpu": "1",
+        "request_memory": "1Gi",
+        "limit_memory": "2Gi",
+        "limit_gpu": "0",
+    },
+    "high": {
+        "request_cpu": "1",
+        "limit_cpu": "2",
+        "request_memory": "2Gi",
+        "limit_memory": "4Gi",
+        "limit_gpu": "0.5",
+    },
+    "ultra": {
+        "request_cpu": "2",
+        "limit_cpu": "4",
+        "request_memory": "4Gi",
+        "limit_memory": "8Gi",
+        "limit_gpu": "1",
+    },
+}
