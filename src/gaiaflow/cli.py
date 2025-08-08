@@ -2,7 +2,7 @@ from importlib.metadata import version
 
 import typer
 
-from .commands import minikube, mlops, mlflow_model
+from .commands import minikube, mlflow_model, mlops
 
 pkg_version = version("gaiaflow")
 
@@ -25,7 +25,7 @@ app.add_typer(
     mlflow_model.app,
     name="model",
     help="Manage MLFlow models by either deploying or un-deploying them. "
-         "NOTE:Currently only local deployments supported.",
+    "NOTE:Currently only local deployments supported.",
 )
 
 if __name__ == "__main__":

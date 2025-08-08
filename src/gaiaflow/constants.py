@@ -18,6 +18,7 @@ class ExtendedActions(str, Enum):
     CREATE_CONFIG = "create_config"
     CREATE_SECRET = "create_secret"
 
+
 AIRFLOW_SERVICES = [
     "airflow-apiserver",
     "airflow-scheduler",

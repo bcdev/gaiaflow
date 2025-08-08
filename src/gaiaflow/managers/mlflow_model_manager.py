@@ -1,22 +1,44 @@
-import mlflow
-import subprocess
-import docker
 import os
+import subprocess
 import uuid
 
-from gaiaflow.constants import BaseActions
+import mlflow
+
+import docker
+from gaiaflow.constants import (
+    DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
+    DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
+    BaseActions,
+)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 
 
 class MlflowModelManager(BaseGaiaflowManager):
-
-    def __init__(self, registry_uri=None, action: BaseActions = None,
-                 force_new: bool = False,
+    def __init__(
+        self,
+        registry_uri=None,
+        action: BaseActions = None,
+        force_new: bool = False,
         prune: bool = False,
-        local: bool = False, **kwargs):
+        local: bool = False,
+        **kwargs,
+    ):
         self.docker_client = docker.from_env()
         self.registry_uri = registry_uri.rstrip("/") if registry_uri else None
         self.local = local
+
+        os.environ["MLFLOW_TRACKING_URI"] = (
+            os.getenv("MLFLOW_TRACKING_URI") or "https://localhost:5000"
+        )
+        os.environ["MLFLOW_S3_ENDPOINT_URL"] = (
+            os.getenv("MLFLOW_S3_ENDPOINT_URL") or "https://localhost:9000"
+        )
+        os.environ["AWS_ACCESS_KEY_ID"] = (
+            os.getenv("AWS_ACCESS_KEY_ID") or DEFAULT_MINIO_AWS_ACCESS_KEY_ID
+        )
+        os.environ["AWS_SECRET_ACCESS_KEY"] = (
+            os.getenv("AWS_SECRET_ACCESS_KEY") or DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY
+        )
 
         mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
 
@@ -29,7 +51,7 @@ class MlflowModelManager(BaseGaiaflowManager):
             action=action,
             force_new=force_new,
             prune=prune,
-            **kwargs
+            **kwargs,
         )
 
     def _get_model_uri(self, model_uri=None, run_id=None):
@@ -67,15 +89,17 @@ class MlflowModelManager(BaseGaiaflowManager):
         purge = params.get("purge")
         self.stop_and_remove_container(container_id_or_name, purge)
 
-
-    def build_model_docker_image(self, model_uri=None, run_id=None,
-                                 image_name=None, enable_mlserver=True):
+    def build_model_docker_image(
+        self, model_uri=None, run_id=None, image_name=None, enable_mlserver=True
+    ):
         model_uri_final = self._get_model_uri(model_uri, run_id)
 
         unique_tag = str(uuid.uuid4())[:8]
         image_name = image_name or f"mlflow-model:{unique_tag}"
 
-        full_image_name = f"{self.registry_uri}/{image_name}" if self.registry_uri else image_name
+        full_image_name = (
+            f"{self.registry_uri}/{image_name}" if self.registry_uri else image_name
+        )
 
         print(f"Building Docker image from {model_uri_final} as {full_image_name}...")
 
@@ -91,8 +115,8 @@ class MlflowModelManager(BaseGaiaflowManager):
         container = self.docker_client.containers.run(
             image_name,
             detach=True,
-            ports={'8080/tcp': port},
-            name=f"mlflow_model_{uuid.uuid4().hex[:6]}"
+            ports={"8080/tcp": port},
+            name=f"mlflow_model_{uuid.uuid4().hex[:6]}",
         )
         print(f"Container started: {container.name} on port {port}")
         return container

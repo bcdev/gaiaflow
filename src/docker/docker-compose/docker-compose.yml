@@ -41,6 +41,8 @@ x-airflow-common:
   user: "${AIRFLOW_UID:-50000}:0"
 
   volumes:
+    # The following will be replaced at runtime with the python packages from the user project dir along with required
+    # mounts like dags, logs, plugins, .env, .kube/config, /var/run/docker.sock and gaiaflow (for development)
     - ../../dags:/opt/airflow/dags
     - ../../plugins:/opt/airflow/plugins
     - ../../logs:/opt/airflow/logs

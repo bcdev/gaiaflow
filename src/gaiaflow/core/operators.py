@@ -5,14 +5,17 @@ from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperato
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.providers.standard.operators.python import PythonOperator
 
+from gaiaflow.constants import (
+    DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
+    DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
+)
+
 from .utils import (
     build_env_from_secrets,
     build_env_vars,
     build_xcom_templates,
     inject_params_as_env_vars,
 )
-from gaiaflow.constants import DEFAULT_MINIO_AWS_ACCESS_KEY_ID, \
-    DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY
 
 
 class BaseTaskOperator:
@@ -67,7 +70,6 @@ class DevTaskOperator(BaseTaskOperator):
             do_xcom_push=True,
             retries=self.retries,
             params=self.params,
-            env={}
         )
 
 
@@ -103,12 +105,11 @@ class ProdLocalTaskOperator(BaseTaskOperator):
 
         aws_secret_access_key = DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY
         if "AWS_SECRET_ACCESS_KEY" in self.env_vars:
-            aws_secret_access_key = self.env_vars.pop(
-                "AWS_SECRET_ACCESS_KEY")
+            aws_secret_access_key = self.env_vars.pop("AWS_SECRET_ACCESS_KEY")
 
         minio_env_vars = {
             "AWS_ACCESS_KEY_ID": aws_access_key_id,
-            "AWS_SECRET_ACCESS_KEY": aws_secret_access_key
+            "AWS_SECRET_ACCESS_KEY": aws_secret_access_key,
         }
 
         env_vars = build_env_vars(
@@ -123,8 +124,12 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             env=self.environment.value,
         )
 
-        all_env_vars = {**inject_params_as_env_vars(self.params), **env_vars,
-                        **mlflow_env_vars, **minio_env_vars}
+        all_env_vars = {
+            **inject_params_as_env_vars(self.params),
+            **env_vars,
+            **mlflow_env_vars,
+            **minio_env_vars,
+        }
         env_from = build_env_from_secrets(self.secrets or [])
 
         return KubernetesPodOperator(
@@ -163,11 +168,11 @@ class DockerTaskOperator(BaseTaskOperator):
             "XCOM_PULL_KWARGS_RESULTS": json.dumps(xcom_kwargs_pull or {}),
         }
 
-        mlflow_tracking_uri = "http://localhost:5000"
+        mlflow_tracking_uri = "http://mlflow:5000"
         if "MLFLOW_TRACKING_URI" in self.env_vars:
             mlflow_tracking_uri = self.env_vars.pop("MLFLOW_TRACKING_URI")
 
-        mlflow_s3_endpoint_url = "http://localhost:9000"
+        mlflow_s3_endpoint_url = "http://minio:9000"
         if "MLFLOW_S3_ENDPOINT_URL" in self.env_vars:
             mlflow_s3_endpoint_url = self.env_vars.pop("MLFLOW_S3_ENDPOINT_URL")
 
@@ -195,7 +200,7 @@ class DockerTaskOperator(BaseTaskOperator):
             **self.env_vars,
             **inject_params_as_env_vars(self.params),
             **mlflow_env_vars,
-            **minio_env_vars
+            **minio_env_vars,
         }
         safe_image_name = self.image.replace(":", "_").replace("/", "_")
         return DockerOperator(
@@ -213,5 +218,5 @@ class DockerTaskOperator(BaseTaskOperator):
             retrieve_output=True,
             retrieve_output_path="/tmp/script.out",
             # tty=True,
-            xcom_all=False
+            xcom_all=False,
         )

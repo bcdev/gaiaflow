@@ -6,16 +6,24 @@ from gaiaflow.managers.mlflow_model_manager import MlflowModelManager
 app = typer.Typer()
 
 
-@app.command(help="Deploy a Mlflow model. NOTE: Currently only local model "
-                  "deployment is provided.")
+@app.command(
+    help="Deploy a Mlflow model. NOTE: Currently only local model "
+    "deployment is provided."
+)
 def start(
-    model_uri: str = typer.Option("", help="S3 URI of the model to serve. "
-                                            "This or run_id has to be "
-                                            "provided. If you provide both, "
-                                           "model_uri takes precedence."),
-    run_id: str = typer.Option("", help="MLflow run ID of your model. This "
-                                         "or model_uri has to be provided. If you provide both, "
-                                           "model_uri takes precedence."),
+    model_uri: str = typer.Option(
+        "",
+        help="S3 URI of the model to serve. "
+        "This or run_id has to be "
+        "provided. If you provide both, "
+        "model_uri takes precedence.",
+    ),
+    run_id: str = typer.Option(
+        "",
+        help="MLflow run ID of your model. This "
+        "or model_uri has to be provided. If you provide both, "
+        "model_uri takes precedence.",
+    ),
     image_name: str = typer.Option(..., help="Docker image name"),
     enable_mlserver: bool = typer.Option(True, help="Enable MLServer"),
 ):
@@ -30,13 +38,13 @@ def start(
         }
     }
     typer.echo(f"kwargs::{kwargs}")
-    MlflowModelManager(
-        action=BaseActions.START,
-        **kwargs
-    )
+    MlflowModelManager(action=BaseActions.START, **kwargs)
 
-@app.command(help="Stop a deployed Mlflow model container. NOTE: Currently "
-                  "only local model deployment is provided.")
+
+@app.command(
+    help="Stop a deployed Mlflow model container. NOTE: Currently "
+    "only local model deployment is provided."
+)
 def stop(
     container_id_or_name: str = typer.Option(..., help="Container ID or name"),
 ):
@@ -46,17 +54,16 @@ def stop(
         }
     }
     typer.echo(f"kwargs::{kwargs}")
-    MlflowModelManager(
-        action=BaseActions.STOP,
-        **kwargs
-    )
+    MlflowModelManager(action=BaseActions.STOP, **kwargs)
 
-@app.command(help="Cleanup a deployed Mlflow model container. NOTE: Currently "
-                  "only local model deployment is provided.")
+
+@app.command(
+    help="Cleanup a deployed Mlflow model container. NOTE: Currently "
+    "only local model deployment is provided."
+)
 def cleanup(
     container_id_or_name: str = typer.Option(..., help="Container ID or name"),
-    purge: str = typer.Option(..., "-p", help="Remove the Deployed MLFlow "
-                                              "model image"),
+    purge: str = typer.Option(..., "-p", help="Remove the Deployed MLFlow model image"),
 ):
     kwargs = {
         "params": {
@@ -65,7 +72,4 @@ def cleanup(
         }
     }
     typer.echo(f"kwargs::{kwargs}")
-    MlflowModelManager(
-        action=BaseActions.STOP,
-        **kwargs
-    )
+    MlflowModelManager(action=BaseActions.STOP, **kwargs)

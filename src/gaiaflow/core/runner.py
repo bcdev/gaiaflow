@@ -128,7 +128,7 @@ def run(
         # This is needed when we use KubernetesPodOperator and want to
         # share information via XCOM.
         _write_xcom_result(result)
-    if os.environ.gmethodet("ENV") == "dev_docker":
+    if os.environ.get("ENV") == "dev_docker":
         with open("/tmp/script.out", "wb+") as tmp:
             pickle.dump(result, tmp)
     return result

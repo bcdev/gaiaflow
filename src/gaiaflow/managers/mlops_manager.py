@@ -12,11 +12,11 @@ import psutil
 from ruamel.yaml import YAML
 
 from gaiaflow.constants import (
-    GAIAFLOW_STATE_FILE,
-    BaseActions,
     AIRFLOW_SERVICES,
-    MLFLOW_SERVICES,
+    GAIAFLOW_STATE_FILE,
     MINIO_SERVICES,
+    MLFLOW_SERVICES,
+    BaseActions,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.utils import (
@@ -259,9 +259,9 @@ class MlopsManager(BaseGaiaflowManager):
             f"{self.gaiaflow_path / 'docker'}/kube_config_inline:/home/airflow/.kube/config"
         )
         # TODO: For windows not needed?
-        new_volumes.append(
-            "/var/run/docker.sock:/var/run/docker.sock"
-        )
+        new_volumes.append("/var/run/docker.sock:/var/run/docker.sock")
+        # This is only needed for development
+        new_volumes.append("/home/yogesh/Projects/BC/gaiaflow:/opt/airflow/gaiaflow")
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes
 

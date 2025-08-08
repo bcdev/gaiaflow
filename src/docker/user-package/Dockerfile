@@ -9,11 +9,9 @@ WORKDIR /app
 COPY environment.yml .
 
 RUN micromamba install -f environment.yml -n base
-
+# This is temporary. Once gaiaflow is released, it will used installed from PyPi.
+COPY ./gaiaflow ./gaiaflow
+RUN micromamba run -n base pip install /app/gaiaflow
 ENV PATH=/opt/conda/bin:$PATH
 
-
-COPY one ./one
-COPY two ./two
-COPY seven ./seven
-ENTRYPOINT ["python", "-m", "tech_talk.runner"]
+ENTRYPOINT ["python", "-m", "gaiaflow.core.runner"]

@@ -8,15 +8,15 @@ from typing import Any, Union
 import yaml
 
 from gaiaflow.constants import (
+    AIRFLOW_SERVICES,
+    MINIO_SERVICES,
+    MLFLOW_SERVICES,
     BaseActions,
     ExtendedActions,
-    AIRFLOW_SERVICES,
-    MLFLOW_SERVICES,
-    MINIO_SERVICES,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
-from gaiaflow.managers.utils import log_error, log_info, run
+from gaiaflow.managers.utils import find_python_packages, log_error, log_info, run
 
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 
@@ -206,7 +206,7 @@ class MinikubeManager(BaseGaiaflowManager):
 
         if entrypoint_index is None:
             raise ValueError("No ENTRYPOINT found in Dockerfile.")
-
+        # {self.user_project_path}/
         copy_lines = [f"COPY {pkg} ./{pkg}\n" for pkg in local_packages]
 
         updated_lines = (
@@ -224,9 +224,11 @@ class MinikubeManager(BaseGaiaflowManager):
         if not (dockerfile_path.exists()):
             log_error(f"Dockerfile not found at {dockerfile_path}")
             return
+
         log_info(f"Updating dockerfile at {dockerfile_path}")
-        # MinikubeManager._add_copy_statements_to_dockerfile(dockerfile_path,
-        #                                        find_python_packages(self.user_project_path))
+        MinikubeManager._add_copy_statements_to_dockerfile(
+            dockerfile_path, find_python_packages(self.user_project_path)
+        )
 
         if self.local:
             log_info(f"Building Docker image [{self.docker_image_name}] locally")
@@ -238,7 +240,7 @@ class MinikubeManager(BaseGaiaflowManager):
                     self.docker_image_name,
                     "-f",
                     dockerfile_path,
-                    "../../",
+                    self.user_project_path,
                 ],
                 "Error building docker image.",
             )
@@ -274,7 +276,7 @@ class MinikubeManager(BaseGaiaflowManager):
                     self.docker_image_name,
                     "-f",
                     dockerfile_path,
-                    "../../",
+                    self.user_project_path,
                 ],
                 "Error building docker image inside minikube cluster.",
                 env=env,
@@ -335,8 +337,12 @@ class MinikubeManager(BaseGaiaflowManager):
             f"Error deleting minikube profile [{self.minikube_profile}]",
         )
         for service in AIRFLOW_SERVICES + MLFLOW_SERVICES + MINIO_SERVICES:
-            run(["docker", "network", "disconnect", self.minikube_profile,
-                 service], f"Error disconnecting network from service: {service}")
-        run(["docker", "network", "rm", "-f", "airflow"],
-            "Error removing  airflow docker network")
+            run(
+                ["docker", "network", "disconnect", self.minikube_profile, service],
+                f"Error disconnecting network from service: {service}",
+            )
+        run(
+            ["docker", "network", "rm", "-f", "airflow"],
+            "Error removing  airflow docker network",
+        )
         log_info("Minikube Cleanup complete")
