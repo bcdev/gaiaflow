@@ -42,4 +42,16 @@ apache-airflow-providers-docker = ">=4.4.2,<5"
 mlflow = ">=3.2.0,<4"
 
 [project.scripts]
-gaiaflow = "gaiaflow.cli:app"
+gaiaflow = "gaiaflow.cli.cli:app"
+
+[[tool.mypy.overrides]]
+module = "kubernetes.client.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fsspec.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "psutil.*"
+ignore_missing_imports = true

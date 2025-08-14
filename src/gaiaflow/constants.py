@@ -6,14 +6,14 @@ GAIAFLOW_CONFIG_DIR.mkdir(exist_ok=True)
 GAIAFLOW_STATE_FILE = GAIAFLOW_CONFIG_DIR / "state.json"
 
 
-class BaseActions(str, Enum):
+class BaseAction(str, Enum):
     START = "start"
     STOP = "stop"
     RESTART = "restart"
     CLEANUP = "cleanup"
 
 
-class ExtendedActions(str, Enum):
+class ExtendedAction(str, Enum):
     DOCKERIZE = "dockerize"
     CREATE_CONFIG = "create_config"
     CREATE_SECRET = "create_secret"

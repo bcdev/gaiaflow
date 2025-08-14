@@ -16,7 +16,7 @@ from gaiaflow.constants import (
     GAIAFLOW_STATE_FILE,
     MINIO_SERVICES,
     MLFLOW_SERVICES,
-    BaseActions,
+    BaseAction,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.utils import (
@@ -64,7 +64,7 @@ class MlopsManager(BaseGaiaflowManager):
         self,
         gaiaflow_path: Path,
         user_project_path: Path,
-        action: BaseActions,
+        action: BaseAction,
         service: Service = None,
         cache: bool = False,
         jupyter_port: int = 8895,

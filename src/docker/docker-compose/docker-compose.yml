@@ -30,9 +30,9 @@ x-airflow-common:
     MLFLOW_S3_ENDPOINT_URL: http://minio:9000
     MLFLOW_TRACKING_URI: http://mlflow:5000
 
-    PYTHONPATH: /opt/airflow/tech_talk_demo:/opt/airflow/dags:${PYTHONPATH}
-    PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/bin:/usr/bin:/bin:${PATH}
-    LD_LIBRARY_PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/lib:/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
+#    PYTHONPATH: /opt/airflow/tech_talk_demo:/opt/airflow/dags:${PYTHONPATH}
+#    PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/bin:/usr/bin:/bin:${PATH}
+#    LD_LIBRARY_PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/lib:/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
     PYTHONNOUSERSITE: 1
 
     # TODO: Figure out for windows (maybe tcp://host.docker.internal:2375?)

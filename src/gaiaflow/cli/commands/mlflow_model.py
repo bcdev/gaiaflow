@@ -1,6 +1,6 @@
 import typer
 
-from gaiaflow.constants import BaseActions
+from gaiaflow.constants import BaseAction
 from gaiaflow.managers.mlflow_model_manager import MlflowModelManager
 
 app = typer.Typer()
@@ -38,7 +38,7 @@ def start(
         }
     }
     typer.echo(f"kwargs::{kwargs}")
-    MlflowModelManager(action=BaseActions.START, **kwargs)
+    MlflowModelManager(action=BaseAction.START, **kwargs)
 
 
 @app.command(
@@ -54,7 +54,7 @@ def stop(
         }
     }
     typer.echo(f"kwargs::{kwargs}")
-    MlflowModelManager(action=BaseActions.STOP, **kwargs)
+    MlflowModelManager(action=BaseAction.STOP, **kwargs)
 
 
 @app.command(
@@ -72,4 +72,4 @@ def cleanup(
         }
     }
     typer.echo(f"kwargs::{kwargs}")
-    MlflowModelManager(action=BaseActions.STOP, **kwargs)
+    MlflowModelManager(action=BaseAction.STOP, **kwargs)

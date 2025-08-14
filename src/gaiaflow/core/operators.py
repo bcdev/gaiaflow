@@ -4,13 +4,14 @@ from datetime import datetime
 
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from airflow.providers.docker.operators.docker import DockerOperator
-from airflow.providers.standard.operators.python import PythonOperator
+from airflow.providers.standard.operators.python import PythonOperator, \
+    ExternalPythonOperator
 from kubernetes.client import V1ResourceRequirements
 
 from gaiaflow.constants import (
     DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
     DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
-    RESOURCE_PROFILES
+    RESOURCE_PROFILES,
 )
 
 from .utils import (
@@ -62,12 +63,13 @@ class DevTaskOperator(BaseTaskOperator):
             "func_path": self.func_path,
             "args": self.func_args,
             "kwargs": self.func_kwargs,
-            "xcom_pull_kwargs": self.func_kwargs_from_tasks,
             "xcom_pull_args": self.func_args_from_tasks,
+            "xcom_pull_kwargs": self.func_kwargs_from_tasks,
         }
 
-        return PythonOperator(
+        return ExternalPythonOperator(
             task_id=self.task_id,
+            python="/opt/airflow/.pixi/envs/default/bin/python",
             python_callable=run,
             op_kwargs=op_kwargs,
             do_xcom_push=True,
@@ -135,10 +137,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
         }
         env_from = build_env_from_secrets(self.secrets or [])
 
-
-        profile_name = self.params.get(
-            "resource_profile", "low"
-        )
+        profile_name = self.params.get("resource_profile", "low")
         profile = RESOURCE_PROFILES.get(profile_name)
         if profile is None:
             raise ValueError(f"Unknown resource profile: {profile_name}")
@@ -232,8 +231,12 @@ class DockerTaskOperator(BaseTaskOperator):
         return DockerOperator(
             task_id=self.task_id,
             image=self.image,
-            container_name=safe_image_name + "_" + self.task_id + "_" +
-                           datetime.now().strftime("%Y%m%d%H%M%S") +  "_container",
+            container_name=safe_image_name
+            + "_"
+            + self.task_id
+            + "_"
+            + datetime.now().strftime("%Y%m%d%H%M%S")
+            + "_container",
             api_version="auto",
             auto_remove="success",
             command=["python", "-m", "gaiaflow.core.runner"],

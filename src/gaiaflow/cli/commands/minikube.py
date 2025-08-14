@@ -1,10 +1,16 @@
+# TODO: Refactor the imports into a function and move the function to the
+#  commands as a good practice.
+#  Remove redundant gaiaflow version from state.json
+#  Remove old gaiaflow entry when new version is used for the same project
+#  Change service None to all in MLOPS manager
+
 from pathlib import Path
 
 import fsspec
 import typer
 
-from gaiaflow.constants import BaseActions
-from gaiaflow.managers.minikube_manager import ExtendedActions, MinikubeManager
+from gaiaflow.constants import BaseAction
+from gaiaflow.managers.minikube_manager import ExtendedAction, MinikubeManager
 from gaiaflow.managers.utils import (
     create_gaiaflow_context_path,
     gaiaflow_path_exists_in_state,
@@ -35,7 +41,7 @@ def start(
     MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=BaseActions.START,
+        action=BaseAction.START,
         force_new=force_new,
     )
 
@@ -52,7 +58,7 @@ def stop(
     MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=BaseActions.STOP,
+        action=BaseAction.STOP,
     )
 
 
@@ -75,7 +81,7 @@ def restart(
     MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=BaseActions.RESTART,
+        action=BaseAction.RESTART,
     )
 
 
@@ -98,7 +104,7 @@ def dockerize(
     MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=ExtendedActions.DOCKERIZE,
+        action=ExtendedAction.DOCKERIZE,
         local=local,
     )
 
@@ -118,7 +124,7 @@ def create_config(
     MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=ExtendedActions.CREATE_CONFIG,
+        action=ExtendedAction.CREATE_CONFIG,
     )
 
 
@@ -140,7 +146,7 @@ def create_secret(
     MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=ExtendedActions.CREATE_SECRET,
+        action=ExtendedAction.CREATE_SECRET,
         secret_name=name,
         secret_data=secret_data,
     )

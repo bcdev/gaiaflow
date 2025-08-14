@@ -11,8 +11,8 @@ from gaiaflow.constants import (
     AIRFLOW_SERVICES,
     MINIO_SERVICES,
     MLFLOW_SERVICES,
-    BaseActions,
-    ExtendedActions,
+    BaseAction,
+    ExtendedAction,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
@@ -21,7 +21,7 @@ from gaiaflow.managers.utils import find_python_packages, log_error, log_info, r
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 
 
-MinikubeActions = Union[BaseActions, ExtendedActions]
+MinikubeActions = Union[BaseAction, ExtendedAction]
 
 
 class MinikubeManager(BaseGaiaflowManager):
@@ -50,20 +50,20 @@ class MinikubeManager(BaseGaiaflowManager):
             prune=prune,
         )
 
-        if action == ExtendedActions.DOCKERIZE:
+        if action == ExtendedAction.DOCKERIZE:
             self.build_docker_image()
 
-        if action == ExtendedActions.CREATE_CONFIG:
+        if action == ExtendedAction.CREATE_CONFIG:
             self.create_kube_config_inline()
 
-        if action == ExtendedActions.CREATE_SECRET:
+        if action == ExtendedAction.CREATE_SECRET:
             self.create_secrets(secret_name, secret_data)
 
     def start(self):
         if self.force_new:
             self.cleanup()
         MlopsManager(
-            self.gaiaflow_path, self.user_project_path, action=BaseActions.STOP
+            self.gaiaflow_path, self.user_project_path, action=BaseAction.STOP
         )
         log_info(f"Checking Minikube cluster [{self.minikube_profile}] status...")
         try:
@@ -103,7 +103,7 @@ class MinikubeManager(BaseGaiaflowManager):
         MlopsManager(
             self.gaiaflow_path,
             self.user_project_path,
-            action=BaseActions.START,
+            action=BaseAction.START,
             prod_local=True,
             force_new=self.force_new,
         )

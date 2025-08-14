@@ -326,7 +326,7 @@ OPERATOR_MAP = {
     Environment.DEV_DOCKER: DockerTaskOperator,
 }
 
-
+# TODO: Use kwargs and args as a tuple to reduce verbosity
 def create_task(
     task_id: str,
     func_path: str,

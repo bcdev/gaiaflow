@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from gaiaflow.constants import BaseActions
+from gaiaflow.constants import BaseAction
 
 
 class BaseGaiaflowManager(ABC):
@@ -9,7 +9,7 @@ class BaseGaiaflowManager(ABC):
         self,
         gaiaflow_path: Path,
         user_project_path: Path,
-        action: BaseActions,
+        action: BaseAction,
         force_new: bool = False,
         prune: bool = False,
         **kwargs,
@@ -20,16 +20,18 @@ class BaseGaiaflowManager(ABC):
         self.force_new = force_new
         self.prune = prune
 
-        if self.action == BaseActions.STOP:
+        # TODO: Move this into a classmethod run() which inits this Class and
+        #  calls the action
+        if self.action == BaseAction.STOP:
             self.stop(**kwargs)
 
-        if self.action == BaseActions.RESTART:
+        if self.action == BaseAction.RESTART:
             self.restart(**kwargs)
 
-        if self.action == BaseActions.START:
+        if self.action == BaseAction.START:
             self.start(**kwargs)
 
-        if self.action == BaseActions.CLEANUP:
+        if self.action == BaseAction.CLEANUP:
             self.stop(**kwargs)
             self.cleanup(**kwargs)
 

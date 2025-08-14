@@ -4,6 +4,7 @@ from typing import List
 import fsspec
 import typer
 
+from gaiaflow.constants import BaseAction
 from gaiaflow.managers.mlops_manager import MlopsManager, Service
 from gaiaflow.managers.utils import (
     create_gaiaflow_context_path,
@@ -75,7 +76,7 @@ def start(
             gaiaflow_path=gaiaflow_path,
             user_project_path=user_project_path,
             force_new=force_new,
-            action="start",
+            action=BaseAction.START,
             service=None,
             cache=cache,
             jupyter_port=jupyter_port,
