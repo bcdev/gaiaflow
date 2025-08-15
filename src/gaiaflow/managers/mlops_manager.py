@@ -143,14 +143,14 @@ class MlopsManager(BaseGaiaflowManager):
 
     def stop(self):
         log_info("Shutting down Gaiaflow services...")
-        if self.service == "jupyter":
+        if self.service == Service.jupyter:
             self._stop_jupyter()
-        elif self.service is None:
+        elif self.service == Service.all:
             down_cmd = ["down"]
             if self.delete_volume:
                 log_info("Removing volumes with shutdown")
                 down_cmd.append("-v")
-            self._docker_compose_action(down_cmd, self.service)
+            self._docker_compose_action(down_cmd)
             self._stop_jupyter()
         else:
             down_cmd = ["down"]
@@ -339,7 +339,7 @@ class MlopsManager(BaseGaiaflowManager):
                 "skipping creating new context."
             )
 
-        if self.service == "jupyter" or self.service is None:
+        if self.service == Service.jupyter or self.service == Service.all:
             self._check_port()
 
         if self.docker_build:
@@ -350,10 +350,10 @@ class MlopsManager(BaseGaiaflowManager):
             log_info("Building Docker images")
             self._docker_compose_action(build_cmd, self.service)
 
-        if self.service is None:
-            # self._start_jupyter()
+        if self.service == Service.all:
+            self._start_jupyter()
             self._docker_compose_action(["up", "-d"], service=None)
-        elif self.service == "jupyter":
+        elif self.service == Service.jupyter:
             self._start_jupyter()
         else:
             self._docker_compose_action(["up", "-d"], service=self.service)

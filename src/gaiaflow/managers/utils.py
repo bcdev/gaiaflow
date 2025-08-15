@@ -59,7 +59,6 @@ def handle_error(message: str):
 def get_state_file() -> Path:
     return GAIAFLOW_STATE_FILE
 
-
 def save_project_state(project_path: Path, gaiaflow_path: Path):
     state_file = get_state_file()
     try:
@@ -69,17 +68,20 @@ def save_project_state(project_path: Path, gaiaflow_path: Path):
         else:
             state = {}
     except (json.JSONDecodeError, FileNotFoundError):
-        state = {}
+         state = {}
 
-    key = str(gaiaflow_path)
-    if key in state:
-        typer.echo(
-            f"State for '{gaiaflow_path}' already exists. Skipping save.", err=True
-        )
-        return
+    project_path_str = str(project_path)
+    gaiaflow_path_str = str(gaiaflow_path)
+    keys_to_delete = [
+        k
+        for k, v in state.items()
+        if v.get("project_path") == project_path_str and k != gaiaflow_path_str
+    ]
+    for k in keys_to_delete:
+        del state[k]
 
-    state[key] = {
-        "project_path": str(project_path),
+    state[gaiaflow_path_str] = {
+        "project_path": project_path_str,
     }
 
     with open(state_file, "w") as f:

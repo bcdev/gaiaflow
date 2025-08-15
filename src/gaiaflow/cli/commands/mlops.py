@@ -40,7 +40,7 @@ def start(
         "command",
     ),
     service: List[Service] = typer.Option(
-        None,
+        ["all"],
         "--service",
         "-s",
         help="Services to manage. Use multiple --service flags, or leave empty to run all.",
@@ -68,7 +68,7 @@ def start(
             f"saving to the state"
         )
 
-    if service:
+    if service != ["all"]:
         for s in service:
             typer.echo(f"Running start on {s}...")
             imports.MlopsManager(
@@ -89,7 +89,7 @@ def start(
             user_project_path=user_project_path,
             force_new=force_new,
             action=imports.BaseAction.START,
-            service=None,
+            service=Service.all,
             cache=cache,
             jupyter_port=jupyter_port,
             delete_volume=delete_volume,
@@ -101,7 +101,7 @@ def start(
 def stop(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     service: List[Service] = typer.Option(
-        None,
+        ["all"],
         "--service",
         "-s",
         help="Services to manage. Use multiple --service flags, or leave empty to run all.",
@@ -116,7 +116,7 @@ def stop(
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
-    if service:
+    if service != ["all"]:
         for s in service:
             typer.echo(f"Stopping service:  {s}")
             imports.MlopsManager(
@@ -131,6 +131,7 @@ def stop(
         imports.MlopsManager(
             Path(gaiaflow_path),
             Path(user_project_path),
+            service=Service.all,
             action=imports.BaseAction.STOP,
             delete_volume=delete_volume,
         )
@@ -149,7 +150,7 @@ def restart(
         "the current version of Gaiaflow.",
     ),
     service: List[Service] = typer.Option(
-        None,
+        ["all"],
         "--service",
         "-s",
         help="Services to manage. Use multiple --service flags, or leave empty to run all.",
@@ -171,7 +172,7 @@ def restart(
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
-    if service:
+    if service != ["all"]:
         for s in service:
             typer.echo(f"Stopping service:  {s}")
             imports.MlopsManager(
@@ -196,6 +197,7 @@ def restart(
             jupyter_port=jupyter_port,
             delete_volume=delete_volume,
             docker_build=docker_build,
+            service=Service.all,
         )
 
 

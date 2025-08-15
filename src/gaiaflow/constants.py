@@ -22,6 +22,7 @@ class Service(str, Enum):
     mlflow = "mlflow"
     minio = "minio"
     jupyter = "jupyter"
+    all = "all"
 
 AIRFLOW_SERVICES = [
     "airflow-apiserver",

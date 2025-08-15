@@ -1,9 +1,3 @@
-# TODO: Refactor the imports into a function and move the function to the
-#  commands as a good practice.
-#  Remove redundant gaiaflow version from state.json
-#  Remove old gaiaflow entry when new version is used for the same project
-#  Change service None to all in MLOPS manager
-
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -30,8 +24,6 @@ def load_imports():
         gaiaflow_path_exists_in_state=gaiaflow_path_exists_in_state,
         parse_key_value_pairs=parse_key_value_pairs,
     )
-
-
 
 
 @app.command(help="Start Gaiaflow production-like services.")
