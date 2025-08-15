@@ -1,5 +1,3 @@
-# 🚨 WARNING: Changes to this file may break local deployments. Consult the team before modifying! 🚨
-
 x-airflow-common:
   &airflow-common
   build:
@@ -30,9 +28,6 @@ x-airflow-common:
     MLFLOW_S3_ENDPOINT_URL: http://minio:9000
     MLFLOW_TRACKING_URI: http://mlflow:5000
 
-#    PYTHONPATH: /opt/airflow/tech_talk_demo:/opt/airflow/dags:${PYTHONPATH}
-#    PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/bin:/usr/bin:/bin:${PATH}
-#    LD_LIBRARY_PATH: /home/airflow/.local/share/mamba/envs/tech_talk_demo/lib:/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
     PYTHONNOUSERSITE: 1
 
     # TODO: Figure out for windows (maybe tcp://host.docker.internal:2375?)
@@ -41,14 +36,11 @@ x-airflow-common:
   user: "${AIRFLOW_UID:-50000}:0"
 
   volumes:
-    # The following will be replaced at runtime with the python packages from the user project dir along with required
-    # mounts like dags, logs, plugins, .env, .kube/config, /var/run/docker.sock and gaiaflow (for development)
-    - ../../dags:/opt/airflow/dags
-    - ../../plugins:/opt/airflow/plugins
-    - ../../logs:/opt/airflow/logs
-    - ../../data:/opt/airflow/data
-    - ../../tech_talk:/opt/airflow/tech_talk
-    - ../../.env:/opt/airflow/.env
+    - ./dags:/opt/airflow/dags
+    - ./plugins:/opt/airflow/plugins
+    - ./logs:/opt/airflow/logs
+    - ./data:/opt/airflow/data
+    - ../../../../.env:/opt/airflow/.env
 
   extra_hosts:
     - "host.docker.internal:host-gateway"
@@ -123,6 +115,7 @@ services:
   airflow-apiserver:
     container_name: airflow-apiserver
     <<: *airflow-common
+    entrypoint: ["/opt/airflow/entrypoint.sh"]
     command: api-server
     ports:
       - 8080:8080
@@ -141,6 +134,7 @@ services:
   airflow-dag-processor:
     container_name: airflow-dag-processor
     <<: *airflow-common
+    entrypoint: ["/opt/airflow/entrypoint.sh"]
     command: dag-processor
     healthcheck:
       test: [ "CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"' ]
@@ -158,6 +152,7 @@ services:
   airflow-scheduler:
     container_name: airflow-scheduler
     <<: *airflow-common
+    entrypoint: ["/opt/airflow/entrypoint.sh"]
     command: scheduler
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
@@ -177,6 +172,7 @@ services:
   airflow-triggerer:
     container_name: airflow-triggerer
     <<: *airflow-common
+    entrypoint: ["/opt/airflow/entrypoint.sh"]
     command: triggerer
     healthcheck:
       test: [ "CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"' ]
