@@ -1,6 +1,8 @@
 import os
 import subprocess
 import uuid
+from contextlib import contextmanager
+from typing import Generator, Callable
 
 import mlflow
 
@@ -8,7 +10,7 @@ import docker
 from gaiaflow.constants import (
     DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
     DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
-    BaseActions,
+    BaseAction,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 
@@ -17,7 +19,7 @@ class MlflowModelManager(BaseGaiaflowManager):
     def __init__(
         self,
         registry_uri=None,
-        action: BaseActions = None,
+        action: BaseAction = None,
         force_new: bool = False,
         prune: bool = False,
         local: bool = False,
@@ -27,6 +29,8 @@ class MlflowModelManager(BaseGaiaflowManager):
         self.registry_uri = registry_uri.rstrip("/") if registry_uri else None
         self.local = local
 
+        # TODO: not optimal. Use ContextManager to restore the env vars
+        #  Move them to the actual methods where they are needed.
         os.environ["MLFLOW_TRACKING_URI"] = (
             os.getenv("MLFLOW_TRACKING_URI") or "https://localhost:5000"
         )
@@ -61,6 +65,23 @@ class MlflowModelManager(BaseGaiaflowManager):
             return f"runs:/{run_id}/model"
         else:
             raise ValueError("Either model_uri or run_id must be provided.")
+
+    # TODO: Use this instead
+    # @classmethod
+    # def run(cls, action, **kwargs):
+    #     params = kwargs.get("params", {})
+    #     model_uri = params.get("model_uri")
+    #     run_id = params.get("run_id")
+    #     image_name = params.get("image_name")
+    #     enable_mlserver = params.get("enable_mlserver", True)
+    #     manag = MlflowModelManager(model_uri, run_id, image_name,
+    #                               enable_mlserver)
+    #     environment = create_env()
+    #     with set_env_cm(environment):
+    #         if action == BaseAction.START:
+    #             manag.start()
+
+
 
     def start(self, **kwargs):
         print("kwargs inside start, **kwargs", kwargs)
@@ -150,3 +171,38 @@ class MlflowModelManager(BaseGaiaflowManager):
         print(f"Deploying to Kubernetes from {k8s_yaml_path}...")
         subprocess.run(["kubectl", "apply", "-f", k8s_yaml_path], check=True)
         print("Deployment applied.")
+
+#
+# @contextmanager
+# def set_env_cm(**new_env: str | None) -> Generator[dict[str, str | None]]:
+#     """Run the code in the block with a new environment `new_env`."""
+#     restore_env = set_env(**new_env)
+#     try:
+#         yield new_env
+#     finally:
+#         restore_env()
+#
+#
+# def set_env(**new_env: str | None) -> Callable[[], None]:
+#     """
+#     Set the new environment in `new_env` and return a no-arg
+#     function to restore the old environment.
+#     """
+#     old_env = {k: os.environ.get(k) for k in new_env.keys()}
+#
+#     def restore_env():
+#         for ko, vo in old_env.items():
+#             if vo is not None:
+#                 os.environ[ko] = vo
+#             elif ko in os.environ:
+#                 del os.environ[ko]
+#
+#     for kn, vn in new_env.items():
+#         if vn is not None:
+#             os.environ[kn] = vn
+#         elif kn in os.environ:
+#             del os.environ[kn]
+#
+#     return restore_env
+
+

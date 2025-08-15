@@ -5,7 +5,6 @@
 # arguments provided
 
 import ast
-import importlib
 import json
 import os
 import pickle
@@ -117,7 +116,8 @@ def run(
                     except Exception as e:
                         print(f"[XCom] [prod] Failed to parse XCOM for {arg_key}: {e}")
 
-    module_path, func_name = func_path.rsplit(":", 1)
+        module_path, func_name = func_path.rsplit(":", 1)
+    import importlib
     module = importlib.import_module(module_path)
     func = getattr(module, func_name)
 

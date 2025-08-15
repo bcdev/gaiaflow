@@ -40,7 +40,7 @@ x-airflow-common:
     - ./plugins:/opt/airflow/plugins
     - ./logs:/opt/airflow/logs
     - ./data:/opt/airflow/data
-    - ../../../../.env:/opt/airflow/.env
+    - ./.env:/opt/airflow/.env
 
   extra_hosts:
     - "host.docker.internal:host-gateway"

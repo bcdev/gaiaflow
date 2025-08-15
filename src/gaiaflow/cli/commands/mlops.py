@@ -1,20 +1,31 @@
 from pathlib import Path
 from typing import List
+from types import SimpleNamespace
 
 import fsspec
 import typer
 
-from gaiaflow.constants import BaseAction
-from gaiaflow.managers.mlops_manager import MlopsManager, Service
-from gaiaflow.managers.utils import (
-    create_gaiaflow_context_path,
-    gaiaflow_path_exists_in_state,
-    save_project_state,
-)
+from gaiaflow.constants import Service
 
 app = typer.Typer()
 fs = fsspec.filesystem("file")
 
+def load_imports():
+    from gaiaflow.constants import BaseAction
+    from gaiaflow.managers.mlops_manager import MlopsManager
+    from gaiaflow.managers.utils import (
+        create_gaiaflow_context_path,
+        gaiaflow_path_exists_in_state,
+        save_project_state,
+    )
+
+    return SimpleNamespace(
+        BaseAction=BaseAction,
+        MlopsManager=MlopsManager,
+        create_gaiaflow_context_path=create_gaiaflow_context_path,
+        gaiaflow_path_exists_in_state=gaiaflow_path_exists_in_state,
+        save_project_state=save_project_state,
+    )
 
 @app.command(help="Start Gaiaflow development services")
 def start(
@@ -45,11 +56,12 @@ def start(
         False, "--docker-build", "-b", help="Force Docker image build"
     ),
 ):
+    imports = load_imports()
     typer.echo(f"Selected Gaiaflow services: {service}")
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
-        save_project_state(user_project_path, gaiaflow_path)
+        imports.save_project_state(user_project_path, gaiaflow_path)
     else:
         typer.echo(
             f"Gaiaflow project already exists at {gaiaflow_path}. Skipping "
@@ -59,11 +71,11 @@ def start(
     if service:
         for s in service:
             typer.echo(f"Running start on {s}...")
-            MlopsManager(
+            imports.MlopsManager(
                 gaiaflow_path=gaiaflow_path,
                 user_project_path=user_project_path,
                 force_new=force_new,
-                action="start",
+                action=imports.BaseAction.START,
                 service=s,
                 cache=cache,
                 jupyter_port=jupyter_port,
@@ -72,11 +84,11 @@ def start(
             )
     else:
         typer.echo("Running start with all services")
-        MlopsManager(
+        imports.MlopsManager(
             gaiaflow_path=gaiaflow_path,
             user_project_path=user_project_path,
             force_new=force_new,
-            action=BaseAction.START,
+            action=imports.BaseAction.START,
             service=None,
             cache=cache,
             jupyter_port=jupyter_port,
@@ -99,26 +111,27 @@ def stop(
     ),
 ):
     """"""
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
     if service:
         for s in service:
             typer.echo(f"Stopping service:  {s}")
-            MlopsManager(
+            imports.MlopsManager(
                 Path(gaiaflow_path),
                 Path(user_project_path),
-                action="stop",
+                action=imports.BaseAction.STOP,
                 service=s,
                 delete_volume=delete_volume,
             )
     else:
         typer.echo("Stopping all services")
-        MlopsManager(
+        imports.MlopsManager(
             Path(gaiaflow_path),
             Path(user_project_path),
-            action="stop",
+            action=imports.BaseAction.STOP,
             delete_volume=delete_volume,
         )
 
@@ -153,18 +166,19 @@ def restart(
     ),
 ):
     """"""
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
     if service:
         for s in service:
             typer.echo(f"Stopping service:  {s}")
-            MlopsManager(
+            imports.MlopsManager(
                 Path(gaiaflow_path),
                 Path(user_project_path),
                 force_new=force_new,
-                action="restart",
+                action=imports.BaseAction.RESTART,
                 service=s,
                 cache=cache,
                 jupyter_port=jupyter_port,
@@ -173,11 +187,11 @@ def restart(
             )
     else:
         typer.echo("Stopping all services")
-        MlopsManager(
+        imports.MlopsManager(
             Path(gaiaflow_path),
             Path(user_project_path),
             force_new=force_new,
-            action="restart",
+            action=imports.BaseAction.RESTART,
             cache=cache,
             jupyter_port=jupyter_port,
             delete_volume=delete_volume,
@@ -196,14 +210,16 @@ def cleanup(
         False, "--prune", help="Prune Docker image, network and cache"
     ),
 ):
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
-    MlopsManager(
+    imports.MlopsManager(
         Path(gaiaflow_path),
         Path(user_project_path),
-        action="cleanup",
+        action=imports.BaseAction.CLEANUP,
         prune=prune,
     )
 

@@ -80,7 +80,6 @@ def save_project_state(project_path: Path, gaiaflow_path: Path):
 
     state[key] = {
         "project_path": str(project_path),
-        "gaiaflow_version": get_gaialfow_version(),
     }
 
     with open(state_file, "w") as f:
@@ -161,11 +160,14 @@ def create_directory(dir_name):
     else:
         log_info(f"Directory {dir_name} already exists")
 
+    set_permissions(dir_name)
+
+def set_permissions(path, mode=0o777):
     try:
-        fs.chmod(dir_name, 0o777)
-        log_info(f"Set permissions for {dir_name}")
+        fs.chmod(path, mode)
+        log_info(f"Set permissions for {path}")
     except Exception:
-        log_info(f"Warning: Could not set permissions for {dir_name}")
+        log_info(f"Warning: Could not set permissions for {path}")
 
 
 def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:

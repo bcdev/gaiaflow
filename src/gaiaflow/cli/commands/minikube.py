@@ -5,20 +5,33 @@
 #  Change service None to all in MLOPS manager
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import fsspec
 import typer
 
-from gaiaflow.constants import BaseAction
-from gaiaflow.managers.minikube_manager import ExtendedAction, MinikubeManager
-from gaiaflow.managers.utils import (
-    create_gaiaflow_context_path,
-    gaiaflow_path_exists_in_state,
-    parse_key_value_pairs,
-)
-
 app = typer.Typer()
 fs = fsspec.filesystem("file")
+
+def load_imports():
+    from gaiaflow.constants import BaseAction
+    from gaiaflow.managers.minikube_manager import ExtendedAction, MinikubeManager
+    from gaiaflow.managers.utils import (
+        create_gaiaflow_context_path,
+        gaiaflow_path_exists_in_state,
+        parse_key_value_pairs,
+    )
+
+    return SimpleNamespace(
+        BaseAction=BaseAction,
+        ExtendedAction=ExtendedAction,
+        MinikubeManager=MinikubeManager,
+        create_gaiaflow_context_path=create_gaiaflow_context_path,
+        gaiaflow_path_exists_in_state=gaiaflow_path_exists_in_state,
+        parse_key_value_pairs=parse_key_value_pairs,
+    )
+
+
 
 
 @app.command(help="Start Gaiaflow production-like services.")
@@ -33,15 +46,16 @@ def start(
     ),
 ):
     """"""
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    MinikubeManager(
+    imports.MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=BaseAction.START,
+        action=imports.BaseAction.START,
         force_new=force_new,
     )
 
@@ -50,15 +64,16 @@ def start(
 def stop(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    MinikubeManager(
+    imports.MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=BaseAction.STOP,
+        action=imports.BaseAction.STOP,
     )
 
 
@@ -73,15 +88,16 @@ def restart(
         "fresh production-like environment installation. ",
     ),
 ):
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    MinikubeManager(
+    imports.MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=BaseAction.RESTART,
+        action=imports.BaseAction.RESTART,
     )
 
 
@@ -96,15 +112,16 @@ def dockerize(
         "of creating it inside prod-local environment",
     ),
 ):
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    MinikubeManager(
+    imports.MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=ExtendedAction.DOCKERIZE,
+        action=imports.ExtendedAction.DOCKERIZE,
         local=local,
     )
 
@@ -116,15 +133,16 @@ def dockerize(
 def create_config(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    MinikubeManager(
+    imports.MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=ExtendedAction.CREATE_CONFIG,
+        action=imports.ExtendedAction.CREATE_CONFIG,
     )
 
 
@@ -136,17 +154,18 @@ def create_secret(
         ..., "--data", help="Secret data as key=value pairs"
     ),
 ):
-    secret_data = parse_key_value_pairs(data)
+    imports = load_imports()
+    secret_data = imports.parse_key_value_pairs(data)
     print(secret_data, name)
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    MinikubeManager(
+    imports.MinikubeManager(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=ExtendedAction.CREATE_SECRET,
+        action=imports.ExtendedAction.CREATE_SECRET,
         secret_name=name,
         secret_data=secret_data,
     )
@@ -159,6 +178,14 @@ def create_secret(
 def cleanup(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
+    (
+        BaseAction,
+        ExtendedAction,
+        MinikubeManager,
+        create_gaiaflow_context_path,
+        gaiaflow_path_exists_in_state,
+        parse_key_value_pairs,
+    ) = load_imports()
     gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
     gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:

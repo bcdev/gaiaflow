@@ -1,6 +1,9 @@
 FROM apache/airflow:3.0.3-python3.12
 
 USER root
+WORKDIR /opt/airflow
+
+RUN echo "deb http://deb.debian.org/debian testing main" >> /etc/apt/sources.list
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -8,17 +11,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libstdc++6 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://pixi.sh/install.sh | bash
-ENV PATH="/root/.pixi/bin:$PATH"
-RUN pixi --version
+RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C /opt/
 
-WORKDIR /opt/airflow
+ENV PATH="/opt/bin:$PATH"
+RUN micromamba --version
 
-RUN chmod -R 755 /opt/airflow
-RUN cp /root/.pixi/bin/pixi /usr/local/bin/pixi
-RUN chmod +x /usr/local/bin/pixi
-
-RUN mkdir -p /opt/src && chmod 755 /opt/src
-RUN chown -R 50000:0 /opt/airflow /opt/src
 USER airflow
-WORKDIR /opt/airflow
+COPY environment.yml .
+
+RUN micromamba env create -f environment.yml -n default_user_env
+RUN micromamba env list
+
+RUN micromamba shell init -s bash

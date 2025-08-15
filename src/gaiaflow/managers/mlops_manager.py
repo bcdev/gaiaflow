@@ -4,7 +4,6 @@ import platform
 import shutil
 import socket
 import subprocess
-from enum import Enum
 from pathlib import Path
 
 import fsspec
@@ -17,6 +16,7 @@ from gaiaflow.constants import (
     MINIO_SERVICES,
     MLFLOW_SERVICES,
     BaseAction,
+    Service,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.utils import (
@@ -29,15 +29,8 @@ from gaiaflow.managers.utils import (
     log_info,
     run,
     save_project_state,
+    set_permissions,
 )
-
-
-class Service(str, Enum):
-    airflow = "airflow"
-    mlflow = "mlflow"
-    minio = "minio"
-    jupyter = "jupyter"
-
 
 _IMAGES = [
     "docker-compose-airflow-apiserver:latest",
@@ -258,6 +251,12 @@ class MlopsManager(BaseGaiaflowManager):
         new_volumes.append(
             f"{self.gaiaflow_path / 'docker'}/kube_config_inline:/home/airflow/.kube/config"
         )
+        new_volumes.append(
+            f"{self.gaiaflow_path / 'docker' / 'docker-compose'}/entrypoint.sh:/opt/airflow/entrypoint.sh"
+        )
+        new_volumes.append(
+            f"{self.user_project_path}/pyproject.toml:/opt/airflow/pyproject.toml"
+        )
         # TODO: For windows not needed?
         new_volumes.append("/var/run/docker.sock:/var/run/docker.sock")
         # This is only needed for development
@@ -265,19 +264,50 @@ class MlopsManager(BaseGaiaflowManager):
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes
 
-        result = [f"/opt/airflow/{item}" for item in python_packages]
-        pythonpath_entry = ":".join(result)
-        log_info("Found and mounting following python packages " + str(python_packages))
-        env_updates = {
-            "PYTHONPATH": f"{pythonpath_entry}:/opt/airflow/dags:${{PYTHONPATH}}",
-            "PATH": f"/home/airflow/.local/share/mamba/envs/{env_name}/bin:/usr/bin:/bin:${{PATH}}",
-            "LD_LIBRARY_PATH": f"/home/airflow/.local/share/mamba/envs/{env_name}/lib:/lib/x86_64-linux-gnu:${{LD_LIBRARY_PATH}}",
-        }
-
-        compose_data["x-airflow-common"]["environment"].update(env_updates)
+        # result = [f"/opt/airflow/{item}" for item in python_packages]
+        # pythonpath_entry = ":".join(result)
+        # log_info("Found and mounting following python packages " + str(python_packages))
+        # env_updates = {
+        #     "PYTHONPATH": f"{pythonpath_entry}:/opt/airflow/dags:${{PYTHONPATH}}",
+        #     "PATH": f"/home/airflow/.local/share/mamba/envs/{env_name}/bin:/usr/bin:/bin:${{PATH}}",
+        #     "LD_LIBRARY_PATH": f"/home/airflow/.local/share/mamba/envs/{env_name}/lib:/lib/x86_64-linux-gnu:${{LD_LIBRARY_PATH}}",
+        # }
+        #
+        # compose_data["x-airflow-common"]["environment"].update(env_updates)
 
         with compose_path.open("w") as f:
             yaml.dump(compose_data, f)
+
+
+        entrypoint_path = (
+            self.gaiaflow_path / "docker" / "docker-compose" / "entrypoint.sh"
+        )
+        set_permissions(entrypoint_path)
+        # if entrypoint_path.exists():
+        #     with open(entrypoint_path, "r") as f:
+        #         entrypoint_lines = f.readlines()
+        #
+        #     updated_lines = []
+        #     for line in entrypoint_lines:
+        #         if "micromamba run -n" in line:
+        #             parts = line.split()
+        #             for i, p in enumerate(parts):
+        #                 if p == "-n" and i + 1 < len(parts):
+        #                     parts[i + 1] = env_name
+        #             line = " ".join(parts) + "\n"
+        #         updated_lines.append(line)
+        #
+        #     with open(entrypoint_path, "w") as f:
+        #         f.writelines(updated_lines)
+        #
+        #     print(
+        #         "[INFO] Updated micromamba env name in entrypoint.sh:"
+        #         f" {env_name}"
+        #     )
+        #     set_permissions(entrypoint_path)
+        #
+        # else:
+        #     print(f"[WARN] entrypoint.sh not found at {entrypoint_path}")
 
     def start(self):
         log_info("Starting Gaiaflow services")

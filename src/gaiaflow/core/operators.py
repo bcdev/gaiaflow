@@ -4,8 +4,7 @@ from datetime import datetime
 
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from airflow.providers.docker.operators.docker import DockerOperator
-from airflow.providers.standard.operators.python import PythonOperator, \
-    ExternalPythonOperator
+from airflow.providers.standard.operators.python import ExternalPythonOperator
 from kubernetes.client import V1ResourceRequirements
 
 from gaiaflow.constants import (
@@ -69,7 +68,7 @@ class DevTaskOperator(BaseTaskOperator):
 
         return ExternalPythonOperator(
             task_id=self.task_id,
-            python="/opt/airflow/.pixi/envs/default/bin/python",
+            python="/home/airflow/.local/share/mamba/envs/default_user_env/bin/python",
             python_callable=run,
             op_kwargs=op_kwargs,
             do_xcom_push=True,
