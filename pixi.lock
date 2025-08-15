@@ -2125,8 +2125,8 @@ packages:
   timestamp: 1741505873840
 - pypi: ./
   name: gaiaflow
-  version: 0.1.0
-  sha256: a442943590f591d2b77331b28d0735ed1f4624da43c8683fa3792b675941703a
+  version: 0.0.1.dev0
+  sha256: 8ddb5b1841ed8ea754df2a8c92fa6b4367469ecf67320e38b15c99132e82eda7
   requires_python: '>=3.11'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/gflags-2.2.2-h5888daf_1005.conda

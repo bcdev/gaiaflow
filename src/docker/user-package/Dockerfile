@@ -17,6 +17,7 @@ ENV PATH=/opt/conda/bin:$PATH
 #ENTRYPOINT ["python", "-m", "gaiaflow.core.runner"]
 # Optional: install local development version if mounted
 # If /app/gaiaflow exists (from a bind mount), pip install it; otherwise, rely on environment.yml
+# TODO: Needs fixing before releasing.
 ENTRYPOINT ["sh", "-c", "\
 if [ -d /app/gaiaflow ]; then \
     echo 'Installing local gaiaflow for development'; \

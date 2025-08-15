@@ -16,7 +16,8 @@ from gaiaflow.constants import (
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
-from gaiaflow.managers.utils import find_python_packages, log_error, log_info, run
+from gaiaflow.managers.utils import find_python_packages, log_error, log_info, run, \
+    set_permissions
 
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 
@@ -65,19 +66,19 @@ class MinikubeManager(BaseGaiaflowManager):
         MlopsManager(
             self.gaiaflow_path, self.user_project_path, action=BaseAction.STOP
         )
-        log_info(f"Checking Minikube cluster [{self.minikube_profile}] status...")
-        try:
-            result = subprocess.run(
-                ["minikube", "status", "--profile", self.minikube_profile],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                check=True,
+        log_info(f"Checking Minikube cluster [{self.minikube_profile}] "
+                 f"status...")
+        result = subprocess.run(
+            ["minikube", "status", "--profile", self.minikube_profile],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+        if b"Running" in result.stdout:
+            log_info(
+                f"Minikube cluster [{self.minikube_profile}] is already running."
             )
-            if b"Running" in result.stdout:
-                log_info(
-                    f"Minikube cluster [{self.minikube_profile}] is already running."
-                )
-        except subprocess.CalledProcessError:
+        else:
             log_info(
                 f"Minikube cluster [{self.minikube_profile}] is not running. Starting..."
             )
@@ -244,6 +245,8 @@ class MinikubeManager(BaseGaiaflowManager):
                 ],
                 "Error building docker image.",
             )
+            # TODO: For windows?
+            set_permissions("/var/run/docker.sock", 0o666)
         else:
             log_info(
                 f"Building Docker image [{self.docker_image_name}] in minikube context"
