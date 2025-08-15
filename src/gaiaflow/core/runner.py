@@ -118,6 +118,7 @@ def run(
 
         module_path, func_name = func_path.rsplit(":", 1)
     import importlib
+
     module = importlib.import_module(module_path)
     func = getattr(module, func_name)
 

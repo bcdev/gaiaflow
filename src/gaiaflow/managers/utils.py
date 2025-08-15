@@ -59,6 +59,7 @@ def handle_error(message: str):
 def get_state_file() -> Path:
     return GAIAFLOW_STATE_FILE
 
+
 def save_project_state(project_path: Path, gaiaflow_path: Path):
     state_file = get_state_file()
     try:
@@ -68,7 +69,7 @@ def save_project_state(project_path: Path, gaiaflow_path: Path):
         else:
             state = {}
     except (json.JSONDecodeError, FileNotFoundError):
-         state = {}
+        state = {}
 
     project_path_str = str(project_path)
     gaiaflow_path_str = str(gaiaflow_path)
@@ -163,6 +164,7 @@ def create_directory(dir_name):
         log_info(f"Directory {dir_name} already exists")
 
     set_permissions(dir_name)
+
 
 def set_permissions(path, mode=0o777):
     try:

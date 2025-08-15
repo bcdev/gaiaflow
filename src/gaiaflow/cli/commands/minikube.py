@@ -7,6 +7,7 @@ import typer
 app = typer.Typer()
 fs = fsspec.filesystem("file")
 
+
 def load_imports():
     from gaiaflow.constants import BaseAction
     from gaiaflow.managers.minikube_manager import ExtendedAction, MinikubeManager
@@ -39,7 +40,9 @@ def start(
 ):
     """"""
     imports = load_imports()
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -57,7 +60,9 @@ def stop(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
     imports = load_imports()
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -81,7 +86,9 @@ def restart(
     ),
 ):
     imports = load_imports()
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -105,7 +112,9 @@ def dockerize(
     ),
 ):
     imports = load_imports()
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -126,7 +135,9 @@ def create_config(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
     imports = load_imports()
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -149,7 +160,9 @@ def create_secret(
     imports = load_imports()
     secret_data = imports.parse_key_value_pairs(data)
     print(secret_data, name)
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")

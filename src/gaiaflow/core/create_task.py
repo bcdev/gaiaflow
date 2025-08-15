@@ -7,16 +7,16 @@
 # from kubernetes.client import V1EnvFromSource, V1SecretReference
 #
 #
-# class Environment(Enum):
+# class GaiaflowMode(Enum):
 #     DEV = "dev"
 #     PROD_LOCAL = "prod_local"
 #     PROD = "prod"
 #
 #
 # # TASK_REGISTRY = {
-# #     Environment.DEV: _create_python_task,
-# #     Environment.PROD: _create_kubernetes_task,
-# #     Environment.PROD_LOCAL: _create_kubernetes_task,
+# #     GaiaflowMode.DEV: _create_python_task,
+# #     GaiaflowMode.PROD: _create_kubernetes_task,
+# #     GaiaflowMode.PROD_LOCAL: _create_kubernetes_task,
 # # }
 #
 #
@@ -56,19 +56,19 @@
 #         func_args: Static positional arguments to pass to the function
 #         func_kwargs: Static keyword arguments to pass to the function
 #         image: Docker image for production and prod-like environments
-#         env: Environment to run in ('dev', 'prod_local', 'prod')
+#         env: GaiaflowMode to run in ('dev', 'prod_local', 'prod')
 #         func_kwargs_from_tasks: Dynamic keyword arguments from other tasks via XCom
 #         secrets: List of Kubernetes secrets to mount
-#         env_vars: Environment variables for the task for production and prod-like environments
+#         env_vars: GaiaflowMode variables for the task for production and prod-like environments
 #         retries: Number of retries on failure
 #         func_args_from_tasks:
 #     """
 #
 #     try:
-#         environment = Environment(env)
+#         environment = GaiaflowMode(env)
 #     except ValueError:
 #         raise ValueError(
-#             f"env must be one of {[e.value for e in Environment]}, got '{env}'"
+#             f"env must be one of {[e.value for e in GaiaflowMode]}, got '{env}'"
 #         )
 #
 #     if func_kwargs is None:
@@ -105,7 +105,7 @@
 #     #     }
 #
 #
-#     if environment == Environment.DEV:
+#     if environment == GaiaflowMode.DEV:
 #         return _create_python_task(
 #             task_id=task_id,
 #             func_path=func_path,
@@ -118,7 +118,7 @@
 #             params=combined_params,
 #         )
 #
-#     elif environment in [Environment.PROD, Environment.PROD_LOCAL]:
+#     elif environment in [GaiaflowMode.PROD, GaiaflowMode.PROD_LOCAL]:
 #         if not image:
 #             raise ValueError(f"Docker image is required for {env} environment")
 #
@@ -134,7 +134,7 @@
 #             env_vars=env_vars,
 #             xcom_push=True,
 #             retries=retries,
-#             in_cluster=(environment == Environment.PROD),
+#             in_cluster=(environment == GaiaflowMode.PROD),
 #             params=combined_params
 #         )
 #
@@ -312,7 +312,7 @@ from .operators import (
 from .utils import XComConfig
 
 
-class Environment(Enum):
+class GaiaflowMode(Enum):
     DEV = "dev"
     PROD_LOCAL = "prod_local"
     PROD = "prod"
@@ -320,38 +320,41 @@ class Environment(Enum):
 
 
 OPERATOR_MAP = {
-    Environment.DEV: DevTaskOperator,
-    Environment.PROD: ProdLocalTaskOperator,
-    Environment.PROD_LOCAL: ProdTaskOperator,
-    Environment.DEV_DOCKER: DockerTaskOperator,
+    GaiaflowMode.DEV: DevTaskOperator,
+    GaiaflowMode.PROD: ProdLocalTaskOperator,
+    GaiaflowMode.PROD_LOCAL: ProdTaskOperator,
+    GaiaflowMode.DEV_DOCKER: DockerTaskOperator,
 }
+
 
 # TODO: Use kwargs and args as a tuple to reduce verbosity
 def create_task(
     task_id: str,
     func_path: str,
-    func_kwargs: dict = None,
-    func_args: list = None,
-    image: str = None,
+    func_kwargs: dict | None = None,
+    func_args: list | None = None,
+    image: str | None = None,
     env: str = "dev",
-    func_args_from_tasks: dict = None,
-    func_kwargs_from_tasks: dict = None,
-    secrets: list = None,
-    env_vars: dict = None,
+    func_args_from_tasks: dict | None = None,
+    func_kwargs_from_tasks: dict | None = None,
+    secrets: list | None = None,
+    env_vars: dict | None = None,
     retries: int = 3,
     dag=None,
     params=None,
 ):
     try:
-        environment = Environment(env)
+        environment = GaiaflowMode(env)
     except ValueError:
         raise ValueError(
-            f"env must be one of {[e.value for e in Environment]}, got '{env}'"
+            f"env must be one of {[e.value for e in GaiaflowMode]}, got '{env}'"
         )
 
     func_args = func_args or []
     func_kwargs = func_kwargs or {}
-    env_vars = env_vars or {}
+    if env_vars is None:
+        env_vars = {}
+    # env_vars = env_vars or {}
     func_args_from_tasks = func_args_from_tasks or {}
     func_kwargs_from_tasks = func_kwargs_from_tasks or {}
 

@@ -2,7 +2,7 @@ from importlib.metadata import version
 
 import typer
 
-from gaiaflow.cli.commands import mlops, minikube
+from gaiaflow.cli.commands import minikube, mlops
 
 pkg_version = version("gaiaflow")
 

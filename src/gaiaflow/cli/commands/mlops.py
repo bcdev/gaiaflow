@@ -1,6 +1,6 @@
 from pathlib import Path
-from typing import List
 from types import SimpleNamespace
+from typing import List
 
 import fsspec
 import typer
@@ -9,6 +9,7 @@ from gaiaflow.constants import Service
 
 app = typer.Typer()
 fs = fsspec.filesystem("file")
+
 
 def load_imports():
     from gaiaflow.constants import BaseAction
@@ -26,6 +27,7 @@ def load_imports():
         gaiaflow_path_exists_in_state=gaiaflow_path_exists_in_state,
         save_project_state=save_project_state,
     )
+
 
 @app.command(help="Start Gaiaflow development services")
 def start(
@@ -58,7 +60,9 @@ def start(
 ):
     imports = load_imports()
     typer.echo(f"Selected Gaiaflow services: {service}")
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         imports.save_project_state(user_project_path, gaiaflow_path)
@@ -112,7 +116,9 @@ def stop(
 ):
     """"""
     imports = load_imports()
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -168,7 +174,9 @@ def restart(
 ):
     """"""
     imports = load_imports()
-    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(project_path)
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
@@ -214,7 +222,8 @@ def cleanup(
 ):
     imports = load_imports()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
-        project_path)
+        project_path
+    )
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")

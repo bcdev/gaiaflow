@@ -12,10 +12,12 @@ class BaseAction(str, Enum):
     RESTART = "restart"
     CLEANUP = "cleanup"
 
+
 class ExtendedAction(str, Enum):
     DOCKERIZE = "dockerize"
     CREATE_CONFIG = "create_config"
     CREATE_SECRET = "create_secret"
+
 
 class Service(str, Enum):
     airflow = "airflow"
@@ -23,6 +25,7 @@ class Service(str, Enum):
     minio = "minio"
     jupyter = "jupyter"
     all = "all"
+
 
 AIRFLOW_SERVICES = [
     "airflow-apiserver",

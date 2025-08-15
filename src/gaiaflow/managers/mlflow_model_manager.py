@@ -1,8 +1,6 @@
 import os
 import subprocess
 import uuid
-from contextlib import contextmanager
-from typing import Generator, Callable
 
 import mlflow
 
@@ -80,8 +78,6 @@ class MlflowModelManager(BaseGaiaflowManager):
     #     with set_env_cm(environment):
     #         if action == BaseAction.START:
     #             manag.start()
-
-
 
     def start(self, **kwargs):
         print("kwargs inside start, **kwargs", kwargs)
@@ -172,6 +168,7 @@ class MlflowModelManager(BaseGaiaflowManager):
         subprocess.run(["kubectl", "apply", "-f", k8s_yaml_path], check=True)
         print("Deployment applied.")
 
+
 #
 # @contextmanager
 # def set_env_cm(**new_env: str | None) -> Generator[dict[str, str | None]]:
@@ -204,5 +201,3 @@ class MlflowModelManager(BaseGaiaflowManager):
 #             del os.environ[kn]
 #
 #     return restore_env
-
-

@@ -218,14 +218,14 @@ class MlopsManager(BaseGaiaflowManager):
         with open(compose_path) as f:
             compose_data = yaml.load(f)
 
-        env_file = self.gaiaflow_path / "environment.yml"
-
-        def get_env_name_from_yml(env_file: Path) -> str:
-            with open(env_file, "r") as f:
-                env_yaml = yaml.load(f)
-            return env_yaml.get("name")
-
-        env_name = get_env_name_from_yml(env_file)
+        # env_file = self.gaiaflow_path / "environment.yml"
+        #
+        # def get_env_name_from_yml(env_file: Path) -> str:
+        #     with open(env_file, "r") as f:
+        #         env_yaml = yaml.load(f)
+        #     return env_yaml.get("name")
+        #
+        # env_name = get_env_name_from_yml(env_file)
 
         x_common = compose_data.get("x-airflow-common", {})
         original_vols = x_common.get("volumes", [])
@@ -240,6 +240,9 @@ class MlopsManager(BaseGaiaflowManager):
 
         existing_mounts = {Path(v.split(":", 1)[0]).name for v in new_volumes}
         python_packages = find_python_packages(self.user_project_path)
+
+        for python_package in python_packages:
+            set_permissions(python_package, 0o755)
 
         for child in self.user_project_path.iterdir():
             if (
@@ -277,7 +280,6 @@ class MlopsManager(BaseGaiaflowManager):
 
         with compose_path.open("w") as f:
             yaml.dump(compose_data, f)
-
 
         entrypoint_path = (
             self.gaiaflow_path / "docker" / "docker-compose" / "entrypoint.sh"

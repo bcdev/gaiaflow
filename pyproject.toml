@@ -9,6 +9,9 @@ version = "0.0.1.dev0"
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
+[tool.mypy]
+python_version = "3.12"
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
