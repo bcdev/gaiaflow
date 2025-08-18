@@ -196,7 +196,8 @@ def restart(
             )
     else:
         typer.echo("Stopping all services")
-        imports.MlopsManager.run(Path(gaiaflow_path),
+        imports.MlopsManager.run(
+            Path(gaiaflow_path),
             Path(user_project_path),
             force_new=force_new,
             action=imports.BaseAction.RESTART,
@@ -204,7 +205,8 @@ def restart(
             jupyter_port=jupyter_port,
             delete_volume=delete_volume,
             docker_build=docker_build,
-            service=Service.all,)
+            service=Service.all,
+        )
 
 
 @app.command(

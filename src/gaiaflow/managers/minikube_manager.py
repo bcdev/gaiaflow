@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Set
 
 import yaml
 
@@ -12,6 +12,7 @@ from gaiaflow.constants import (
     AIRFLOW_SERVICES,
     MINIO_SERVICES,
     MLFLOW_SERVICES,
+    Action,
     BaseAction,
     ExtendedAction,
 )
@@ -28,8 +29,6 @@ from gaiaflow.managers.utils import (
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 
 
-MinikubeActions = Union[BaseAction, ExtendedAction]
-
 @contextmanager
 def temporary_copy(src: Path, dest: Path):
     print("copying...", src, dest)
@@ -40,18 +39,17 @@ def temporary_copy(src: Path, dest: Path):
         if dest.exists():
             dest.unlink()
 
+
 class MinikubeManager(BaseGaiaflowManager):
     def __init__(
         self,
         gaiaflow_path: Path,
         user_project_path: Path,
-        action: MinikubeActions,
+        action: Action,
         force_new: bool = False,
-        secret_data: dict = None,
-        secret_name: str = "",
         prune: bool = False,
         local: bool = False,
-        **kwargs
+        **kwargs,
     ):
         if kwargs:
             raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
@@ -68,6 +66,17 @@ class MinikubeManager(BaseGaiaflowManager):
             force_new=force_new,
             prune=prune,
         )
+
+    def _get_valid_actions(self) -> Set[Action]:
+        return {
+            BaseAction.START,
+            BaseAction.STOP,
+            BaseAction.RESTART,
+            BaseAction.CLEANUP,
+            ExtendedAction.DOCKERIZE,
+            ExtendedAction.CREATE_CONFIG,
+            ExtendedAction.CREATE_SECRET,
+        }
 
     @classmethod
     def run(cls, **kwargs):
@@ -227,6 +236,9 @@ class MinikubeManager(BaseGaiaflowManager):
             None,
         )
 
+        if env_index is None:
+            raise ValueError("No ENV found in Dockerfile.")
+
         entrypoint_index = next(
             (
                 i
@@ -238,7 +250,6 @@ class MinikubeManager(BaseGaiaflowManager):
 
         if entrypoint_index is None:
             raise ValueError("No ENTRYPOINT found in Dockerfile.")
-
 
         copy_lines = [f"COPY {pkg} ./{pkg}\n" for pkg in local_packages]
         copy_lines.append("COPY runner.py ./runner.py\n")

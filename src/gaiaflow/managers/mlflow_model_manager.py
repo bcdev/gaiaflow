@@ -8,6 +8,7 @@ import docker
 from gaiaflow.constants import (
     DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
     DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
+    DEFAULT_MLFLOW_TRACKING_URI,
     BaseAction,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
@@ -42,7 +43,10 @@ class MlflowModelManager(BaseGaiaflowManager):
             os.getenv("AWS_SECRET_ACCESS_KEY") or DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY
         )
 
-        mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
+        mlflow_tracking_uri = (
+            os.getenv("MLFLOW_TRACKING_URI") or DEFAULT_MLFLOW_TRACKING_URI
+        )
+        mlflow.set_tracking_uri(mlflow_tracking_uri)
 
         # This Manager does not need the paths. But it expects that either
         # the model exists in S3 if s3_uri is used or a live instance of MLFlow

@@ -21,7 +21,7 @@ def _extract_params_from_env(prefix="PARAMS_") -> dict[str, str]:
 def run(
     func_path: str | None = None,
     args: list | None = None,
-    kwargs: dict[str, str] | None = None,
+    kwargs: dict[str, Any] | None = None,
 ) -> dict[str, str]:
     mode = os.environ.get("MODE", "dev")
     print(f"## Runner running in {mode} mode ##")
@@ -30,12 +30,15 @@ def run(
         print("kwargs", kwargs)
     else:
         func_path = os.environ.get("FUNC_PATH", "")
-        args = json.loads(os.environ.get("FUNC_ARGS", "{}"))
+        args = json.loads(os.environ.get("FUNC_ARGS", "[]"))
         kwargs = json.loads(os.environ.get("FUNC_KWARGS", "{}"))
-        params = _extract_params_from_env()
+        params: dict = _extract_params_from_env()
         kwargs["params"] = params
         print("args", args)
         print("kwargs", kwargs)
+
+    if not func_path:
+        raise ValueError("func_path must be provided")
 
     module_path, func_name = func_path.rsplit(":", 1)
     import importlib
@@ -46,7 +49,7 @@ def run(
     print(f"Running {func_path} with args: {args} and kwargs :{kwargs}")
     result = func(*args, **kwargs)
     print("Function result:", result)
-    if (mode == "prod" or mode == "prod_local_minikube"):
+    if mode == "prod" or mode == "prod_local_minikube":
         # This is needed when we use KubernetesPodOperator and want to
         # share information via XCOM.
         _write_xcom_result(result)

@@ -13,10 +13,8 @@ from gaiaflow.constants import (
     RESOURCE_PROFILES,
 )
 
-from .utils import (
-    build_env_from_secrets,
-    inject_params_as_env_vars,
-)
+from .utils import build_env_from_secrets, inject_params_as_env_vars
+
 
 class FromTask:
     def __init__(self, task: str, key: str = "return_value"):
@@ -25,6 +23,7 @@ class FromTask:
 
     def to_dict(self) -> dict:
         return {"task": self.task, "key": self.key}
+
 
 def split_args_kwargs(func_args=None, func_kwargs=None):
     func_args = func_args or []
@@ -56,8 +55,8 @@ class BaseTaskOperator:
         func_path: str,
         func_args: list,
         func_kwargs: dict,
-        image: str,
-        secrets: list[str],
+        image: str | None,
+        secrets: list[str] | None,
         env_vars: dict,
         retries: int,
         params: dict,
@@ -182,7 +181,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             **inject_params_as_env_vars(self.params),
             **mlflow_env_vars,
             **minio_env_vars,
-            **self.create_func_env_vars()
+            **self.create_func_env_vars(),
         }
         env_from = build_env_from_secrets(self.secrets or [])
 
@@ -218,6 +217,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             params=self.params,
             container_resources=resources,
         )
+
 
 class ProdTaskOperator(ProdLocalTaskOperator):
     """"""

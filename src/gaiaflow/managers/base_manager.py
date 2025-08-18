@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Set
 
-from gaiaflow.constants import BaseAction
+from gaiaflow.constants import Action, BaseAction
 
 
 class BaseGaiaflowManager(ABC):
@@ -9,10 +10,9 @@ class BaseGaiaflowManager(ABC):
         self,
         gaiaflow_path: Path,
         user_project_path: Path,
-        action: BaseAction,
+        action: Action,
         force_new: bool = False,
         prune: bool = False,
-        **kwargs,
     ):
         self.gaiaflow_path = gaiaflow_path
         self.user_project_path = user_project_path
@@ -20,23 +20,8 @@ class BaseGaiaflowManager(ABC):
         self.force_new = force_new
         self.prune = prune
 
-        # TODO: Move this into a classmethod run() which inits this Class and
-        #  calls the action
-        if self.action == BaseAction.STOP:
-            self.stop(**kwargs)
-
-        if self.action == BaseAction.RESTART:
-            self.restart(**kwargs)
-
-        if self.action == BaseAction.START:
-            self.start(**kwargs)
-
-        if self.action == BaseAction.CLEANUP:
-            self.stop(**kwargs)
-            self.cleanup(**kwargs)
-
     @abstractmethod
-    def start(self, **kwargs):
+    def start(self):
         """Start the services provided by the manager.
 
         It can use the `force_new` variable to start a fresh set of services
@@ -44,18 +29,26 @@ class BaseGaiaflowManager(ABC):
         """
 
     @abstractmethod
-    def stop(self, **kwargs):
+    def stop(self):
         """Stop the services provided by the manager."""
 
-    def restart(self, **kwargs):
+    def restart(self):
         """Restart the services provided by the manager."""
-        self.stop(**kwargs)
-        self.start(**kwargs)
+        self.stop()
+        self.start()
 
     @abstractmethod
-    def cleanup(self, **kwargs):
+    def cleanup(self):
         """Cleanup the services provided by the manager.
 
         It can use the `prune` flag to permanently delete the services
         provided by the manager.
         """
+
+    def _get_valid_actions(self) -> Set[Action]:
+        return {
+            BaseAction.START,
+            BaseAction.STOP,
+            BaseAction.RESTART,
+            BaseAction.CLEANUP,
+        }

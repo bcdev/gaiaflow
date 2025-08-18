@@ -101,6 +101,7 @@ def load_project_state() -> dict | None:
     except (json.JSONDecodeError, FileNotFoundError):
         return None
 
+
 def check_structure(base_path: Path, structure: dict) -> bool:
     for name, sub in structure.items():
         if name == "_files_":
@@ -129,16 +130,19 @@ def check_structure(base_path: Path, structure: dict) -> bool:
             raise TypeError("Structure values must be dict or list")
     return True
 
+
 def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) -> bool:
     REQUIRED_STRUCTURE = {
         "docker": {
-            "docker-compose": ["docker-compose.yml",
-                               "docker-compose-minikube-network.yml",
-                               "entrypoint.sh"],
+            "docker-compose": [
+                "docker-compose.yml",
+                "docker-compose-minikube-network.yml",
+                "entrypoint.sh",
+            ],
             "airflow": ["Dockerfile"],
             "mlflow": ["Dockerfile", "requirements.txt"],
             "user-package": ["Dockerfile"],
-            "_files_": ["kube_config_inline"]
+            "_files_": ["kube_config_inline"],
         }
     }
     state = load_project_state()
@@ -229,5 +233,6 @@ def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
 
 
 if __name__ == "__main__":
-    print(gaiaflow_path_exists_in_state(Path(
-        "/tmp/gaiaflow-0.0.1.dev0-tech_talk_demo")))
+    print(
+        gaiaflow_path_exists_in_state(Path("/tmp/gaiaflow-0.0.1.dev0-tech_talk_demo"))
+    )

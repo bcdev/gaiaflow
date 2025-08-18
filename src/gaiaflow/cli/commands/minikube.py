@@ -185,9 +185,9 @@ def cleanup(
 ):
     imports = load_imports()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
-        project_path)
-    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(
-        gaiaflow_path, True)
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return

@@ -15,6 +15,7 @@ from gaiaflow.constants import (
     GAIAFLOW_STATE_FILE,
     MINIO_SERVICES,
     MLFLOW_SERVICES,
+    Action,
     BaseAction,
     Service,
 )
@@ -57,8 +58,8 @@ class MlopsManager(BaseGaiaflowManager):
         self,
         gaiaflow_path: Path,
         user_project_path: Path,
-        action: BaseAction,
-        service: Service = None,
+        action: Action,
+        service: Service = Service.all,
         cache: bool = False,
         jupyter_port: int = 8895,
         delete_volume: bool = False,
@@ -66,7 +67,7 @@ class MlopsManager(BaseGaiaflowManager):
         force_new: bool = False,
         prune: bool = False,
         prod_local: bool = False,
-        **kwargs
+        **kwargs,
     ):
         if kwargs:
             raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
@@ -234,8 +235,6 @@ class MlopsManager(BaseGaiaflowManager):
 
         log_info(f"Running: {' '.join(cmd)}")
         run(cmd, f"Error running docker compose {actions}")
-
-
 
     def _start_jupyter(self):
         log_info("Starting Jupyter Lab...")

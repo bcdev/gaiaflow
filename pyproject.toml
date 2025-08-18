@@ -28,7 +28,7 @@ ruff = "*"
 test = "pytest tests"
 format = "isort src/gaiaflow && ruff format src/gaiaflow"
 check = "ruff check src/gaiaflow --fix"
-typecheck = "mypy src/gaiaflow"
+typecheck = "PYTHONPATH=./src mypy -p gaiaflow"
 
 [tool.pixi.dependencies]
 typer = ">=0.16.0,<0.17"
@@ -58,3 +58,17 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "psutil.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "yaml.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "docker.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["gaiaflow.*"]
+follow_untyped_imports = true
+ignore_missing_imports = true
+

@@ -325,7 +325,7 @@ OPERATOR_MAP = {
     GaiaflowMode.PROD: ProdTaskOperator,
 }
 
-# TODO: Use kwargs and args as a tuple to reduce verbosity
+
 def create_task(
     task_id: str,
     func_path: str,
@@ -340,7 +340,7 @@ def create_task(
     params=None,
 ):
     try:
-        mode = GaiaflowMode(mode)
+        gaiaflow_mode: GaiaflowMode = GaiaflowMode(mode)
     except ValueError:
         raise ValueError(
             f"env must be one of {[e.value for e in GaiaflowMode]}, got '{mode}'"
@@ -354,9 +354,9 @@ def create_task(
     dag_params = getattr(dag, "params", {}) if dag else {}
     combined_params = {**dag_params, **(params or {})}
 
-    operator_cls = OPERATOR_MAP.get(mode)
+    operator_cls = OPERATOR_MAP.get(gaiaflow_mode)
     if not operator_cls:
-        raise ValueError(f"No task creation operator defined for {mode}")
+        raise ValueError(f"No task creation operator defined for {gaiaflow_mode}")
 
     operator = operator_cls(
         task_id=task_id,

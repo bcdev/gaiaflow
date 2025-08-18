@@ -1,22 +1,29 @@
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+
+
+@dataclass(frozen=True)
+class Action:
+    name: str
+
+
+class BaseAction:
+    START = Action("start")
+    STOP = Action("stop")
+    RESTART = Action("restart")
+    CLEANUP = Action("cleanup")
+
+
+class ExtendedAction:
+    DOCKERIZE = Action("dockerize")
+    CREATE_CONFIG = Action("create_config")
+    CREATE_SECRET = Action("create_secret")
+
 
 GAIAFLOW_CONFIG_DIR = Path.home() / ".gaiaflow"
 GAIAFLOW_CONFIG_DIR.mkdir(exist_ok=True)
 GAIAFLOW_STATE_FILE = GAIAFLOW_CONFIG_DIR / "state.json"
-
-
-class BaseAction(str, Enum):
-    START = "start"
-    STOP = "stop"
-    RESTART = "restart"
-    CLEANUP = "cleanup"
-
-
-class ExtendedAction(str, Enum):
-    DOCKERIZE = "dockerize"
-    CREATE_CONFIG = "create_config"
-    CREATE_SECRET = "create_secret"
 
 
 class Service(str, Enum):
@@ -42,6 +49,7 @@ MINIO_SERVICES = ["minio", "minio_client"]
 
 DEFAULT_MINIO_AWS_ACCESS_KEY_ID = "minio"
 DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY = "minio123"
+DEFAULT_MLFLOW_TRACKING_URI = "http://localhost:5000"
 
 # TODO: Talk with Tejas/Norman (currently contains random values)
 RESOURCE_PROFILES = {
