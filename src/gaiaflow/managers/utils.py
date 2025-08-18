@@ -47,7 +47,7 @@ def run(command: list, error_message: str, env=None):
     try:
         subprocess.call(command, env=env)
     except Exception:
-        log_info(error_message)
+        log_error(error_message)
         raise
 
 

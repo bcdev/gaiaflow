@@ -31,22 +31,22 @@ def inject_params_as_env_vars(params: dict) -> dict:
 
 
 def build_env_vars(
-    func_path: str,
-    func_args: list,
-    func_kwargs: dict,
-    func_args_from_tasks: dict,
-    func_kwargs_from_tasks: dict,
+    # func_path: str,
+    # func_args: list,
+    # func_kwargs: dict,
+    # func_args_from_tasks: dict,
+    # func_kwargs_from_tasks: dict,
     xcom_args_pull_results: dict,
     xcom_kwargs_pull_results: dict,
     custom_env_vars: dict,
     env: str,
 ) -> dict:
     default_env = {
-        "FUNC_PATH": func_path,
-        "FUNC_ARGS": json.dumps(func_args),
-        "FUNC_KWARGS": json.dumps(func_kwargs),
-        "XCOM_PULL_ARGS": json.dumps(func_args_from_tasks),
-        "XCOM_PULL_KWARGS": json.dumps(func_kwargs_from_tasks),
+        # "FUNC_PATH": func_path,
+        # "FUNC_ARGS": json.dumps(func_args),
+        # "FUNC_KWARGS": json.dumps(func_kwargs),
+        # "XCOM_PULL_ARGS": json.dumps(func_args_from_tasks),
+        # "XCOM_PULL_KWARGS": json.dumps(func_kwargs_from_tasks),
         "XCOM_PULL_ARGS_RESULTS": json.dumps(xcom_args_pull_results),
         "XCOM_PULL_KWARGS_RESULTS": json.dumps(xcom_kwargs_pull_results),
         "ENV": env,

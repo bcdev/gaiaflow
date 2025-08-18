@@ -4,14 +4,14 @@
 # It imports the required function from your package and executes it with the
 # arguments provided
 
-import ast
+# import ast
 import json
 import os
 import pickle
 from typing import Any
 
-from airflow.models.taskinstance import TaskInstance
-from airflow.utils.context import Context
+# from airflow.models.taskinstance import TaskInstance
+# from airflow.utils.context import Context
 
 
 def _extract_params_from_env(prefix="PARAMS_") -> dict[str, str]:
@@ -26,97 +26,112 @@ def run(
     func_path: str | None = None,
     args: list | None = None,
     kwargs: dict[str, str] | None = None,
-    xcom_pull_kwargs: dict | None = None,
-    xcom_pull_args: dict | None = None,
-    **context: Context,
+    # xcom_pull_kwargs: dict | None = None,
+    # xcom_pull_args: dict | None = None,
+#     ti: dict | None = None,
+# dag_id = None, task_id = None, run_id = None,
+#     **context: Context,
 ) -> dict[str, str]:
     env = os.environ.get("ENV", "dev")
     print(f"## Runner running in {env} mode ##")
-
+    # from airflow.providers.standard.operators.python import get_current_context
+    # context = get_current_context()
+    # ti = context["ti"]
     if env == "dev":
         print("args", args)
         print("kwargs", kwargs)
-        print("xcom_pull_args", xcom_pull_args)
-        print("xcom_pull_kwargs", xcom_pull_kwargs)
-        kwargs["params"] = context.get("params", {})
-        ti: TaskInstance = context.get("ti")
-        if ti and xcom_pull_kwargs:
-            for arg_key, pull_config in xcom_pull_kwargs.items():
-                source_task = pull_config["task"]
-                key = pull_config.get("key", "return_value")
-                pulled_val = ti.xcom_pull(task_ids=source_task, key=key)
-                kwargs[arg_key] = (
-                    pulled_val
-                    if not isinstance(pulled_val, dict)
-                    else pulled_val.get(arg_key)
-                )
-        print(f"[XCom] [dev] Pulled kwargs {kwargs}")
-        if ti and xcom_pull_args:
-            for index_str, pull_config in sorted(
-                xcom_pull_args.items(), key=lambda x: int(x[0])
-            ):
-                index = int(index_str)
-                source_task = pull_config["task"]
-                pulled_val = ti.xcom_pull(task_ids=source_task, key="return_value").get(
-                    pull_config["key"]
-                )
-                if len(args) <= index:
-                    args.extend([None] * (index - len(args)))
-                args.insert(index, pulled_val)
-        print(f"[XCom] Pulled args: {args}")
+        # print("xcom_pull_args", xcom_pull_args)
+        # print("xcom_pull_kwargs", xcom_pull_kwargs)
+        # kwargs["params"] = context.get("params", {})
+        # ti: TaskInstance = context.get("ti") or ti
+        # print("context:::", context)
+        # ti=context[run_id].get_task_instance(task_id)
+        # ti = session.query(TaskInstance).filter_by(
+        #     dag_id=dag_id,
+        #     task_id=task_id,
+        #     run_id=run_id
+        # ).one()
+        # print("ti", ti)
+        # if ti and xcom_pull_kwargs:
+        #     for arg_key, pull_config in xcom_pull_kwargs.items():
+        #         source_task = pull_config["task"]
+        #         # key = pull_config.get("key", "return_value")
+        #         key = "return_value"
+        #         pulled_val = ti.xcom_pull(task_ids=source_task, key=key)
+        #         print("pulled val kwargs::", pulled_val)
+        #         kwargs[arg_key] = (
+        #             pulled_val
+        #             if not isinstance(pulled_val, dict)
+        #             else pulled_val.get(arg_key)
+        #         )
+        # print(f"[XCom] [dev] Pulled kwargs {kwargs}")
+        # if ti and xcom_pull_args:
+        #     for index_str, pull_config in sorted(
+        #         xcom_pull_args.items(), key=lambda x: int(x[0])
+        #     ):
+        #         index = int(index_str)
+        #         source_task = pull_config["task"]
+        #         pulled_val = ti.xcom_pull(task_ids=source_task, key="return_value").get(
+        #             pull_config["key"]
+        #         )
+        #         print("puled val args", pulled_val)
+        #         if len(args) <= index:
+        #             args.extend([None] * (index - len(args)))
+        #         args.insert(index, pulled_val)
+        # print(f"[XCom] [dev] Pulled args: {args}")
     else:
         func_path = os.environ.get("FUNC_PATH", "")
         args = json.loads(os.environ.get("FUNC_ARGS", "{}"))
         kwargs = json.loads(os.environ.get("FUNC_KWARGS", "{}"))
-        xcom_pull_args = json.loads(os.environ.get("XCOM_PULL_ARGS", "{}"))
-        xcom_pull_kwargs = json.loads(os.environ.get("XCOM_PULL_KWARGS", "{}"))
-        xcom_pull_args_results = json.loads(
-            os.environ.get("XCOM_PULL_ARGS_RESULTS", "{}")
-        )
-        xcom_pull_kwargs_results = json.loads(
-            os.environ.get("XCOM_PULL_KWARGS_RESULTS", "{}")
-        )
+        # xcom_pull_args = json.loads(os.environ.get("XCOM_PULL_ARGS", "{}"))
+        # xcom_pull_kwargs = json.loads(os.environ.get("XCOM_PULL_KWARGS", "{}"))
+        # xcom_pull_args_results = json.loads(
+        #     os.environ.get("XCOM_PULL_ARGS_RESULTS", "{}")
+        # )
+        # xcom_pull_kwargs_results = json.loads(
+        #     os.environ.get("XCOM_PULL_KWARGS_RESULTS", "{}")
+        # )
         print("args", args)
         print("kwargs", kwargs)
-        print("xcom_pull_args", xcom_pull_args)
-        print("xcom_pull_kwargs", xcom_pull_kwargs)
-        print(f"[XCom] [prod] Pulled args from env: {xcom_pull_args_results}")
-        print(f"[XCom] [prod] Pulled kwargs from env: {xcom_pull_kwargs_results}")
+        # print("xcom_pull_args", xcom_pull_args)
+        # print("xcom_pull_kwargs", xcom_pull_kwargs)
+        # print(f"[XCom] [prod] Pulled args from env: {xcom_pull_args_results}")
+        # print(f"[XCom] [prod] Pulled kwargs from env: {xcom_pull_kwargs_results}")
         params = _extract_params_from_env()
         kwargs["params"] = params
         print("Params passed in kwargs['params']", kwargs["params"])
 
-        if xcom_pull_args:
-            for index_str, pull_config in sorted(
-                xcom_pull_args.items(), key=lambda x: int(x[0])
-            ):
-                index = int(index_str)
-                task_name = pull_config["task"]
-                pulled_val = xcom_pull_args_results.get(task_name, {})
-                if pulled_val:
-                    try:
-                        pulled_val = ast.literal_eval(pulled_val)
-                        args.insert(index, pulled_val.get(pull_config["key"]))
-                        print("Pulled val in args::", pulled_val)
-                    except Exception as e:
-                        print(
-                            f"[XCom] [prod] Failed to parse XCOM for {index_str}: {e}"
-                        )
+        # if xcom_pull_args:
+        #     for index_str, pull_config in sorted(
+        #         xcom_pull_args.items(), key=lambda x: int(x[0])
+        #     ):
+        #         index = int(index_str)
+        #         task_name = pull_config["task"]
+        #         pulled_val = xcom_pull_args_results.get(task_name, {})
+        #         if pulled_val:
+        #             try:
+        #                 pulled_val = ast.literal_eval(pulled_val)
+        #                 args.insert(index, pulled_val.get(pull_config["key"]))
+        #                 print("Pulled val in args::", pulled_val)
+        #             except Exception as e:
+        #                 print(
+        #                     f"[XCom] [prod] Failed to parse XCOM for {index_str}: {e}"
+        #                 )
+        #
+        # if xcom_pull_kwargs:
+        #     for arg_key, pull_config in xcom_pull_kwargs.items():
+        #         pulled_val = xcom_pull_kwargs_results.get(pull_config["task"])
+        #         if pulled_val:
+        #             try:
+        #                 pulled_val = ast.literal_eval(pulled_val)
+        #                 if isinstance(pulled_val, dict):
+        #                     kwargs[arg_key] = pulled_val.get(arg_key)
+        #                 else:
+        #                     kwargs[arg_key] = pulled_val
+        #             except Exception as e:
+        #                 print(f"[XCom] [prod] Failed to parse XCOM for {arg_key}: {e}")
 
-        if xcom_pull_kwargs:
-            for arg_key, pull_config in xcom_pull_kwargs.items():
-                pulled_val = xcom_pull_kwargs_results.get(pull_config["task"])
-                if pulled_val:
-                    try:
-                        pulled_val = ast.literal_eval(pulled_val)
-                        if isinstance(pulled_val, dict):
-                            kwargs[arg_key] = pulled_val.get(arg_key)
-                        else:
-                            kwargs[arg_key] = pulled_val
-                    except Exception as e:
-                        print(f"[XCom] [prod] Failed to parse XCOM for {arg_key}: {e}")
-
-        module_path, func_name = func_path.rsplit(":", 1)
+    module_path, func_name = func_path.rsplit(":", 1)
     import importlib
 
     module = importlib.import_module(module_path)

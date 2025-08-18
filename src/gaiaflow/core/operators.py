@@ -18,37 +18,79 @@ from .utils import (
     build_env_vars,
     build_xcom_templates,
     inject_params_as_env_vars,
+    XComConfig,
 )
+
+
+class FromTask:
+    def __init__(self, task: str, key: str = "return_value"):
+        self.task = task
+        self.key = key
+
+    def to_dict(self) -> dict:
+        return {"task": self.task, "key": self.key}
+
+
+def split_args_kwargs(func_args=None, func_kwargs=None):
+    func_args = func_args or []
+    func_kwargs = func_kwargs or {}
+
+    user_args = []
+    xcom_args = {}
+    for idx, arg in enumerate(func_args):
+        if isinstance(arg, FromTask):
+            xcom_args[str(idx)] = arg.to_dict()
+        else:
+            user_args.append(arg)
+
+    user_kwargs = {}
+    xcom_kwargs = {}
+    for k, v in func_kwargs.items():
+        if isinstance(v, FromTask):
+            xcom_kwargs[k] = v.to_dict()
+        else:
+            user_kwargs[k] = v
+
+    return user_args, xcom_args, user_kwargs, xcom_kwargs
 
 
 class BaseTaskOperator:
     def __init__(
         self,
-        task_id,
-        func_path,
-        func_args,
-        func_kwargs,
-        func_kwargs_from_tasks,
-        func_args_from_tasks,
-        image,
-        secrets,
-        env_vars,
-        retries,
-        params,
-        environment,
+        task_id: str,
+        func_path: str,
+        func_args: list,
+        func_kwargs: dict,
+        image: str,
+        secrets: list[str],
+        env_vars: dict,
+        retries: int,
+        params: dict,
+        environment: str,
     ):
         self.task_id = task_id
         self.func_path = func_path
-        self.func_args = func_args
-        self.func_kwargs = func_kwargs
-        self.func_kwargs_from_tasks = func_kwargs_from_tasks
-        self.func_args_from_tasks = func_args_from_tasks
         self.image = image
         self.secrets = secrets
         self.env_vars = env_vars
         self.retries = retries
         self.params = params
         self.environment = environment
+
+        (
+            self.func_args,
+            self.func_args_from_tasks,
+            self.func_kwargs,
+            self.func_kwargs_from_tasks,
+        ) = split_args_kwargs(func_args, func_kwargs)
+
+        self.func_args_from_tasks = self.func_args_from_tasks or {}
+        self.func_kwargs_from_tasks = self.func_kwargs_from_tasks or {}
+
+        self.func_kwargs_from_tasks = {
+            k: (v if isinstance(v, dict) and "task" in v else XComConfig(v).to_dict())
+            for k, v in self.func_kwargs_from_tasks.items()
+        }
 
     def create_task(self):
         raise NotImplementedError
@@ -60,10 +102,8 @@ class DevTaskOperator(BaseTaskOperator):
 
         op_kwargs = {
             "func_path": self.func_path,
-            "args": self.func_args,
-            "kwargs": self.func_kwargs,
-            "xcom_pull_args": self.func_args_from_tasks,
-            "xcom_pull_kwargs": self.func_kwargs_from_tasks,
+            "args": self._resolve_xcom_args(),
+            "kwargs": self._resolve_xcom_kwargs(),
         }
 
         return ExternalPythonOperator(
@@ -75,6 +115,51 @@ class DevTaskOperator(BaseTaskOperator):
             retries=self.retries,
             params=self.params,
         )
+
+    def _resolve_xcom_kwargs(self):
+        resolved_kwargs = self.func_kwargs or {}
+
+        if self.func_kwargs_from_tasks:
+            for arg_key, from_task_config in self.func_kwargs_from_tasks.items():
+                if isinstance(from_task_config, dict) and "task" in from_task_config:
+                    task_id = from_task_config["task"]
+                    key = from_task_config.get("key", "return_value")
+
+                    if key == "return_value":
+                        template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
+                    else:
+                        template = (
+                            f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
+                        )
+
+                    resolved_kwargs[arg_key] = template
+
+        return resolved_kwargs
+
+    def _resolve_xcom_args(self):
+        resolved_args = self.func_args or []
+
+        if self.func_args_from_tasks:
+            for index_str, from_task_config in self.func_args_from_tasks.items():
+                index = int(index_str)
+
+                while len(resolved_args) <= index:
+                    resolved_args.append(None)
+
+                if isinstance(from_task_config, dict) and "task" in from_task_config:
+                    task_id = from_task_config["task"]
+                    key = from_task_config.get("key", "return_value")
+
+                    if key == "return_value":
+                        template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
+                    else:
+                        template = (
+                            f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
+                        )
+
+                    resolved_args[index] = template
+
+        return resolved_args
 
 
 class ProdLocalTaskOperator(BaseTaskOperator):
@@ -117,11 +202,11 @@ class ProdLocalTaskOperator(BaseTaskOperator):
         }
 
         env_vars = build_env_vars(
-            func_path=self.func_path,
-            func_args=self.func_args,
-            func_kwargs=self.func_kwargs,
-            func_args_from_tasks=self.func_args_from_tasks,
-            func_kwargs_from_tasks=self.func_kwargs_from_tasks,
+            # func_path=self.func_path,
+            # func_args=self.func_args,
+            # func_kwargs=self.func_kwargs,
+            # func_args_from_tasks=self.func_args_from_tasks,
+            # func_kwargs_from_tasks=self.func_kwargs_from_tasks,
             xcom_args_pull_results=xcom_args_pull,
             xcom_kwargs_pull_results=xcom_kwargs_pull,
             custom_env_vars=self.env_vars,
@@ -133,6 +218,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             **env_vars,
             **mlflow_env_vars,
             **minio_env_vars,
+            **self._create_env_vars_with_xcom()
         }
         env_from = build_env_from_secrets(self.secrets or [])
 
@@ -156,7 +242,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
         return KubernetesPodOperator(
             task_id=self.task_id,
             image=self.image,
-            cmds=["python", "-m", "gaiaflow.core.runner"],
+            cmds=["python", "-m", "runner"],
             env_vars=all_env_vars,
             env_from=env_from,
             get_logs=True,
@@ -169,26 +255,74 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             container_resources=resources,
         )
 
+    def _create_env_vars_with_xcom(self):
+        env_vars = {
+            "FUNC_PATH": self.func_path,
+        }
+
+        base_args = list(self.func_args) if self.func_args else []
+        base_kwargs = dict(self.func_kwargs) if self.func_kwargs else {}
+
+        final_args = base_args.copy()
+        if self.func_args_from_tasks:
+            sorted_args_from_tasks = sorted(
+                self.func_args_from_tasks.items(), key=lambda x: int(x[0])
+            )
+
+            for index_str, from_task_config in sorted_args_from_tasks:
+                index = int(index_str)
+
+                while len(final_args) <= index:
+                    final_args.append(None)
+
+                task_id = from_task_config["task"]
+                key = from_task_config.get("key", "return_value")
+
+                if key == "return_value":
+                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
+                else:
+                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
+
+                final_args[index] = template
+
+        final_kwargs = base_kwargs.copy()
+        if self.func_kwargs_from_tasks:
+            for arg_key, from_task_config in self.func_kwargs_from_tasks.items():
+                task_id = from_task_config["task"]
+                key = from_task_config.get("key", "return_value")
+
+                if key == "return_value":
+                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
+                else:
+                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
+
+                final_kwargs[arg_key] = template
+
+        env_vars["FUNC_ARGS"] = json.dumps(final_args)
+        env_vars["FUNC_KWARGS"] = json.dumps(final_kwargs)
+
+        return env_vars
+
 
 class ProdTaskOperator(ProdLocalTaskOperator):
     """"""
 
 
-class DockerTaskOperator(BaseTaskOperator):
+class DockerTaskOperator(ProdLocalTaskOperator):
     def create_task(self):
         """"""
-        xcom_kwargs_pull = build_xcom_templates(self.func_kwargs_from_tasks)
-        xcom_args_pull = build_xcom_templates(self.func_args_from_tasks)
+        # xcom_kwargs_pull = build_xcom_templates(self.func_kwargs_from_tasks)
+        # xcom_args_pull = build_xcom_templates(self.func_args_from_tasks)
 
-        environment = {
-            "FUNC_PATH": self.func_path,
-            "FUNC_ARGS": json.dumps(self.func_args or []),
-            "FUNC_KWARGS": json.dumps(self.func_kwargs or {}),
-            "XCOM_PULL_KWARGS": json.dumps(self.func_kwargs_from_tasks or {}),
-            "XCOM_PULL_ARGS": json.dumps(self.func_args_from_tasks or []),
-            "XCOM_PULL_ARGS_RESULTS": json.dumps(xcom_args_pull or {}),
-            "XCOM_PULL_KWARGS_RESULTS": json.dumps(xcom_kwargs_pull or {}),
-        }
+        # environment = {
+        #     "FUNC_PATH": self.func_path,
+        #     "FUNC_ARGS": json.dumps(self.func_args or []),
+        #     "FUNC_KWARGS": json.dumps(self.func_kwargs or {}),
+        #     "XCOM_PULL_KWARGS": json.dumps(self.func_kwargs_from_tasks or {}),
+        #     "XCOM_PULL_ARGS": json.dumps(self.func_args_from_tasks or []),
+        #     "XCOM_PULL_ARGS_RESULTS": json.dumps(xcom_args_pull or {}),
+        #     "XCOM_PULL_KWARGS_RESULTS": json.dumps(xcom_kwargs_pull or {}),
+        # }
 
         mlflow_tracking_uri = "http://mlflow:5000"
         if "MLFLOW_TRACKING_URI" in self.env_vars:
@@ -218,7 +352,7 @@ class DockerTaskOperator(BaseTaskOperator):
 
         combined_env = {
             "ENV": self.environment.value,
-            **environment,
+            **self._create_env_vars_with_xcom(),
             **self.env_vars,
             **inject_params_as_env_vars(self.params),
             **mlflow_env_vars,
@@ -238,7 +372,7 @@ class DockerTaskOperator(BaseTaskOperator):
             + "_container",
             api_version="auto",
             auto_remove="success",
-            command=["python", "-m", "gaiaflow.core.runner"],
+            command=["python", "-m", "runner"],
             docker_url="unix://var/run/docker.sock",
             environment=combined_env,
             network_mode="docker-compose_ml-network",

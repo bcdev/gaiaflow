@@ -2,6 +2,7 @@ import os
 import platform
 import shutil
 import subprocess
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Union
 
@@ -29,6 +30,15 @@ from gaiaflow.managers.utils import (
 
 MinikubeActions = Union[BaseAction, ExtendedAction]
 
+@contextmanager
+def temporary_copy(src: Path, dest: Path):
+    print("copying...", src, dest)
+    shutil.copy(src, dest)
+    try:
+        yield
+    finally:
+        if dest.exists():
+            dest.unlink()
 
 class MinikubeManager(BaseGaiaflowManager):
     def __init__(
@@ -44,7 +54,7 @@ class MinikubeManager(BaseGaiaflowManager):
     ):
         self.minikube_profile = "airflow"
         # TODO: get the docker image name automatically
-        self.docker_image_name = "gaiaflow_test_pl:v16"
+        self.docker_image_name = "gaiaflow_test_pl:v17"
         self.os_type = platform.system().lower()
         self.local = local
 
@@ -74,7 +84,6 @@ class MinikubeManager(BaseGaiaflowManager):
             ["minikube", "status", "--profile", self.minikube_profile],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
-            check=True,
         )
         if b"Running" in result.stdout:
             log_info(f"Minikube cluster [{self.minikube_profile}] is already running.")
@@ -207,8 +216,10 @@ class MinikubeManager(BaseGaiaflowManager):
 
         if entrypoint_index is None:
             raise ValueError("No ENTRYPOINT found in Dockerfile.")
-        # {self.user_project_path}/
+
+
         copy_lines = [f"COPY {pkg} ./{pkg}\n" for pkg in local_packages]
+        copy_lines.append("COPY runner.py ./runner.py\n")
 
         updated_lines = (
             lines[: env_index + 1]
@@ -230,60 +241,62 @@ class MinikubeManager(BaseGaiaflowManager):
         MinikubeManager._add_copy_statements_to_dockerfile(
             dockerfile_path, find_python_packages(self.user_project_path)
         )
-
-        if self.local:
-            log_info(f"Building Docker image [{self.docker_image_name}] locally")
-            run(
-                [
-                    "docker",
-                    "build",
-                    "-t",
-                    self.docker_image_name,
-                    "-f",
-                    dockerfile_path,
-                    self.user_project_path,
-                ],
-                "Error building docker image.",
-            )
-            # TODO: For windows?
-            set_permissions("/var/run/docker.sock", 0o666)
-        else:
-            log_info(
-                f"Building Docker image [{self.docker_image_name}] in minikube context"
-            )
-            result = subprocess.run(
-                [
-                    "minikube",
-                    "-p",
-                    self.minikube_profile,
-                    "docker-env",
-                    "--shell",
-                    "bash",
-                ],
-                stdout=subprocess.PIPE,
-                check=True,
-            )
-            env = os.environ.copy()
-            for line in result.stdout.decode().splitlines():
-                if line.startswith("export "):
-                    try:
-                        key, value = line.replace("export ", "").split("=", 1)
-                        env[key.strip()] = value.strip('"')
-                    except ValueError:
-                        continue
-            run(
-                [
-                    "docker",
-                    "build",
-                    "-t",
-                    self.docker_image_name,
-                    "-f",
-                    dockerfile_path,
-                    self.user_project_path,
-                ],
-                "Error building docker image inside minikube cluster.",
-                env=env,
-            )
+        runner_src = Path(__file__).parent.parent.resolve() / "core" / "runner.py"
+        runner_dest = self.user_project_path / "runner.py"
+        with temporary_copy(runner_src, runner_dest):
+            if self.local:
+                log_info(f"Building Docker image [{self.docker_image_name}] locally")
+                run(
+                    [
+                        "docker",
+                        "build",
+                        "-t",
+                        self.docker_image_name,
+                        "-f",
+                        dockerfile_path,
+                        self.user_project_path,
+                    ],
+                    "Error building docker image.",
+                )
+                # TODO: For windows?
+                set_permissions("/var/run/docker.sock", 0o666)
+            else:
+                log_info(
+                    f"Building Docker image [{self.docker_image_name}] in minikube context"
+                )
+                result = subprocess.run(
+                    [
+                        "minikube",
+                        "-p",
+                        self.minikube_profile,
+                        "docker-env",
+                        "--shell",
+                        "bash",
+                    ],
+                    stdout=subprocess.PIPE,
+                    check=True,
+                )
+                env = os.environ.copy()
+                for line in result.stdout.decode().splitlines():
+                    if line.startswith("export "):
+                        try:
+                            key, value = line.replace("export ", "").split("=", 1)
+                            env[key.strip()] = value.strip('"')
+                        except ValueError:
+                            continue
+                run(
+                    [
+                        "docker",
+                        "build",
+                        "-t",
+                        self.docker_image_name,
+                        "-f",
+                        dockerfile_path,
+                        self.user_project_path,
+                    ],
+                    "Error building docker image inside minikube cluster.",
+                    env=env,
+                )
 
     def create_secrets(self, secret_name: str, secret_data: dict[str, Any]):
         log_info(f"Checking if secret [{secret_name}] exists...")

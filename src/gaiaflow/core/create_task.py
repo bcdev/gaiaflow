@@ -326,7 +326,6 @@ OPERATOR_MAP = {
     GaiaflowMode.DEV_DOCKER: DockerTaskOperator,
 }
 
-
 # TODO: Use kwargs and args as a tuple to reduce verbosity
 def create_task(
     task_id: str,
@@ -335,8 +334,6 @@ def create_task(
     func_args: list | None = None,
     image: str | None = None,
     env: str = "dev",
-    func_args_from_tasks: dict | None = None,
-    func_kwargs_from_tasks: dict | None = None,
     secrets: list | None = None,
     env_vars: dict | None = None,
     retries: int = 3,
@@ -355,16 +352,17 @@ def create_task(
     if env_vars is None:
         env_vars = {}
     # env_vars = env_vars or {}
-    func_args_from_tasks = func_args_from_tasks or {}
-    func_kwargs_from_tasks = func_kwargs_from_tasks or {}
+
+    # func_args_from_tasks = func_args_from_tasks or {}
+    # func_kwargs_from_tasks = func_kwargs_from_tasks or {}
 
     dag_params = getattr(dag, "params", {}) if dag else {}
     combined_params = {**dag_params, **(params or {})}
 
-    normalized_kwargs_from_tasks = {
-        k: (v if isinstance(v, dict) and "task" in v else XComConfig(v).to_dict())
-        for k, v in func_kwargs_from_tasks.items()
-    }
+    # normalized_kwargs_from_tasks = {
+    #     k: (v if isinstance(v, dict) and "task" in v else XComConfig(v).to_dict())
+    #     for k, v in func_kwargs_from_tasks.items()
+    # }
 
     operator_cls = OPERATOR_MAP.get(environment)
     if not operator_cls:
@@ -375,8 +373,8 @@ def create_task(
         func_path=func_path,
         func_args=func_args,
         func_kwargs=func_kwargs,
-        func_kwargs_from_tasks=normalized_kwargs_from_tasks,
-        func_args_from_tasks=func_args_from_tasks,
+        # func_kwargs_from_tasks=normalized_kwargs_from_tasks,
+        # func_args_from_tasks=func_args_from_tasks,
         image=image,
         secrets=secrets,
         env_vars=env_vars,
