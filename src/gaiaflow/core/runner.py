@@ -23,9 +23,9 @@ def run(
     args: list | None = None,
     kwargs: dict[str, str] | None = None,
 ) -> dict[str, str]:
-    env = os.environ.get("MODE", "dev")
-    print(f"## Runner running in {env} mode ##")
-    if env == "dev":
+    mode = os.environ.get("MODE", "dev")
+    print(f"## Runner running in {mode} mode ##")
+    if mode == "dev":
         print("args", args)
         print("kwargs", kwargs)
     else:
@@ -46,12 +46,11 @@ def run(
     print(f"Running {func_path} with args: {args} and kwargs :{kwargs}")
     result = func(*args, **kwargs)
     print("Function result:", result)
-    if (os.environ.get("MODE") == "prod" or os.environ.get("MODE") ==
-            "prod_local"):
+    if (mode == "prod" or mode == "prod_local_minikube"):
         # This is needed when we use KubernetesPodOperator and want to
         # share information via XCOM.
         _write_xcom_result(result)
-    if os.environ.get("MODE") == "dev_docker":
+    if mode == "prod_local_docker":
         with open("/tmp/script.out", "wb+") as tmp:
             pickle.dump(result, tmp)
     return result
