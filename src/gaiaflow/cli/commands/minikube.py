@@ -47,7 +47,7 @@ def start(
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    imports.MinikubeManager(
+    imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.BaseAction.START,
@@ -67,7 +67,7 @@ def stop(
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    imports.MinikubeManager(
+    imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.BaseAction.STOP,
@@ -93,7 +93,7 @@ def restart(
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    imports.MinikubeManager(
+    imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.BaseAction.RESTART,
@@ -119,7 +119,7 @@ def dockerize(
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    imports.MinikubeManager(
+    imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
@@ -142,7 +142,7 @@ def create_config(
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    imports.MinikubeManager(
+    imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.ExtendedAction.CREATE_CONFIG,
@@ -167,7 +167,7 @@ def create_secret(
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    imports.MinikubeManager(
+    imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.ExtendedAction.CREATE_SECRET,
@@ -183,20 +183,15 @@ def create_secret(
 def cleanup(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
-    (
-        BaseAction,
-        ExtendedAction,
-        MinikubeManager,
-        create_gaiaflow_context_path,
-        gaiaflow_path_exists_in_state,
-        parse_key_value_pairs,
-    ) = load_imports()
-    gaiaflow_path, user_project_path = create_gaiaflow_context_path(project_path)
-    gaiaflow_path_exists = gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path)
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(
+        gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
-    MinikubeManager(
+    imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action="cleanup",

@@ -51,7 +51,10 @@ class MinikubeManager(BaseGaiaflowManager):
         secret_name: str = "",
         prune: bool = False,
         local: bool = False,
+        **kwargs
     ):
+        if kwargs:
+            raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
         self.minikube_profile = "airflow"
         # TODO: get the docker image name automatically
         self.docker_image_name = "gaiaflow_test_pl:v17"
@@ -66,14 +69,33 @@ class MinikubeManager(BaseGaiaflowManager):
             prune=prune,
         )
 
-        if action == ExtendedAction.DOCKERIZE:
-            self.build_docker_image()
+    @classmethod
+    def run(cls, **kwargs):
+        action = kwargs.get("action")
+        if action is None:
+            raise ValueError("Missing required argument 'action'")
 
-        if action == ExtendedAction.CREATE_CONFIG:
-            self.create_kube_config_inline()
+        manager = MinikubeManager(**kwargs)
+
+        action_map = {
+            BaseAction.START: manager.start,
+            BaseAction.STOP: manager.stop,
+            BaseAction.RESTART: manager.restart,
+            BaseAction.CLEANUP: manager.cleanup,
+            ExtendedAction.DOCKERIZE: manager.build_docker_image,
+            ExtendedAction.CREATE_CONFIG: manager.create_kube_config_inline,
+            ExtendedAction.CREATE_SECRET: manager.create_secrets,
+        }
+
+        try:
+            action_method = action_map[action]
+        except KeyError:
+            raise ValueError(f"Unknown action: {action}")
 
         if action == ExtendedAction.CREATE_SECRET:
-            self.create_secrets(secret_name, secret_data)
+            action_method(kwargs["secret_name"], kwargs["secret_data"])
+        else:
+            action_method()
 
     def start(self):
         if self.force_new:
@@ -331,20 +353,6 @@ class MinikubeManager(BaseGaiaflowManager):
             for k, v in secret_data.items():
                 create_cmd.append(f"--from-literal={k}={v}")
             subprocess.check_call(create_cmd)
-
-    def _start(self):
-        log_info("Starting full setup...")
-        self.start()
-        self.build_docker_image()
-        self.create_kube_config_inline()
-        self.create_secrets(
-            secret_name="my-minio-creds",
-            secret_data={
-                "AWS_ACCESS_KEY_ID": "minio",
-                "AWS_SECRET_ACCESS_KEY": "minio123",
-            },
-        )
-        log_info(f"Minikube cluster [{self.minikube_profile}] is ready!")
 
     def cleanup(self):
         log_info(f"Deleting minikube profile: {self.minikube_profile}")

@@ -75,7 +75,7 @@ def start(
     if service != ["all"]:
         for s in service:
             typer.echo(f"Running start on {s}...")
-            imports.MlopsManager(
+            imports.MlopsManager.run(
                 gaiaflow_path=gaiaflow_path,
                 user_project_path=user_project_path,
                 force_new=force_new,
@@ -88,7 +88,7 @@ def start(
             )
     else:
         typer.echo("Running start with all services")
-        imports.MlopsManager(
+        imports.MlopsManager.run(
             gaiaflow_path=gaiaflow_path,
             user_project_path=user_project_path,
             force_new=force_new,
@@ -125,18 +125,18 @@ def stop(
     if service != ["all"]:
         for s in service:
             typer.echo(f"Stopping service:  {s}")
-            imports.MlopsManager(
-                Path(gaiaflow_path),
-                Path(user_project_path),
+            imports.MlopsManager.run(
+                gaiaflow_path=Path(gaiaflow_path),
+                user_project_path=Path(user_project_path),
                 action=imports.BaseAction.STOP,
                 service=s,
                 delete_volume=delete_volume,
             )
     else:
         typer.echo("Stopping all services")
-        imports.MlopsManager(
-            Path(gaiaflow_path),
-            Path(user_project_path),
+        imports.MlopsManager.run(
+            gaiaflow_path=Path(gaiaflow_path),
+            user_project_path=Path(user_project_path),
             service=Service.all,
             action=imports.BaseAction.STOP,
             delete_volume=delete_volume,
@@ -183,9 +183,9 @@ def restart(
     if service != ["all"]:
         for s in service:
             typer.echo(f"Stopping service:  {s}")
-            imports.MlopsManager(
-                Path(gaiaflow_path),
-                Path(user_project_path),
+            imports.MlopsManager.run(
+                gaiaflow_path=Path(gaiaflow_path),
+                user_project_path=Path(user_project_path),
                 force_new=force_new,
                 action=imports.BaseAction.RESTART,
                 service=s,
@@ -196,8 +196,7 @@ def restart(
             )
     else:
         typer.echo("Stopping all services")
-        imports.MlopsManager(
-            Path(gaiaflow_path),
+        imports.MlopsManager.run(Path(gaiaflow_path),
             Path(user_project_path),
             force_new=force_new,
             action=imports.BaseAction.RESTART,
@@ -205,8 +204,7 @@ def restart(
             jupyter_port=jupyter_port,
             delete_volume=delete_volume,
             docker_build=docker_build,
-            service=Service.all,
-        )
+            service=Service.all,)
 
 
 @app.command(
@@ -227,9 +225,9 @@ def cleanup(
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
-    imports.MlopsManager(
-        Path(gaiaflow_path),
-        Path(user_project_path),
+    imports.MlopsManager.run(
+        gaiaflow_path=Path(gaiaflow_path),
+        user_project_path=Path(user_project_path),
         action=imports.BaseAction.CLEANUP,
         prune=prune,
     )

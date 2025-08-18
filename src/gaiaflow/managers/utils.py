@@ -101,8 +101,46 @@ def load_project_state() -> dict | None:
     except (json.JSONDecodeError, FileNotFoundError):
         return None
 
+def check_structure(base_path: Path, structure: dict) -> bool:
+    for name, sub in structure.items():
+        if name == "_files_":
+            for file_name in sub:
+                file_path = base_path / file_name
+                if not file_path.exists():
+                    typer.echo(f"Missing file: {file_path}", err=True)
+                    return False
+            continue
+
+        path = base_path / name
+        if not path.exists() or not path.is_dir():
+            typer.echo(f"Missing folder: {path}", err=True)
+            return False
+
+        if isinstance(sub, dict):
+            if not check_structure(path, sub):
+                return False
+        elif isinstance(sub, list):
+            for item in sub:
+                item_path = path / item
+                if not item_path.exists():
+                    typer.echo(f"Missing file: {item_path}", err=True)
+                    return False
+        else:
+            raise TypeError("Structure values must be dict or list")
+    return True
 
 def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) -> bool:
+    REQUIRED_STRUCTURE = {
+        "docker": {
+            "docker-compose": ["docker-compose.yml",
+                               "docker-compose-minikube-network.yml",
+                               "entrypoint.sh"],
+            "airflow": ["Dockerfile"],
+            "mlflow": ["Dockerfile", "requirements.txt"],
+            "user-package": ["Dockerfile"],
+            "_files_": ["kube_config_inline"]
+        }
+    }
     state = load_project_state()
     if not state:
         return False
@@ -111,11 +149,16 @@ def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) ->
     if key not in state:
         return False
 
-    if check_fs and not gaiaflow_path.exists():
-        typer.echo(
-            f"Gaiaflow path exists in state but not on disk: {gaiaflow_path}", err=True
-        )
-        return False
+    if check_fs:
+        if not gaiaflow_path.exists():
+            typer.echo(
+                f"Gaiaflow path exists in state but not on disk: {gaiaflow_path}",
+                err=True,
+            )
+            return False
+
+        if not check_structure(gaiaflow_path, REQUIRED_STRUCTURE):
+            return False
 
     return True
 
@@ -183,3 +226,8 @@ def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
     gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
 
     return gaiaflow_path, user_project_path
+
+
+if __name__ == "__main__":
+    print(gaiaflow_path_exists_in_state(Path(
+        "/tmp/gaiaflow-0.0.1.dev0-tech_talk_demo")))
