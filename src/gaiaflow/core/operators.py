@@ -15,12 +15,8 @@ from gaiaflow.constants import (
 
 from .utils import (
     build_env_from_secrets,
-    build_env_vars,
-    build_xcom_templates,
     inject_params_as_env_vars,
-    XComConfig,
 )
-
 
 class FromTask:
     def __init__(self, task: str, key: str = "return_value"):
@@ -29,7 +25,6 @@ class FromTask:
 
     def to_dict(self) -> dict:
         return {"task": self.task, "key": self.key}
-
 
 def split_args_kwargs(func_args=None, func_kwargs=None):
     func_args = func_args or []
@@ -66,7 +61,7 @@ class BaseTaskOperator:
         env_vars: dict,
         retries: int,
         params: dict,
-        environment: str,
+        mode: str,
     ):
         self.task_id = task_id
         self.func_path = func_path
@@ -75,7 +70,7 @@ class BaseTaskOperator:
         self.env_vars = env_vars
         self.retries = retries
         self.params = params
-        self.environment = environment
+        self.mode = mode
 
         (
             self.func_args,
@@ -88,23 +83,51 @@ class BaseTaskOperator:
         self.func_kwargs_from_tasks = self.func_kwargs_from_tasks or {}
 
         self.func_kwargs_from_tasks = {
-            k: (v if isinstance(v, dict) and "task" in v else XComConfig(v).to_dict())
+            k: (v if isinstance(v, dict) and "task" in v else FromTask(v).to_dict())
             for k, v in self.func_kwargs_from_tasks.items()
         }
 
     def create_task(self):
         raise NotImplementedError
 
+    def _resolve_xcom_value(self, from_task_config):
+        task_id = from_task_config["task"]
+        key = from_task_config.get("key", "return_value")
+
+        if key == "return_value":
+            return f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
+        return f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
+
+    def resolve_args_kwargs(self):
+        resolved_args = self.func_args or []
+        resolved_kwargs = self.func_kwargs or {}
+
+        for index_str, from_task_config in (self.func_args_from_tasks or {}).items():
+            index = int(index_str)
+            while len(resolved_args) <= index:
+                resolved_args.append(None)
+            resolved_args[index] = self._resolve_xcom_value(from_task_config)
+
+        for k, from_task_config in (self.func_kwargs_from_tasks or {}).items():
+            resolved_kwargs[k] = self._resolve_xcom_value(from_task_config)
+
+        return resolved_args, resolved_kwargs
+
+    def create_func_env_vars(self):
+        final_args, final_kwargs = self.resolve_args_kwargs()
+        return {
+            "FUNC_PATH": self.func_path,
+            "FUNC_ARGS": json.dumps(final_args),
+            "FUNC_KWARGS": json.dumps(final_kwargs),
+        }
+
 
 class DevTaskOperator(BaseTaskOperator):
     def create_task(self):
         from gaiaflow.core.runner import run
 
-        op_kwargs = {
-            "func_path": self.func_path,
-            "args": self._resolve_xcom_args(),
-            "kwargs": self._resolve_xcom_kwargs(),
-        }
+        args, kwargs = self.resolve_args_kwargs()
+        op_kwargs = {"func_path": self.func_path, "args": args, "kwargs": kwargs}
 
         return ExternalPythonOperator(
             task_id=self.task_id,
@@ -116,59 +139,11 @@ class DevTaskOperator(BaseTaskOperator):
             params=self.params,
         )
 
-    def _resolve_xcom_kwargs(self):
-        resolved_kwargs = self.func_kwargs or {}
-
-        if self.func_kwargs_from_tasks:
-            for arg_key, from_task_config in self.func_kwargs_from_tasks.items():
-                if isinstance(from_task_config, dict) and "task" in from_task_config:
-                    task_id = from_task_config["task"]
-                    key = from_task_config.get("key", "return_value")
-
-                    if key == "return_value":
-                        template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
-                    else:
-                        template = (
-                            f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
-                        )
-
-                    resolved_kwargs[arg_key] = template
-
-        return resolved_kwargs
-
-    def _resolve_xcom_args(self):
-        resolved_args = self.func_args or []
-
-        if self.func_args_from_tasks:
-            for index_str, from_task_config in self.func_args_from_tasks.items():
-                index = int(index_str)
-
-                while len(resolved_args) <= index:
-                    resolved_args.append(None)
-
-                if isinstance(from_task_config, dict) and "task" in from_task_config:
-                    task_id = from_task_config["task"]
-                    key = from_task_config.get("key", "return_value")
-
-                    if key == "return_value":
-                        template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
-                    else:
-                        template = (
-                            f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
-                        )
-
-                    resolved_args[index] = template
-
-        return resolved_args
-
 
 class ProdLocalTaskOperator(BaseTaskOperator):
     def create_task(self):
         if not self.image:
             raise ValueError("Docker image must be provided for Kubernetes tasks.")
-
-        xcom_kwargs_pull = build_xcom_templates(self.func_kwargs_from_tasks)
-        xcom_args_pull = build_xcom_templates(self.func_args_from_tasks)
 
         os_type = platform.system().lower()
 
@@ -201,24 +176,13 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             "AWS_SECRET_ACCESS_KEY": aws_secret_access_key,
         }
 
-        env_vars = build_env_vars(
-            # func_path=self.func_path,
-            # func_args=self.func_args,
-            # func_kwargs=self.func_kwargs,
-            # func_args_from_tasks=self.func_args_from_tasks,
-            # func_kwargs_from_tasks=self.func_kwargs_from_tasks,
-            xcom_args_pull_results=xcom_args_pull,
-            xcom_kwargs_pull_results=xcom_kwargs_pull,
-            custom_env_vars=self.env_vars,
-            env=self.environment.value,
-        )
-
         all_env_vars = {
+            "MODE": self.mode.value,
+            **self.env_vars,
             **inject_params_as_env_vars(self.params),
-            **env_vars,
             **mlflow_env_vars,
             **minio_env_vars,
-            **self._create_env_vars_with_xcom()
+            **self.create_func_env_vars()
         }
         env_from = build_env_from_secrets(self.secrets or [])
 
@@ -248,61 +212,12 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             get_logs=True,
             is_delete_operator_pod=True,
             log_events_on_failure=True,
-            in_cluster=(self.environment == self.environment.PROD),
+            in_cluster=(self.mode == self.mode.PROD),
             do_xcom_push=True,
             retries=self.retries,
             params=self.params,
             container_resources=resources,
         )
-
-    def _create_env_vars_with_xcom(self):
-        env_vars = {
-            "FUNC_PATH": self.func_path,
-        }
-
-        base_args = list(self.func_args) if self.func_args else []
-        base_kwargs = dict(self.func_kwargs) if self.func_kwargs else {}
-
-        final_args = base_args.copy()
-        if self.func_args_from_tasks:
-            sorted_args_from_tasks = sorted(
-                self.func_args_from_tasks.items(), key=lambda x: int(x[0])
-            )
-
-            for index_str, from_task_config in sorted_args_from_tasks:
-                index = int(index_str)
-
-                while len(final_args) <= index:
-                    final_args.append(None)
-
-                task_id = from_task_config["task"]
-                key = from_task_config.get("key", "return_value")
-
-                if key == "return_value":
-                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
-                else:
-                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
-
-                final_args[index] = template
-
-        final_kwargs = base_kwargs.copy()
-        if self.func_kwargs_from_tasks:
-            for arg_key, from_task_config in self.func_kwargs_from_tasks.items():
-                task_id = from_task_config["task"]
-                key = from_task_config.get("key", "return_value")
-
-                if key == "return_value":
-                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}') }}}}"
-                else:
-                    template = f"{{{{ ti.xcom_pull(task_ids='{task_id}')['{key}'] }}}}"
-
-                final_kwargs[arg_key] = template
-
-        env_vars["FUNC_ARGS"] = json.dumps(final_args)
-        env_vars["FUNC_KWARGS"] = json.dumps(final_kwargs)
-
-        return env_vars
-
 
 class ProdTaskOperator(ProdLocalTaskOperator):
     """"""
@@ -310,20 +225,6 @@ class ProdTaskOperator(ProdLocalTaskOperator):
 
 class DockerTaskOperator(ProdLocalTaskOperator):
     def create_task(self):
-        """"""
-        # xcom_kwargs_pull = build_xcom_templates(self.func_kwargs_from_tasks)
-        # xcom_args_pull = build_xcom_templates(self.func_args_from_tasks)
-
-        # environment = {
-        #     "FUNC_PATH": self.func_path,
-        #     "FUNC_ARGS": json.dumps(self.func_args or []),
-        #     "FUNC_KWARGS": json.dumps(self.func_kwargs or {}),
-        #     "XCOM_PULL_KWARGS": json.dumps(self.func_kwargs_from_tasks or {}),
-        #     "XCOM_PULL_ARGS": json.dumps(self.func_args_from_tasks or []),
-        #     "XCOM_PULL_ARGS_RESULTS": json.dumps(xcom_args_pull or {}),
-        #     "XCOM_PULL_KWARGS_RESULTS": json.dumps(xcom_kwargs_pull or {}),
-        # }
-
         mlflow_tracking_uri = "http://mlflow:5000"
         if "MLFLOW_TRACKING_URI" in self.env_vars:
             mlflow_tracking_uri = self.env_vars.pop("MLFLOW_TRACKING_URI")
@@ -351,8 +252,8 @@ class DockerTaskOperator(ProdLocalTaskOperator):
         }
 
         combined_env = {
-            "ENV": self.environment.value,
-            **self._create_env_vars_with_xcom(),
+            "MODE": self.mode.value,
+            **self.create_func_env_vars(),
             **self.env_vars,
             **inject_params_as_env_vars(self.params),
             **mlflow_env_vars,

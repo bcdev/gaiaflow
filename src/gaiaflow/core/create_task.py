@@ -309,21 +309,20 @@ from .operators import (
     ProdLocalTaskOperator,
     ProdTaskOperator,
 )
-from .utils import XComConfig
 
 
 class GaiaflowMode(Enum):
     DEV = "dev"
-    PROD_LOCAL = "prod_local"
+    PROD_LOCAL_DOCKER = "prod_local_docker"
+    PROD_LOCAL_MINIKUBE = "prod_local_minikube"
     PROD = "prod"
-    DEV_DOCKER = "dev_docker"
 
 
 OPERATOR_MAP = {
     GaiaflowMode.DEV: DevTaskOperator,
-    GaiaflowMode.PROD: ProdLocalTaskOperator,
-    GaiaflowMode.PROD_LOCAL: ProdTaskOperator,
-    GaiaflowMode.DEV_DOCKER: DockerTaskOperator,
+    GaiaflowMode.PROD_LOCAL_DOCKER: DockerTaskOperator,
+    GaiaflowMode.PROD_LOCAL_MINIKUBE: ProdLocalTaskOperator,
+    GaiaflowMode.PROD: ProdTaskOperator,
 }
 
 # TODO: Use kwargs and args as a tuple to reduce verbosity
@@ -333,7 +332,7 @@ def create_task(
     func_kwargs: dict | None = None,
     func_args: list | None = None,
     image: str | None = None,
-    env: str = "dev",
+    mode: str = "dev",
     secrets: list | None = None,
     env_vars: dict | None = None,
     retries: int = 3,
@@ -341,46 +340,35 @@ def create_task(
     params=None,
 ):
     try:
-        environment = GaiaflowMode(env)
+        mode = GaiaflowMode(mode)
     except ValueError:
         raise ValueError(
-            f"env must be one of {[e.value for e in GaiaflowMode]}, got '{env}'"
+            f"env must be one of {[e.value for e in GaiaflowMode]}, got '{mode}'"
         )
 
     func_args = func_args or []
     func_kwargs = func_kwargs or {}
     if env_vars is None:
         env_vars = {}
-    # env_vars = env_vars or {}
-
-    # func_args_from_tasks = func_args_from_tasks or {}
-    # func_kwargs_from_tasks = func_kwargs_from_tasks or {}
 
     dag_params = getattr(dag, "params", {}) if dag else {}
     combined_params = {**dag_params, **(params or {})}
 
-    # normalized_kwargs_from_tasks = {
-    #     k: (v if isinstance(v, dict) and "task" in v else XComConfig(v).to_dict())
-    #     for k, v in func_kwargs_from_tasks.items()
-    # }
-
-    operator_cls = OPERATOR_MAP.get(environment)
+    operator_cls = OPERATOR_MAP.get(mode)
     if not operator_cls:
-        raise ValueError(f"No task creation operator defined for {environment}")
+        raise ValueError(f"No task creation operator defined for {mode}")
 
     operator = operator_cls(
         task_id=task_id,
         func_path=func_path,
         func_args=func_args,
         func_kwargs=func_kwargs,
-        # func_kwargs_from_tasks=normalized_kwargs_from_tasks,
-        # func_args_from_tasks=func_args_from_tasks,
         image=image,
         secrets=secrets,
         env_vars=env_vars,
         retries=retries,
         params=combined_params,
-        environment=environment,
+        mode=mode,
     )
 
     return operator.create_task()
