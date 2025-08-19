@@ -99,16 +99,10 @@ def restart(
     )
 
 
-@app.command(help="Containerize your package into a docker image.")
+@app.command(help="Containerize your package into a docker image inside the "
+                  "minikube cluster.")
 def dockerize(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
-    local: bool = typer.Option(
-        False,
-        "--local",
-        "-l",
-        help="This will create the image in your local docker instance instead "
-        "of creating it inside prod-local environment",
-    ),
 ):
     imports = load_imports()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
@@ -122,7 +116,7 @@ def dockerize(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
-        local=local,
+        local=False,
     )
 
 

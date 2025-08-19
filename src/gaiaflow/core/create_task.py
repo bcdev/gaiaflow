@@ -309,15 +309,15 @@ from .operators import (DevTaskOperator, DockerTaskOperator,
 
 class GaiaflowMode(Enum):
     DEV = "dev"
-    PROD_LOCAL_DOCKER = "prod_local_docker"
-    PROD_LOCAL_MINIKUBE = "prod_local_minikube"
+    DEV_DOCKER = "dev_docker"
+    PROD_LOCAL = "prod_local"
     PROD = "prod"
 
 
 OPERATOR_MAP = {
     GaiaflowMode.DEV: DevTaskOperator,
-    GaiaflowMode.PROD_LOCAL_DOCKER: DockerTaskOperator,
-    GaiaflowMode.PROD_LOCAL_MINIKUBE: ProdLocalTaskOperator,
+    GaiaflowMode.DEV_DOCKER: DockerTaskOperator,
+    GaiaflowMode.PROD_LOCAL: ProdLocalTaskOperator,
     GaiaflowMode.PROD: ProdTaskOperator,
 }
 
@@ -333,8 +333,12 @@ def create_task(
     env_vars: dict | None = None,
     retries: int = 3,
     dag=None,
-    params=None,
 ):
+    """It is a high-level abstraction on top of Apache Airflow operators.
+
+    It allows you to define tasks for your DAGs in a uniform, environment-aware
+    way, without worrying about which Airflow operator to use for each execution mode.
+    """
     try:
         gaiaflow_mode: GaiaflowMode = GaiaflowMode(mode)
     except ValueError:
@@ -348,7 +352,6 @@ def create_task(
         env_vars = {}
 
     dag_params = getattr(dag, "params", {}) if dag else {}
-    combined_params = {**dag_params, **(params or {})}
 
     operator_cls = OPERATOR_MAP.get(gaiaflow_mode)
     if not operator_cls:
@@ -363,7 +366,7 @@ def create_task(
         secrets=secrets,
         env_vars=env_vars,
         retries=retries,
-        params=combined_params,
+        params=dag_params,
         mode=mode,
     )
 

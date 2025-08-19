@@ -12,15 +12,18 @@ fs = fsspec.filesystem("file")
 
 
 def load_imports():
-    from gaiaflow.constants import BaseAction
+    from gaiaflow.constants import BaseAction, ExtendedAction
     from gaiaflow.managers.mlops_manager import MlopsManager
+    from gaiaflow.managers.minikube_manager import MinikubeManager
     from gaiaflow.managers.utils import (create_gaiaflow_context_path,
                                          gaiaflow_path_exists_in_state,
                                          save_project_state)
 
     return SimpleNamespace(
         BaseAction=BaseAction,
+        ExtendedAction=ExtendedAction,
         MlopsManager=MlopsManager,
+        MinikubeManager=MinikubeManager,
         create_gaiaflow_context_path=create_gaiaflow_context_path,
         gaiaflow_path_exists_in_state=gaiaflow_path_exists_in_state,
         save_project_state=save_project_state,
@@ -231,6 +234,34 @@ def cleanup(
         action=imports.BaseAction.CLEANUP,
         prune=prune,
     )
+
+
+
+@app.command(help="Containerize your package into a docker image locally.")
+def dockerize(
+    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
+):
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        imports.save_project_state(user_project_path, gaiaflow_path)
+    else:
+        typer.echo(
+            f"Gaiaflow project already exists at {gaiaflow_path}. Skipping "
+            f"saving to the state"
+        )
+
+    typer.echo("Running dockerize")
+    imports.MinikubeManager.run(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=imports.ExtendedAction.DOCKERIZE,
+        local=True,
+    )
+
 
 
 # TODO: To let the user update the current infra with new local packages or
