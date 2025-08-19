@@ -14,6 +14,11 @@ class BaseGaiaflowManager(ABC):
         force_new: bool = False,
         prune: bool = False,
     ):
+        valid_actions = self._get_valid_actions()
+        if action not in valid_actions:
+            valid_names = sorted([a.name for a in valid_actions])
+            raise ValueError(f"Invalid action '{action.name}'. Valid: {valid_names}")
+
         self.gaiaflow_path = gaiaflow_path
         self.user_project_path = user_project_path
         self.action = action
@@ -46,6 +51,7 @@ class BaseGaiaflowManager(ABC):
         """
 
     def _get_valid_actions(self) -> Set[Action]:
+        """Return set of valid actions for this manager. Override in subclasses."""
         return {
             BaseAction.START,
             BaseAction.STOP,
