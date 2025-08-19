@@ -2,16 +2,15 @@ import json
 import platform
 from datetime import datetime
 
-from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
+from airflow.providers.cncf.kubernetes.operators.pod import \
+    KubernetesPodOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.providers.standard.operators.python import ExternalPythonOperator
 from kubernetes.client import V1ResourceRequirements
 
-from gaiaflow.constants import (
-    DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
-    DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
-    RESOURCE_PROFILES,
-)
+from gaiaflow.constants import (DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
+                                DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
+                                RESOURCE_PROFILES)
 
 from .utils import build_env_from_secrets, inject_params_as_env_vars
 

@@ -8,23 +8,13 @@ from typing import Any, Set
 
 import yaml
 
-from gaiaflow.constants import (
-    AIRFLOW_SERVICES,
-    MINIO_SERVICES,
-    MLFLOW_SERVICES,
-    Action,
-    BaseAction,
-    ExtendedAction,
-)
+from gaiaflow.constants import (AIRFLOW_SERVICES, MINIO_SERVICES,
+                                MLFLOW_SERVICES, Action, BaseAction,
+                                ExtendedAction)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
-from gaiaflow.managers.utils import (
-    find_python_packages,
-    log_error,
-    log_info,
-    run,
-    set_permissions,
-)
+from gaiaflow.managers.utils import (find_python_packages, log_error, log_info,
+                                     run, set_permissions)
 
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 

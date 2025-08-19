@@ -10,28 +10,15 @@ import fsspec
 import psutil
 from ruamel.yaml import YAML
 
-from gaiaflow.constants import (
-    AIRFLOW_SERVICES,
-    GAIAFLOW_STATE_FILE,
-    MINIO_SERVICES,
-    MLFLOW_SERVICES,
-    Action,
-    BaseAction,
-    Service,
-)
+from gaiaflow.constants import (AIRFLOW_SERVICES, GAIAFLOW_STATE_FILE,
+                                MINIO_SERVICES, MLFLOW_SERVICES, Action,
+                                BaseAction, Service)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
-from gaiaflow.managers.utils import (
-    create_directory,
-    delete_project_state,
-    find_python_packages,
-    gaiaflow_path_exists_in_state,
-    handle_error,
-    log_error,
-    log_info,
-    run,
-    save_project_state,
-    set_permissions,
-)
+from gaiaflow.managers.utils import (create_directory, delete_project_state,
+                                     find_python_packages,
+                                     gaiaflow_path_exists_in_state,
+                                     handle_error, log_error, log_info, run,
+                                     save_project_state, set_permissions)
 
 _IMAGES = [
     "docker-compose-airflow-apiserver:latest",

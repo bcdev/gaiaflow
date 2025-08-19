@@ -5,12 +5,9 @@ import uuid
 import mlflow
 
 import docker
-from gaiaflow.constants import (
-    DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
-    DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
-    DEFAULT_MLFLOW_TRACKING_URI,
-    BaseAction,
-)
+from gaiaflow.constants import (DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
+                                DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
+                                DEFAULT_MLFLOW_TRACKING_URI, BaseAction)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 
 

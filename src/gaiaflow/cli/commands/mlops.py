@@ -14,11 +14,9 @@ fs = fsspec.filesystem("file")
 def load_imports():
     from gaiaflow.constants import BaseAction
     from gaiaflow.managers.mlops_manager import MlopsManager
-    from gaiaflow.managers.utils import (
-        create_gaiaflow_context_path,
-        gaiaflow_path_exists_in_state,
-        save_project_state,
-    )
+    from gaiaflow.managers.utils import (create_gaiaflow_context_path,
+                                         gaiaflow_path_exists_in_state,
+                                         save_project_state)
 
     return SimpleNamespace(
         BaseAction=BaseAction,

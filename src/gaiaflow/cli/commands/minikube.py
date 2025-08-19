@@ -10,12 +10,11 @@ fs = fsspec.filesystem("file")
 
 def load_imports():
     from gaiaflow.constants import BaseAction
-    from gaiaflow.managers.minikube_manager import ExtendedAction, MinikubeManager
-    from gaiaflow.managers.utils import (
-        create_gaiaflow_context_path,
-        gaiaflow_path_exists_in_state,
-        parse_key_value_pairs,
-    )
+    from gaiaflow.managers.minikube_manager import (ExtendedAction,
+                                                    MinikubeManager)
+    from gaiaflow.managers.utils import (create_gaiaflow_context_path,
+                                         gaiaflow_path_exists_in_state,
+                                         parse_key_value_pairs)
 
     return SimpleNamespace(
         BaseAction=BaseAction,
@@ -50,7 +49,7 @@ def start(
     imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=imports.BaseAction.START,
+        action=imports.BaseAction.START2,
         force_new=force_new,
     )
 
