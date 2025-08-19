@@ -1,0 +1,51 @@
+name: Unittest Gaiaflow
+
+on:
+  push:
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+
+    steps:
+      - name: checkout xcube-clms
+        uses: actions/checkout@v4
+
+      - name: Install Pixi
+        run: curl -fsSL https://pixi.sh/install.sh | bash
+        shell: bash
+
+      - name: Add Pixi to PATH
+        run: echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: pixi project python ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        shell: bash -l {0}
+        run: pixi install
+
+      - name: Linting with ruff
+        shell: bash -l {0}
+        run:
+          pixi run check
+
+      - name: Typecheck with mypy
+        shell: bash -l {0}
+        run:
+          pixi run typecheck
+
+      - name: Install and Test
+        shell: bash -l {0}
+        run:
+          pixi run test
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
