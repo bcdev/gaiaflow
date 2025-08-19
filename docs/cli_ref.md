@@ -42,6 +42,8 @@ Manage **production-like services** (via Minikube).
 - `create-secret` – Create Kubernetes (K8s) secrets
 - `cleanup` – Remove Minikube-specific resources
 
+**Example**
+
 ```bash
 gaiaflow prod-local start -p /path/to/project --force-new
 ```
