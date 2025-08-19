@@ -23,24 +23,20 @@ jobs:
         run: echo "$HOME/.pixi/bin" >> $GITHUB_PATH
 
       - name: Set up Python ${{ matrix.python-version }}
-        run: pixi project python ${{ matrix.python-version }}
+        run: pixi add python=${{ matrix.python-version }} --no-install
 
       - name: Install dependencies
-        shell: bash -l {0}
         run: pixi install
 
       - name: Linting with ruff
-        shell: bash -l {0}
         run:
           pixi run check
 
       - name: Typecheck with mypy
-        shell: bash -l {0}
         run:
           pixi run typecheck
 
       - name: Install and Test
-        shell: bash -l {0}
         run:
           pixi run test
 
