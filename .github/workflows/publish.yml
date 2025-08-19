@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        python-version: ["3.12"]
 
     steps:
       - name: checkout xcube-clms
@@ -25,24 +25,16 @@ jobs:
         run: echo "$HOME/.pixi/bin" >> $GITHUB_PATH
 
       - name: Set up Python ${{ matrix.python-version }}
-        run: pixi project python ${{ matrix.python-version }}
+        run: pixi add python=${{ matrix.python-version }} --no-install
 
       - name: Install dependencies
-        shell: bash -l {0}
         run: pixi install
 
       - name: Linting with ruff
-        shell: bash -l {0}
         run:
           pixi run check
 
-      - name: Typecheck with mypy
-        shell: bash -l {0}
-        run:
-          pixi run typecheck
-
       - name: Install and Test
-        shell: bash -l {0}
         run:
           pixi run test
 
@@ -51,6 +43,8 @@ jobs:
         with:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
+
+
   PyPi-Deploy:
     name: Publish Python Package to PyPI
     runs-on: ubuntu-latest

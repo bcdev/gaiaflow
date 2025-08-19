@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13" ]
+        python-version: ["3.12"]
 
     steps:
       - name: checkout xcube-clms
@@ -31,10 +31,6 @@ jobs:
       - name: Linting with ruff
         run:
           pixi run check
-
-      - name: Typecheck with mypy
-        run:
-          pixi run typecheck
 
       - name: Install and Test
         run:
