@@ -1,0 +1,98 @@
+site_name: GaiaFlow - MLOps tool streamlining Earth Observation ML projects.
+repo_url: https://github.com/bcdev/gaiaflow
+repo_name: bc-dev/gaiaflow
+
+copyright: Copyright &copy; 2025 Brockmann Consult
+
+nav:
+  - Overview: index.md
+  - Getting Started: start.md
+  - User guide - dev and dev_docker: dev_guide.md
+  - User guide - prod_local and prod: prod_guide.md
+  - CLI reference: cli_ref.md
+
+# TODO: Infrastrucutre architecutre
+# create_task: behaviour by environments
+# From_Task explanation
+# dev_docker
+# How to create
+#  CDR,
+#  CDR_PAT,
+#  S3,
+#  AWS roles,
+#  docker image name and push,
+#  secrets
+#  github repo to be added by infra team,
+#  user to be created in airflow by infra team
+# Add CI for PyPi and testing
+# Release 0.0.1 in pypi
+
+# Cookiecutter
+# Remove all lib stuff
+# Update CI
+# Use 0.0.1 here instead.
+# Update examples with create_task
+
+# Test on windows
+# Add tests
+# Use pixi
+# Model deployment
+# K8s pod-spec
+# stage-in/stage-out
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: lightblue
+      accent: purple
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: lightblue
+      accent: lime
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bcdev/gaiaflow
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_root_toc_entry: true
+            show_root_heading: true
+            show_source: true
+            heading_level: 2
+            annotations_path: brief
+            members_order: source
