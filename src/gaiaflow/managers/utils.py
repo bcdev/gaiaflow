@@ -227,6 +227,7 @@ def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
         raise FileNotFoundError(f"{user_project_path} not found")
     version = get_gaialfow_version()
     project_name = str(user_project_path).split("/")[-1]
+
     gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
 
     return gaiaflow_path, user_project_path
