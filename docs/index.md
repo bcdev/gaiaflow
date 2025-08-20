@@ -205,7 +205,8 @@ gaiaflow prod-local create-secret -p . --name <your-secret-name> --data SOME_KEY
      - Runs tasks as **Kubernetes pods in Minikube**.
      - Requires `image`
      - You can pass in `env_vars` and/or `secrets` if any. 
-     - For creating secrets in your minikube cluster, (coming soon, `Talk to Tejas`)
+     - For creating secrets in your minikube cluster _(coming soon)_
+
    
 Quick rule of thumb:
 
