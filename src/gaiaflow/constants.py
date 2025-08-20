@@ -82,3 +82,5 @@ RESOURCE_PROFILES = {
         "limit_gpu": "1",
     },
 }
+
+DEFAULT_IMAGE_NAME = "user-image:v1"
