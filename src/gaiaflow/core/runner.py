@@ -86,19 +86,3 @@ def _write_xcom_result(result: Any) -> None:
 
 if __name__ == "__main__":
     run()
-
-# wsl --install -d Ubuntu-20.04
-
-# wsl -d Ubuntu-20.04
-
-# In docker settings -> genereal -> use wsl, resource -> wsl intergartion -> enable ubunutu
-
-# Add your user to the docker group
-# sudo usermod -aG docker $USER
-
-# Apply the group change immediately
-# newgrp docker
-
-# Or alternatively, log out and back in to WSL2
-# exit
-# Then start WSL2 again: wsl -d Ubuntu-20.04

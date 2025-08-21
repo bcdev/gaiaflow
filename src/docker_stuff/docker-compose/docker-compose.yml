@@ -30,7 +30,6 @@ x-airflow-common:
 
     PYTHONNOUSERSITE: 1
 
-    # TODO: Figure out for windows (maybe tcp://host.docker.internal:2375?)
     DOCKER_HOST: unix:///var/run/docker.sock
 #    DOCKER_HOST: tcp://host.docker.internal:2375
 

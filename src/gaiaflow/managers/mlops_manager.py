@@ -308,10 +308,6 @@ class MlopsManager(BaseGaiaflowManager):
         kube_config_path = (self.gaiaflow_path.resolve() / "docker_stuff" / "kube_config_inline").as_posix()
         new_volumes.append(f"{kube_config_path}:/home/airflow/.kube/config")
 
-        # new_volumes.append(
-        #     f"{self.gaiaflow_path.as_posix() / 'docker_stuff'}/kube_config_inline:/home/airflow/.kube/config"
-        # )
-
         entrypoint_path = (
                     self.gaiaflow_path.resolve() / "docker_stuff" / "docker-compose" / "entrypoint.sh").as_posix()
         new_volumes.append(f"{entrypoint_path}:/opt/airflow/entrypoint.sh")
@@ -323,15 +319,7 @@ class MlopsManager(BaseGaiaflowManager):
         pyproject_path = (self.user_project_path.resolve()  / "pyproject.toml").as_posix()
         new_volumes.append(f"{pyproject_path}:/opt/airflow/pyproject.toml")
 
-        # new_volumes.append(
-        #     f"{self.user_project_path.as_posix()}/pyproject.toml:/opt/airflow/pyproject.toml"
-        # )
-        # TODO: For windows not needed?
         new_volumes.append("/var/run/docker.sock:/var/run/docker.sock")
-        # # TODO: Remove this before publishing .This is only needed for
-        # #  development
-        # new_volumes.append("/home/yogesh/Projects/BC/gaiaflow:/opt/airflow/gaiaflow")
-        new_volumes.append("/mnt/c/Users/yoges/test/gaiaflow:/opt/airflow/gaiaflow")
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes
 
