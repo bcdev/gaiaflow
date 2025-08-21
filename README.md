@@ -16,6 +16,9 @@ It provides an opinionated CLI for managing Airflow, MLflow, and other
 dependencies, abstracting away complex configurations, and giving you 
 a smooth developer experience.
 
+_NOTE: Currently this library is released as an experimental version. Stable 
+releases will follow later_
+
 Gaiaflow is a tool that
 - provides you with a local MLOps infrastructure via a CLI tool with 
 some prerequisites already installed.
