@@ -1,4 +1,4 @@
-## Version 0.0.1 (in development)
+## Version 0.0.1
 
 This is an experimental version. A stable release will follow in the future.
 
@@ -6,5 +6,6 @@ This is an experimental version. A stable release will follow in the future.
 infrastructure.
 * Moved all Docker files from the user’s cookiecutter project into this library.
 * A documentation site has been created.
-
+* Tested on Windows-WSL2-Ubuntu and Linux Ubuntu.
+ 
  
