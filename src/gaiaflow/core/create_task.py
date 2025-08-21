@@ -367,7 +367,7 @@ def create_task(
         env_vars=env_vars,
         retries=retries,
         params=dag_params,
-        mode=mode,
+        mode=gaiaflow_mode,
     )
 
     return operator.create_task()

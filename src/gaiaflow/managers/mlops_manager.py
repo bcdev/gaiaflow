@@ -18,7 +18,7 @@ from gaiaflow.managers.utils import (create_directory, delete_project_state,
                                      find_python_packages,
                                      gaiaflow_path_exists_in_state,
                                      handle_error, log_error, log_info, run,
-                                     save_project_state, set_permissions)
+                                     save_project_state, set_permissions, convert_crlf_to_lf)
 
 _IMAGES = [
     "docker-compose-airflow-apiserver:latest",
@@ -200,16 +200,16 @@ class MlopsManager(BaseGaiaflowManager):
                 "docker",
                 "compose",
                 "-f",
-                f"{self.gaiaflow_path}/docker/docker-compose/docker-compose.yml",
+                f"{self.gaiaflow_path}/docker_stuff/docker-compose/docker-compose.yml",
                 "-f",
-                f"{self.gaiaflow_path}/docker/docker-compose/docker-compose-minikube-network.yml",
+                f"{self.gaiaflow_path}/docker_stuff/docker-compose/docker-compose-minikube-network.yml",
             ]
         else:
             base_cmd = [
                 "docker",
                 "compose",
                 "-f",
-                f"{self.gaiaflow_path}/docker/docker-compose/docker-compose.yml",
+                f"{self.gaiaflow_path}/docker_stuff/docker-compose/docker-compose.yml",
             ]
         if service:
             services = MlopsManager._docker_services_for(service)
@@ -260,9 +260,10 @@ class MlopsManager(BaseGaiaflowManager):
         self.fs.makedirs(self.gaiaflow_path, exist_ok=True)
 
         package_dir = Path(__file__).parent.parent.resolve()
-        docker_dir = package_dir.parent / "docker"
+        docker_dir = package_dir.parent / "docker_stuff"
+        # docker_dir = package_dir / "docker_stuff"
 
-        shutil.copytree(docker_dir, self.gaiaflow_path / "docker", dirs_exist_ok=True)
+        shutil.copytree(docker_dir, self.gaiaflow_path / "docker_stuff", dirs_exist_ok=True)
         shutil.copy(
             self.user_project_path / "environment.yml",
             self.gaiaflow_path / "environment.yml",
@@ -274,7 +275,7 @@ class MlopsManager(BaseGaiaflowManager):
         yaml.preserve_quotes = True
 
         compose_path = (
-            self.gaiaflow_path / "docker" / "docker-compose" / "docker-compose.yml"
+            self.gaiaflow_path / "docker_stuff" / "docker-compose" / "docker-compose.yml"
         )
 
         with open(compose_path) as f:
@@ -287,7 +288,7 @@ class MlopsManager(BaseGaiaflowManager):
             parts = vol.split(":", 1)
             if len(parts) == 2:
                 src, dst = parts
-                src_path = (self.user_project_path / Path(src).name).resolve()
+                src_path = (self.user_project_path / Path(src).name).resolve().as_posix()
                 print("src_path", src_path)
                 new_volumes.append(f"{src_path}:{dst}")
 
@@ -302,22 +303,35 @@ class MlopsManager(BaseGaiaflowManager):
                 child.is_dir() and child.name not in existing_mounts and child.name
             ) in python_packages:
                 dst_path = f"/opt/airflow/{child.name}"
-                new_volumes.append(f"{child.resolve()}:{dst_path}")
+                new_volumes.append(f"{child.resolve().as_posix()}:{dst_path}")
 
-        new_volumes.append(
-            f"{self.gaiaflow_path / 'docker'}/kube_config_inline:/home/airflow/.kube/config"
-        )
-        new_volumes.append(
-            f"{self.gaiaflow_path / 'docker' / 'docker-compose'}/entrypoint.sh:/opt/airflow/entrypoint.sh"
-        )
-        new_volumes.append(
-            f"{self.user_project_path}/pyproject.toml:/opt/airflow/pyproject.toml"
-        )
+        kube_config_path = (self.gaiaflow_path.resolve() / "docker_stuff" / "kube_config_inline").as_posix()
+        new_volumes.append(f"{kube_config_path}:/home/airflow/.kube/config")
+
+        # new_volumes.append(
+        #     f"{self.gaiaflow_path.as_posix() / 'docker_stuff'}/kube_config_inline:/home/airflow/.kube/config"
+        # )
+
+        entrypoint_path = (
+                    self.gaiaflow_path.resolve() / "docker_stuff" / "docker-compose" / "entrypoint.sh").as_posix()
+        new_volumes.append(f"{entrypoint_path}:/opt/airflow/entrypoint.sh")
+
+        # new_volumes.append(
+        #     f"{self.gaiaflow_path.as_posix() / 'docker_stuff' / 'docker-compose'}/entrypoint.sh:/opt/airflow/entrypoint.sh"
+        # )
+
+        pyproject_path = (self.user_project_path.resolve()  / "pyproject.toml").as_posix()
+        new_volumes.append(f"{pyproject_path}:/opt/airflow/pyproject.toml")
+
+        # new_volumes.append(
+        #     f"{self.user_project_path.as_posix()}/pyproject.toml:/opt/airflow/pyproject.toml"
+        # )
         # TODO: For windows not needed?
         new_volumes.append("/var/run/docker.sock:/var/run/docker.sock")
-        # TODO: Remove this before publishing .This is only needed for
-        #  development
-        new_volumes.append("/home/yogesh/Projects/BC/gaiaflow:/opt/airflow/gaiaflow")
+        # # TODO: Remove this before publishing .This is only needed for
+        # #  development
+        # new_volumes.append("/home/yogesh/Projects/BC/gaiaflow:/opt/airflow/gaiaflow")
+        new_volumes.append("/mnt/c/Users/yoges/test/gaiaflow:/opt/airflow/gaiaflow")
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes
 
@@ -325,9 +339,10 @@ class MlopsManager(BaseGaiaflowManager):
             yaml.dump(compose_data, f)
 
         entrypoint_path = (
-            self.gaiaflow_path / "docker" / "docker-compose" / "entrypoint.sh"
+            self.gaiaflow_path / "docker_stuff" / "docker-compose" / "entrypoint.sh"
         )
         set_permissions(entrypoint_path)
+        convert_crlf_to_lf(entrypoint_path)
 
     def cleanup(self):
         try:

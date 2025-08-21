@@ -14,7 +14,7 @@ from gaiaflow.constants import (AIRFLOW_SERVICES, MINIO_SERVICES,
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
 from gaiaflow.managers.utils import (find_python_packages, log_error, log_info,
-                                     run, set_permissions)
+                                     run, set_permissions, is_wsl)
 
 # from gen_docker_image_name import DOCKER_IMAGE_NAME
 
@@ -22,7 +22,7 @@ from gaiaflow.managers.utils import (find_python_packages, log_error, log_info,
 @contextmanager
 def temporary_copy(src: Path, dest: Path):
     print("copying...", src, dest)
-    shutil.copy(src, dest)
+    shutil.copyfile(src, dest)
     try:
         yield
     finally:
@@ -41,8 +41,8 @@ class MinikubeManager(BaseGaiaflowManager):
         local: bool = False,
         **kwargs,
     ):
-        if kwargs:
-            raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
+        # if kwargs:
+        #     raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
         self.minikube_profile = "airflow"
         # TODO: get the docker image name automatically
         self.docker_image_name = "gaiaflow_test_pl:v17"
@@ -99,7 +99,7 @@ class MinikubeManager(BaseGaiaflowManager):
     def start(self):
         if self.force_new:
             self.cleanup()
-        MlopsManager(self.gaiaflow_path, self.user_project_path, action=BaseAction.STOP)
+        MlopsManager.run(gaiaflow_path=self.gaiaflow_path, user_project_path=self.user_project_path, action=BaseAction.STOP)
         log_info(f"Checking Minikube cluster [{self.minikube_profile}] status...")
         result = subprocess.run(
             ["minikube", "status", "--profile", self.minikube_profile],
@@ -113,8 +113,7 @@ class MinikubeManager(BaseGaiaflowManager):
                 f"Minikube cluster [{self.minikube_profile}] is not running. Starting..."
             )
             try:
-                run(
-                    [
+                cmd = [
                         "minikube",
                         "start",
                         "--profile",
@@ -122,7 +121,11 @@ class MinikubeManager(BaseGaiaflowManager):
                         "--driver=docker",
                         "--cpus=4",
                         "--memory=4g",
-                    ],
+                    ]
+                if is_wsl():
+                    cmd.append("--extra-config=kubelet.cgroup-driver=cgroupfs")
+                run(
+                    cmd,
                     f"Error starting minikube profile [{self.minikube_profile}]",
                 )
             except subprocess.CalledProcessError:
@@ -131,9 +134,9 @@ class MinikubeManager(BaseGaiaflowManager):
                 self.start()
 
         self.create_kube_config_inline()
-        MlopsManager(
-            self.gaiaflow_path,
-            self.user_project_path,
+        MlopsManager.run(
+            gaiaflow_path=self.gaiaflow_path,
+            user_project_path=self.user_project_path,
             action=BaseAction.START,
             prod_local=True,
             force_new=self.force_new,
@@ -153,22 +156,31 @@ class MinikubeManager(BaseGaiaflowManager):
     def create_kube_config_inline(self):
         kube_config = Path.home() / ".kube" / "config"
         backup_config = kube_config.with_suffix(".backup")
-        filename = f"{self.gaiaflow_path / 'docker'}/kube_config_inline"
+        filename = f"{self.gaiaflow_path / 'docker_stuff'}/kube_config_inline"
 
-        if self.os_type == "windows" and kube_config.exists():
-            log_info("Detected Windows: patching kube config with host.docker.internal")
+        if kube_config.exists():
             with open(kube_config, "r") as f:
                 config_data = yaml.safe_load(f)
 
             with open(backup_config, "w") as f:
                 yaml.dump(config_data, f)
 
-            for cluster in config_data.get("clusters", []):
-                server = cluster.get("cluster", {}).get("server", "")
-                if "127.0.0.1" in server or "localhost" in server:
-                    cluster["cluster"]["server"] = server.replace(
-                        "127.0.0.1", "host.docker.internal"
-                    ).replace("localhost", "host.docker.internal")
+                for cluster in config_data.get("clusters", []):
+                    if self.os_type == "windows" and kube_config.exists():
+                        log_info("Detected Windows: patching kube config with host.docker.internal")
+                        server = cluster.get("cluster", {}).get("server", "")
+                        if "127.0.0.1" in server or "localhost" in server:
+                            cluster["cluster"]["server"] = server.replace(
+                                "127.0.0.1", "host.docker.internal"
+                            ).replace("localhost", "host.docker.internal")
+
+
+                    elif is_wsl():
+                        log_info("Detected WSL: patching kube config with minikube ip")
+                        # ip = subprocess.check_output(["minikube", "ip", "-p", "airflow"], text=True).strip()
+                        # cluster["cluster"]["server"] = f"https://{ip}:8443"
+                        cluster["cluster"]["server"] = "https://192.168.49.2:8443"
+                        cluster["cluster"]["insecure-skip-tls-verify"] = True
 
             with open(kube_config, "w") as f:
                 yaml.dump(config_data, f)
@@ -186,30 +198,30 @@ class MinikubeManager(BaseGaiaflowManager):
                     "--minify",
                     "--raw",
                 ],
-                cwd=self.gaiaflow_path / "docker",
+                cwd=self.gaiaflow_path / "docker_stuff",
                 stdout=f,
             )
 
         log_info(f"Created kube config inline file {filename}")
 
-        log_info(
-            f"Adding insecure-skip-tls-verfiy for local setup in kube config inline file {filename}"
-        )
-
-        with open(filename, "r") as f:
-            kube_config_data = yaml.safe_load(f)
-
         if self.os_type == "windows":
+            log_info(
+                f"Adding insecure-skip-tls-verfiy for local setup in kube config inline file {filename}"
+            )
+            with open(filename, "r") as f:
+                kube_config_data = yaml.safe_load(f)
+
+
             for cluster in kube_config_data.get("clusters", []):
                 cluster_data = cluster.get("cluster", {})
                 if "insecure-skip-tls-verify" not in cluster_data:
                     cluster_data["insecure-skip-tls-verify"] = True
 
-        log_info(f"Saving kube config inline file {filename}")
-        with open(filename, "w") as f:
-            yaml.safe_dump(kube_config_data, f, default_flow_style=False)
+            log_info(f"Saving kube config inline file {filename}")
+            with open(filename, "w") as f:
+                yaml.safe_dump(kube_config_data, f, default_flow_style=False)
 
-        if self.os_type == "windows" and backup_config.exists():
+        if (self.os_type == "windows" or is_wsl()) and backup_config.exists():
             shutil.copy(backup_config, kube_config)
             backup_config.unlink()
             log_info("Reverted kube config to original state.")
@@ -255,7 +267,7 @@ class MinikubeManager(BaseGaiaflowManager):
         print("Dockerfile updated with COPY statements.")
 
     def build_docker_image(self):
-        dockerfile_path = self.gaiaflow_path / "docker" / "user-package" / "Dockerfile"
+        dockerfile_path = self.gaiaflow_path / "docker_stuff" / "user-package" / "Dockerfile"
         if not (dockerfile_path.exists()):
             log_error(f"Dockerfile not found at {dockerfile_path}")
             return

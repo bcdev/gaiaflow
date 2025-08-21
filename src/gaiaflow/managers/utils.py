@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -133,7 +134,7 @@ def check_structure(base_path: Path, structure: dict) -> bool:
 
 def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) -> bool:
     REQUIRED_STRUCTURE = {
-        "docker": {
+        "docker_stuff": {
             "docker-compose": [
                 "docker-compose.yml",
                 "docker-compose-minikube-network.yml",
@@ -226,13 +227,36 @@ def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
     if not user_project_path.exists():
         raise FileNotFoundError(f"{user_project_path} not found")
     version = get_gaialfow_version()
-    project_name = str(user_project_path).split("/")[-1]
-    gaiaflow_path = Path(f"/tmp/gaiaflow-{version}-{project_name}")
+    # project_name = str(user_project_path).split("/")[-1]
+    project_name = user_project_path.name
+    tmp_dir = Path(tempfile.gettempdir())
+    gaiaflow_path =  tmp_dir / f"gaiaflow-{version}-{project_name}"
 
     return gaiaflow_path, user_project_path
 
 
-if __name__ == "__main__":
-    print(
-        gaiaflow_path_exists_in_state(Path("/tmp/gaiaflow-0.0.1.dev0-tech_talk_demo"))
-    )
+def convert_crlf_to_lf(file_path: str):
+    """
+    Converts a file from Windows-style CRLF line endings to Unix-style LF line endings.
+
+    Args:
+        file_path (str): Path to the file to convert.
+    """
+    with open(file_path, "rb") as f:
+        content = f.read()
+
+    # Replace CRLF (\r\n) with LF (\n)
+    new_content = content.replace(b"\r\n", b"\n")
+
+    with open(file_path, "wb") as f:
+        f.write(new_content)
+
+    print(f"Converted {file_path} to LF line endings.")
+
+
+def is_wsl() -> bool:
+    try:
+        with open("/proc/version", "r") as f:
+            return "microsoft" in f.read().lower()
+    except FileNotFoundError:
+        return False

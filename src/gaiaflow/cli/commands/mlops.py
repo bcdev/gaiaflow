@@ -198,8 +198,8 @@ def restart(
     else:
         typer.echo("Stopping all services")
         imports.MlopsManager.run(
-            Path(gaiaflow_path),
-            Path(user_project_path),
+            gaiaflow_path=Path(gaiaflow_path),
+            user_project_path=Path(user_project_path),
             force_new=force_new,
             action=imports.BaseAction.RESTART,
             cache=cache,

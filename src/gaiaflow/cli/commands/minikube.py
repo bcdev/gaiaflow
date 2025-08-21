@@ -49,7 +49,7 @@ def start(
     imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
-        action=imports.BaseAction.START2,
+        action=imports.BaseAction.START,
         force_new=force_new,
     )
 

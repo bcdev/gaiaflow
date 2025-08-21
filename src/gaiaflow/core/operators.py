@@ -274,6 +274,7 @@ class DockerTaskOperator(ProdLocalTaskOperator):
             auto_remove="success",
             command=["python", "-m", "runner"],
             docker_url="unix://var/run/docker.sock",
+            # docker_url="tcp://host.docker.internal:2375",
             environment=combined_env,
             network_mode="docker-compose_ml-network",
             mount_tmp_dir=False,

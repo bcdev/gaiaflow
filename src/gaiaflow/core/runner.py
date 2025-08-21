@@ -49,13 +49,18 @@ def run(
     print(f"Running {func_path} with args: {args} and kwargs :{kwargs}")
     result = func(*args, **kwargs)
     print("Function result:", result)
-    if mode == "prod" or mode == "prod_local_minikube":
+    print("mode::::", mode, type(mode))
+    if mode == "prod" or mode == "prod_local":
         # This is needed when we use KubernetesPodOperator and want to
         # share information via XCOM.
         _write_xcom_result(result)
-    if mode == "prod_local_docker":
+    if mode == "dev_docker":
+        print("inside dev_docker condition")
         with open("/tmp/script.out", "wb+") as tmp:
             pickle.dump(result, tmp)
+        # print("printing result now:::")
+        # print(json.dumps(result))
+
     return result
 
 
@@ -67,6 +72,12 @@ def _write_xcom_result(result: Any) -> None:
         with open(f"{xcom_dir}/return.json", "w") as f:
             json.dump(result, f)
 
+        path = "/airflow/xcom/return.json"
+        print("[DEBUG] File exists:", os.path.exists(path))
+        print("[DEBUG] File size:", os.path.getsize(path))
+        with open(path, "r") as f:
+            print("[DEBUG] File contents:", f.read())
+
         print("Result written to XCom successfully")
     except Exception as e:
         print(f"Failed to write XCom result: {e}")
@@ -75,3 +86,19 @@ def _write_xcom_result(result: Any) -> None:
 
 if __name__ == "__main__":
     run()
+
+# wsl --install -d Ubuntu-20.04
+
+# wsl -d Ubuntu-20.04
+
+# In docker settings -> genereal -> use wsl, resource -> wsl intergartion -> enable ubunutu
+
+# Add your user to the docker group
+# sudo usermod -aG docker $USER
+
+# Apply the group change immediately
+# newgrp docker
+
+# Or alternatively, log out and back in to WSL2
+# exit
+# Then start WSL2 again: wsl -d Ubuntu-20.04

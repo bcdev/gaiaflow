@@ -2,7 +2,7 @@ x-airflow-common:
   &airflow-common
   build:
     context: ../../
-    dockerfile: "./docker/airflow/Dockerfile"
+    dockerfile: "./docker_stuff/airflow/Dockerfile"
   environment:
     &airflow-common-env
     # NOTE: The following secret can be commited to .git as it is only for local development.
@@ -32,6 +32,7 @@ x-airflow-common:
 
     # TODO: Figure out for windows (maybe tcp://host.docker.internal:2375?)
     DOCKER_HOST: unix:///var/run/docker.sock
+#    DOCKER_HOST: tcp://host.docker.internal:2375
 
   user: "${AIRFLOW_UID:-50000}:0"
 
@@ -74,8 +75,8 @@ services:
 
   mlflow:
     build:
-      context: ../../docker
-      dockerfile: "../docker/mlflow/Dockerfile"
+      context: ..
+      dockerfile: "../docker_stuff/mlflow/Dockerfile"
     container_name: mlflow
     ports:
       - 5000:5000
