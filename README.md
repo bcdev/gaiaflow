@@ -1,5 +1,6 @@
 # Gaiaflow
 
+![PyPI - Version](https://img.shields.io/pypi/v/gaiaflow)
 [![Pixi Badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json)](https://pixi.sh)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json)](https://github.com/charliermarsh/ruff)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://bcdev.github.io/gaiaflow/)

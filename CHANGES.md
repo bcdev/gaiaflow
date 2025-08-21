@@ -1,3 +1,7 @@
+## Version 0.0.2
+
+* **Chore**: Update `pyproject.toml` to include `README.md` and necessary links.
+
 ## Version 0.0.1
 
 This is an experimental version. A stable release will follow in the future.
