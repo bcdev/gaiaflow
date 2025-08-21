@@ -99,10 +99,13 @@ data, models, and logging** (metrics, params, and artifacts to MLflow).
     - Learn how to use MLflow for experiment tracking.  
     - Perform inference on MLflow-logged models.  
 - If your data comes from S3 (hosted by BC), it’s best to **download a small 
-sample** and upload it to your local S3 storage (MinIO) for development and testing.  
+sample** and upload it to your local S3 storage (MinIO) for development and testing.
+_NOTE: This is recommended because there are egress-costs (costs that occur when 
+the data is pulled out from the AWS ecosystem) for everytime you pull the data._
 - For local datasets, upload them to MinIO as well. Later, when your workflow
 moves to production, ensure the data is available in S3.  
-`Talk to Tejas about uploading data to S3`
+`aws s3 sync /path/to/source /path/to/target --delete`
+Use `--delete` if you want the target to look exactly as the source
 ---
 
 #### 2. Refactor to Production Code
@@ -168,7 +171,7 @@ it inside a Docker environment:
 gaiaflow dev dockerize -p .
 ```
 
-- This builds an image for your package `Talk to Tejas`.
+- This builds an image for your package
 - Use the generated image name in the `image` parameter of `create_task`.
 - Pass environment variables via the `env_vars` parameter.
 - Set `mode = "dev_docker"` and trigger your workflow again.

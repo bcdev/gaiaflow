@@ -16,8 +16,6 @@ from gaiaflow.managers.mlops_manager import MlopsManager
 from gaiaflow.managers.utils import (find_python_packages, log_error, log_info,
                                      run, set_permissions, is_wsl)
 
-# from gen_docker_image_name import DOCKER_IMAGE_NAME
-
 
 @contextmanager
 def temporary_copy(src: Path, dest: Path):
@@ -39,15 +37,18 @@ class MinikubeManager(BaseGaiaflowManager):
         force_new: bool = False,
         prune: bool = False,
         local: bool = False,
+        image_name: str = "",
         **kwargs,
     ):
         # if kwargs:
         #     raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
         self.minikube_profile = "airflow"
         # TODO: get the docker image name automatically
-        self.docker_image_name = "gaiaflow_test_pl:v17"
+        #  For CI, get the package name, version and create repository. See
+        #  in test-airflow-ci test_ecr_push.yml
         self.os_type = platform.system().lower()
         self.local = local
+        self.image_name = image_name
 
         super().__init__(
             gaiaflow_path=gaiaflow_path,
@@ -278,15 +279,16 @@ class MinikubeManager(BaseGaiaflowManager):
         )
         runner_src = Path(__file__).parent.parent.resolve() / "core" / "runner.py"
         runner_dest = self.user_project_path / "runner.py"
+
         with temporary_copy(runner_src, runner_dest):
             if self.local:
-                log_info(f"Building Docker image [{self.docker_image_name}] locally")
+                log_info(f"Building Docker image [{self.image_name}] locally")
                 run(
                     [
                         "docker",
                         "build",
                         "-t",
-                        self.docker_image_name,
+                        self.image_name,
                         "-f",
                         dockerfile_path,
                         self.user_project_path,
@@ -297,7 +299,7 @@ class MinikubeManager(BaseGaiaflowManager):
                 set_permissions("/var/run/docker.sock", 0o666)
             else:
                 log_info(
-                    f"Building Docker image [{self.docker_image_name}] in minikube context"
+                    f"Building Docker image [{self.image_name}] in minikube context"
                 )
                 result = subprocess.run(
                     [
@@ -324,7 +326,7 @@ class MinikubeManager(BaseGaiaflowManager):
                         "docker",
                         "build",
                         "-t",
-                        self.docker_image_name,
+                        self.image_name,
                         "-f",
                         dockerfile_path,
                         self.user_project_path,

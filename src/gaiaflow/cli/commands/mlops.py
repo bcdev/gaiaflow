@@ -5,7 +5,7 @@ from typing import List
 import fsspec
 import typer
 
-from gaiaflow.constants import Service
+from gaiaflow.constants import Service, DEFAULT_IMAGE_NAME
 
 app = typer.Typer()
 fs = fsspec.filesystem("file")
@@ -240,6 +240,8 @@ def cleanup(
 @app.command(help="Containerize your package into a docker image locally.")
 def dockerize(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
+    image_name: str = typer.Option(DEFAULT_IMAGE_NAME, "--image-name", "-i",
+                                   help=("Name of your image.")),
 ):
     imports = load_imports()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
@@ -260,6 +262,7 @@ def dockerize(
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
         local=True,
+        image_name=image_name
     )
 
 

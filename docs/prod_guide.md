@@ -142,21 +142,21 @@ You’ll need to configure the following secrets in your repository:
 
 ### 3. Task Secrets
 Any **secrets required by your tasks** must also be made available to the cluster running Airflow.  
-For this step, `Talk to Tejas`
-
+_(coming soon)_
 ---
 
-### 4. GitHub Release Workflow
-When you create a **GitHub release**, the following steps are triggered automatically:  
+### 4. GitHub Release
 
--  A Docker image is built and pushed to **AWS ECR**  
--  Your DAGs are uploaded to **S3**  
--  A **dispatch event** is sent to the CDR  
--  CDR pulls DAGs from S3  
--  Airflow reads DAGs from the CDR  
+To enable Airflow running in production to access your DAGs and your
+task packaged as an image, you must make a release following semantic versioning.
 
-For this to work, your team should provide you with an **AWS Role** that allows CI to push to ECR and S3.  
-Add this role as a **GitHub repository secret** so your CI can use it.  
+To release your package, you can do it via Github UI.
+
+To make the release work successfully, you have to request the AWS access
+credentials from the infra team.
+
+Add this as a **GitHub repository secret** so your CI can use it.  
+
 
 ---
 
