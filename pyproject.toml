@@ -1,7 +1,7 @@
 [project]
 name = "gaiaflow"
 requires-python = ">= 3.11"
-version = "0.0.1"
+version = "0.0.2"
 description = "Local-first MLOps infrastructure python tool that simplifies the process of building, testing, and deploying ML workflows."
 authors = [{name = "Yogesh Kumar Baljeet Singh", email = "yogesh.baljeetsingh@brockmann-consult.de"}]
 dependencies = [
@@ -17,6 +17,13 @@ dependencies = [
     "apache-airflow-providers-docker>=4.4.2,<5",
     "mlflow>=3.2.0,<4",
 ]
+readme= "README.md"
+
+[project.urls]
+Documentation = "https://bcdev.github.io/gaiaflow/"
+Repository = "https://github.com/bcdev/gaiaflow"
+Issues = "https://github.com/bcdev/gaiaflow/issues"
+Changelog = "https://github.com/bcdev/gaiaflow/blob/main/CHANGES.md"
 
 [build-system]
 build-backend = "hatchling.build"
