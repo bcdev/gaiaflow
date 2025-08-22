@@ -1,0 +1,994 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+        <link rel="next" href="start/">
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>GaiaFlow - MLOps tool streamlining Earth Observation ML projects.</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="lightblue" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gaiaflow-documentation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." class="md-header__button md-logo" aria-label="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GaiaFlow - MLOps tool streamlining Earth Observation ML projects.
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="lightblue" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="lightblue" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/bcdev/gaiaflow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    bc-dev/gaiaflow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="dev_guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User guide - dev and dev_docker
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="prod_guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User guide - prod_local and prod
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="cli_ref/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." class="md-nav__button md-logo" aria-label="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    GaiaFlow - MLOps tool streamlining Earth Observation ML projects.
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bcdev/gaiaflow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    bc-dev/gaiaflow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gaiaflow-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gaiaflow-Core
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gaiaflow-Core">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fromtask" class="md-nav__link">
+    <span class="md-ellipsis">
+      FromTask
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices-for-passing-values-from-one-task-to-another" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices for passing values from one task to another
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gaiaflow-behaviour-by-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gaiaflow behaviour by mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      User workflow:
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User guide - dev and dev_docker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="prod_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User guide - prod_local and prod
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli_ref/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="gaiaflow-documentation">Gaiaflow Documentation</h1>
+<p><strong>Gaiaflow</strong> is a <strong>local-first MLOps infrastructure tool</strong> that simplifies the process 
+of building, testing, and deploying ML workflows.
+It provides an opinionated CLI for managing Airflow, MLflow, and other 
+dependencies, abstracting away complex configurations, and giving you a smooth 
+developer experience.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Local MLOps Infrastructure</strong> via CLI with pre-installed prerequisites.</li>
+<li><strong>Simplified Airflow + <a href="https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html">Xcom</a>
+  Integration</strong> with an easy interface for DAG creation.</li>
+<li><a href="https://github.com/bcdev/gaiaflow-cookiecutter"><strong>Cookiecutter template</strong></a> for project scaffolding with standardized structure.</li>
+<li><strong>State-of-the-art services</strong> provided:<ul>
+<li>Apache Airflow</li>
+<li>MLflow</li>
+<li>MinIO</li>
+<li>JupyterLab</li>
+</ul>
+</li>
+<li><strong>Containerization</strong> support to package workflow steps as python packages in 
+  Docker images.</li>
+<li><strong>Deployment support</strong>:<ul>
+<li>Local development</li>
+<li>Minikube production-like testing locally</li>
+</ul>
+</li>
+<li><strong>Future roadmap</strong>:<ul>
+<li>Model deploy locally and in production</li>
+<li>Streamlined production deployment documentation</li>
+<li>Centralized DAG repository for CI/CD pipelines</li>
+<li>Private onboarding steps for users</li>
+</ul>
+</li>
+</ul>
+<h2 id="gaiaflow-core">Gaiaflow-Core</h2>
+<p>Gaiaflow library provides a simplified interface to create airflow tasks:</p>
+<p><code>from gaiaflow.core.create_task import create_task</code></p>
+<p>The <code>create_task</code> function is a high-level abstraction on top of 
+Apache Airflow operators.</p>
+<p>This interface makes it easy and intuitive to develop a DAG in Airflow without
+worrying about the complexities of Airflow concepts and configurations about 
+running them in different environments allowing you to define tasks for
+your DAGs in a uniform way.</p>
+<p>Instead of writing different operator classes manually for development, 
+containers, or production deployments, <code>create_task</code> 
+automatically selects the correct operator and applies consistent configuration
+based on the <code>mode</code> argument.</p>
+<p>It supports function execution via a dotted and colon string 
+(e.g. <code>my_package.module:function</code>) with args/kwargs in any of the supported
+modes without changing the user code.</p>
+<p>It is configurable with:</p>
+<ul>
+<li>Docker images</li>
+<li>Secrets</li>
+<li>Environment variables</li>
+<li>Retry policies</li>
+<li>Airflow params</li>
+</ul>
+<p>Arguments for: <code>create_task</code></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>task_id</strong></td>
+<td><code>str</code></td>
+<td>–</td>
+<td>Unique identifier for the task in the DAG.</td>
+</tr>
+<tr>
+<td><strong>func_path</strong></td>
+<td><code>str</code></td>
+<td>–</td>
+<td>Path to the Python function to execute. Format: <code>"module:function_name"</code>.</td>
+</tr>
+<tr>
+<td><strong>func_args</strong></td>
+<td><code>list</code></td>
+<td><code>[]</code></td>
+<td>Positional arguments for the function. The user can also provide output from upstream tasks as args input using the <code>FromTask</code> class. Usage shown below.</td>
+</tr>
+<tr>
+<td><strong>func_kwargs</strong></td>
+<td><code>dict</code></td>
+<td><code>{}</code></td>
+<td>Keyword arguments to pass into the function. The user can also provide output from upstream tasks as kwargs input using the <code>FromTask</code> class. Usage shown below.</td>
+</tr>
+<tr>
+<td><strong>image</strong></td>
+<td><code>str</code></td>
+<td><code>None</code></td>
+<td>Docker image to run the task in <code>dev_docker</code>, <code>prod_local</code> or <code>prod</code> mode. Ignored in <code>dev</code> mode.</td>
+</tr>
+<tr>
+<td><strong>mode</strong></td>
+<td><code>str</code></td>
+<td><code>"dev"</code></td>
+<td>Execution mode. Must be one of: <code>["dev", "dev_docker", "prod_local", "prod"]</code>.</td>
+</tr>
+<tr>
+<td><strong>secrets</strong></td>
+<td><code>list</code></td>
+<td><code>None</code></td>
+<td>List of secrets (e.g., Kubernetes secrets) required by the task in <code>prod_local</code> or <code>prod</code> mode.</td>
+</tr>
+<tr>
+<td><strong>env_vars</strong></td>
+<td><code>dict</code></td>
+<td><code>{}</code></td>
+<td>Environment variables to inject into the task. Can be used in <code>dev_docker</code>, <code>prod_local</code> or <code>prod</code> mode.</td>
+</tr>
+<tr>
+<td><strong>retries</strong></td>
+<td><code>int</code></td>
+<td><code>3</code></td>
+<td>Number of times to retry the task on failure.</td>
+</tr>
+<tr>
+<td><strong>dag</strong></td>
+<td><code>airflow.DAG</code></td>
+<td><code>None</code></td>
+<td>Optional reference to the DAG object. Used to inherit DAG-level params. Should be passed if <code>params</code> are defined in your DAG</td>
+</tr>
+</tbody>
+</table>
+<h4 id="fromtask"><code>FromTask</code></h4>
+<p>When building workflows with Gaiaflow, tasks often depend on the <strong>output of a
+previous task</strong>.</p>
+<p>The FromTask helper makes this easy: it allows you to pull values from upstream 
+tasks and use them as arguments in downstream tasks.</p>
+<p><strong>What It Does</strong>
+- Provides a simple way to pass values between tasks without writing manual 
+<a href="https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html">XCom</a> 
+logic.
+- Works seamlessly inside <code>func_args</code> and <code>func_kwargs</code> of <code>create_task</code>.
+- Lets you specify:
+  - <strong>Which task</strong> to pull from (task)
+  - <strong>Which key</strong> inside the upstream task’s return dictionary to extract (key)</p>
+<p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
+<span class="kn">from</span> <span class="nn">airflow.utils.task_group</span> <span class="kn">import</span> <span class="n">TaskGroup</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">gaiaflow.core.create_task</span> <span class="kn">import</span> <span class="n">create_task</span>
+<span class="kn">from</span> <span class="nn">gaiaflow.core.operators</span> <span class="kn">import</span> <span class="n">FromTask</span>
+
+<span class="n">default_args</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;airflow&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">MODE</span> <span class="o">=</span> <span class="s2">&quot;dev&quot;</span>  <span class="c1"># or &quot;dev_docker&quot;, &quot;prod_local&quot;, &quot;prod&quot;</span>
+
+<span class="k">with</span> <span class="n">DAG</span><span class="p">(</span>
+    <span class="s2">&quot;my_training_dag&quot;</span><span class="p">,</span>
+    <span class="n">default_args</span><span class="o">=</span><span class="n">default_args</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Example DAG using create_task&quot;</span><span class="p">,</span>
+    <span class="n">schedule</span><span class="o">=</span><span class="s2">&quot;0 12 * * *&quot;</span><span class="p">,</span>
+    <span class="n">start_date</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">catchup</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ml&quot;</span><span class="p">,</span> <span class="s2">&quot;gaiaflow&quot;</span><span class="p">],</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="s2">&quot;mnist&quot;</span><span class="p">},</span> <span class="c1"># This will be available to your task via </span>
+                                    <span class="c1"># `kwargs[params]`</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">dag</span><span class="p">:</span>
+
+    <span class="k">with</span> <span class="n">TaskGroup</span><span class="p">(</span><span class="n">group_id</span><span class="o">=</span><span class="s2">&quot;training_group&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">trainer</span><span class="p">:</span>
+
+        <span class="n">preprocess</span> <span class="o">=</span> <span class="n">create_task</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;preprocess_data&quot;</span><span class="p">,</span>
+            <span class="n">func_path</span><span class="o">=</span><span class="s2">&quot;my_package:preprocess&quot;</span><span class="p">,</span>
+            <span class="n">func_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/data/raw&quot;</span><span class="p">},</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">MODE</span><span class="p">,</span>
+            <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">train</span> <span class="o">=</span> <span class="n">create_task</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;train_model&quot;</span><span class="p">,</span>
+            <span class="n">func_path</span><span class="o">=</span><span class="s2">&quot;my_package:train&quot;</span><span class="p">,</span>
+            <span class="n">func_kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> 
+                <span class="c1"># The key `preprocessed_path` is the kwarg expected by the train method</span>
+                <span class="s2">&quot;preprocessed_path&quot;</span><span class="p">:</span> <span class="n">FromTask</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="s2">&quot;training_group.preprocess_data&quot;</span><span class="p">,</span> <span class="c1"># This tells which task to pull the value from</span>
+                    <span class="n">key</span><span class="o">=</span><span class="s2">&quot;preprocessed_path&quot;</span><span class="p">,</span> <span class="c1"># This tells that we want to extract the value of `preprocessed_path`. </span>
+                    <span class="c1"># The previous task must make sure that they return a dict with `preprocessed_path` in it</span>
+                    <span class="c1"># like return {&quot;preprocessed_path&quot;: processed_path}.</span>
+                <span class="p">)},</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">MODE</span><span class="p">,</span>
+            <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">evaluate</span> <span class="o">=</span> <span class="n">create_task</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;evaluate_model&quot;</span><span class="p">,</span>
+            <span class="n">func_path</span><span class="o">=</span><span class="s2">&quot;my_package:evaluate&quot;</span><span class="p">,</span>
+            <span class="n">func_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="s2">&quot;f1&quot;</span><span class="p">]},</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">MODE</span><span class="p">,</span>
+            <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">preprocess</span> <span class="o">&gt;&gt;</span> <span class="n">train</span> <span class="o">&gt;&gt;</span> <span class="n">evaluate</span>
+</code></pre></div>
+<h4 id="best-practices-for-passing-values-from-one-task-to-another">Best Practices for passing values from one task to another</h4>
+<ul>
+<li>Always make your task functions return a <strong>dictionary of literals</strong>. This ensures 
+  downstream tasks can pull values by key.</li>
+<li>Use clear, descriptive keys like <code>"preprocessed_path"</code>, <code>"model_path"</code>, <code>"metrics"</code>.</li>
+</ul>
+<h3 id="gaiaflow-behaviour-by-mode">Gaiaflow behaviour by <code>mode</code></h3>
+<p>The <code>mode</code> argument in <code>create_task</code> controls <strong>where and how your function runs</strong>. 
+Internally, each mode maps to a different Airflow operator, with 
+environment-specific defaults for networking, MLflow, MinIO, and execution backend.</p>
+<ol>
+<li><code>dev</code> → <strong>Local Python execution</strong><ul>
+<li>Airflow Operator: <code>ExternalPythonOperator</code></li>
+<li>Runs your function directly on the <strong>Python environment</strong> created for you in 
+   the docker containers using your dependencies.</li>
+<li>Ignores the <code>image</code>, <code>secrets</code> and <code>env_vars</code> params.</li>
+<li>Uses your local <code>.env</code> file for environment variables.</li>
+<li>You will be using this mode most of the time for iteration, development 
+   and debugging.</li>
+</ul>
+</li>
+<li><code>dev_docker</code> → <strong>Local Docker container execution</strong><ul>
+<li>Airflow Operator: <code>DockerOperator</code></li>
+<li>Runs your function inside a <strong>Docker container</strong></li>
+<li>Requires <code>image</code> parameter</li>
+<li>You can pass in <code>env_vars</code> which are then available as environment 
+    variables.</li>
+<li>This mode is useful when you want to test the docker image locally 
+    before moving to Kubernetes which helps you in catching bugs early on.</li>
+</ul>
+</li>
+<li><code>prod_local</code> → Simulates production on your machine using <strong>Kubernetes via Local Minikube</strong><ul>
+<li>Operator: <code>KubernetesPodOperator</code></li>
+<li>Runs tasks as <strong>Kubernetes pods in Minikube</strong>.</li>
+<li>Requires <code>image</code></li>
+<li>You can pass in <code>env_vars</code> and/or <code>secrets</code> if any. </li>
+<li>For creating secrets in your minikube cluster, you can run
+<div class="highlight"><pre><span></span><code>gaiaflow<span class="w"> </span>prod-local<span class="w"> </span>create-secret<span class="w"> </span>-p<span class="w"> </span>.<span class="w"> </span>--name<span class="w"> </span>&lt;your-secret-name&gt;<span class="w"> </span>--data<span class="w"> </span><span class="nv">SOME_KEY</span><span class="o">=</span>value<span class="w"> </span>--data<span class="w"> </span><span class="nv">SOME_SECRET</span><span class="o">=</span>secret
+</code></pre></div></li>
+</ul>
+</li>
+<li><code>prod</code> → <strong>Kubernetes in-cluster (production)</strong><ul>
+<li>Operator: <code>KubernetesPodOperator</code></li>
+<li>Runs tasks as <strong>Kubernetes pods in Minikube</strong>.</li>
+<li>Requires <code>image</code></li>
+<li>You can pass in <code>env_vars</code> and/or <code>secrets</code> if any. </li>
+<li>For creating secrets in your minikube cluster <em>(coming soon)</em></li>
+</ul>
+</li>
+</ol>
+<p>Quick rule of thumb:</p>
+<ul>
+<li>Use <code>dev</code> for rapid iteration and development.</li>
+<li>Use <code>dev_docker</code> to validate your Docker image locally.</li>
+<li>Use <code>prod_local</code> for testing end-to-end workflows on production-like settngs.</li>
+<li>Use <code>prod</code> for production pipelines in the real cluster.</li>
+</ul>
+<h2 id="user-workflow">User workflow:</h2>
+<p>A typical user workflow could look like this:</p>
+<pre class="mermaid"><code>flowchart TD
+    A1[Start]--&gt; A
+    A{Prerequisites installed except template?}--&gt;|Yes| D{Which OS?}
+    A --&gt;|No| STOP[Stop]
+
+    D --&gt;|Windows WSL2| E1[Install template via conda/mamba/miniforge prompt&lt;br/&gt;then create env in WSL2 CLI + install gaiaflow]
+    D --&gt;|Linux| E2[Install template + create env&lt;br/&gt;then install gaiaflow]
+    E1 --&gt; M
+    E2 --&gt; M
+
+    M[Start services in Dev Mode&lt;br/&gt;`gaiaflow start dev -p .`] --&gt; N[Experiment in JupyterLab if needed]
+
+    N --&gt; P[Refactor to production code&lt;br/&gt;inside Python package and logging experiements to MLFlow and artifacts to S3 MinIO if needed]
+    P --&gt; Q[Write tests in tests/ folder]
+    Q --&gt; R[Create workflows with create_task mode=dev in Airflow]
+    R --&gt; S[Run &amp; monitor DAG in Airflow]
+    S --&gt; T[Track experiments in MLflow &amp; outputs in MinIO]
+    T --&gt; V{Workflow ran successfully in dev mode?}
+    V --&gt; |Yes| V1{Test your package in docker mode?}
+
+    V1 --&gt; |Yes| V2[Change create_task mode to dev_docker and run gaiaflow dev dockerize -p .]
+
+    V2 --&gt; V3{Docker mode ran successfully?}
+    V3 --&gt; |Yes| V4{Move to production?}
+
+    V4 --&gt; |Yes| X1[Start Prod-Local infra&lt;br/&gt;`gaiaflow prod-local start -p .`]
+
+    V --&gt; |No| V5[Fix bugs]
+    V1 --&gt; |No| STOP[Stop]
+    V3 --&gt; |No| V6[Fix bugs]
+    V4 --&gt; |No| STOP[Stop]
+
+    V5 --&gt; R
+    V6 --&gt; V3
+
+    X1 --&gt; X2[Build Docker image&lt;br/&gt;`gaiaflow prod-local dockerize -p .`]
+    X2 --&gt; X3[Configure secrets if needed]
+    X3 --&gt; Y{Prod-Local Success?}
+    Y2 --&gt; Y
+    Y --&gt;|Yes| Y1[Set create_task mode to prod - Local services are not needed anymore]
+    Y1 --&gt; Z[Deploy to Production Cluster ]
+
+    Y --&gt;|No| Y2[Fix the bugs]
+
+    class A,D,U,Y,V,V1,V3,V4 decision;
+    class E1,F1,G1,H1 windows;
+    class E2,G2,H2 linux;
+    class Z prod;
+    class STOP,STOP2 stop;
+
+    classDef decision fill:#FFDD99,stroke:#E67E22,stroke-width:2px;
+    classDef windows fill:#AED6F1,stroke:#2874A6,stroke-width:2px;
+    classDef linux fill:#ABEBC6,stroke:#1E8449,stroke-width:2px;
+    classDef prod fill:#D7BDE2,stroke:#7D3C98,stroke-width:2px;
+    classDef stop fill:#F5B7B1,stroke:#922B21,stroke-width:2px;
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Brockmann Consult
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/bcdev/gaiaflow" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>

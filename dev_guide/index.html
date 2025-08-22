@@ -1,0 +1,1218 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../start/">
+      
+      
+        <link rel="next" href="../prod_guide/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>User guide - dev and dev_docker - GaiaFlow - MLOps tool streamlining Earth Observation ML projects.</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="lightblue" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-guide-dev-and-dev_docker-mode" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." class="md-header__button md-logo" aria-label="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GaiaFlow - MLOps tool streamlining Earth Observation ML projects.
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User guide - dev and dev_docker
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="lightblue" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="lightblue" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/bcdev/gaiaflow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    bc-dev/gaiaflow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User guide - dev and dev_docker
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../prod_guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User guide - prod_local and prod
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../cli_ref/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." class="md-nav__button md-logo" aria-label="GaiaFlow - MLOps tool streamlining Earth Observation ML projects." data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    GaiaFlow - MLOps tool streamlining Earth Observation ML projects.
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bcdev/gaiaflow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    bc-dev/gaiaflow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    User guide - dev and dev_docker
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    User guide - dev and dev_docker
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-git-fundamentals" class="md-nav__link">
+    <span class="md-ellipsis">
+      0. Git Fundamentals.
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-create-and-activate-mamba-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Create and activate mamba environment
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-start-the-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Start the services
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-accessing-the-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Accessing the services
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Development Workflow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Development Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-experiment-in-jupyterlab" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Experiment in JupyterLab
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-refactor-to-production-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Refactor to Production Code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-write-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Write Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-create-your-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Create Your Workflows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-run-and-monitor-your-dag" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Run and Monitor Your DAG
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-validate-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Validate Outputs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-track-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Track Experiments
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-deploy-your-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Deploy Your Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-containerize-for-dev-docker-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Containerize for Dev-Docker Mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-stopping-the-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Stopping the services
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Cleanup
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mlflow-model-deployment-workflow-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      MLFlow Model Deployment workflow locally
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MLFlow Model Deployment workflow locally">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deploying-model-as-a-container-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploying Model as a Container locally
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploying-local-inference-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploying local inference server
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-formatting-practices-while-developing-your-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code formatting practices while developing your package
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code formatting practices while developing your package">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ruff-check-linting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ruff Check (linting)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ruff-check-with-auto-fix-as-much-as-possible" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ruff Check with Auto-fix (as much as possible)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ruff-format-code-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ruff Format (Code formatting)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#isort-import-sorting" class="md-nav__link">
+    <span class="md-ellipsis">
+      isort (import sorting)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-creating-your-python-package-distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Creating your python package distribution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessingviewing-these-services-in-pycharm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Accessing/Viewing these services in Pycharm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Tips
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prod_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User guide - prod_local and prod
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli_ref/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="user-guide-dev-and-dev_docker-mode">User Guide - <code>dev</code> and <code>dev_docker</code> mode</h1>
+<p>Now that you have created a project using the template provided, and have the 
+prerequisites installed please follow the steps below to start your ML journey.</p>
+<h3 id="0-git-fundamentals">0. Git Fundamentals.</h3>
+<p>First, we need to initialize a Git repository to make the initial commit.
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nb">cd</span><span class="w"> </span><span class="o">{{</span><span class="w"> </span>cookiecutter.folder_name<span class="w"> </span><span class="o">}}</span>
+<span class="w">  </span>git<span class="w"> </span>init<span class="w"> </span>-b<span class="w"> </span>main
+<span class="w">  </span>git<span class="w"> </span>add<span class="w"> </span>.
+<span class="w">  </span>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Initial commit&quot;</span>
+</code></pre></div></p>
+<p>Next, create a repository in Github. Once created, copy the remote repository 
+URL. Open the terminal with this project as the current working directory.
+Then, replace the REMOTE-URL with your repo's URL on Github
+<div class="highlight"><pre><span></span><code><span class="w">  </span>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>origin<span class="w"> </span>REMOTE-URL
+</code></pre></div>
+Verify if the remote URL was set correctly.
+<div class="highlight"><pre><span></span><code><span class="w">  </span>git<span class="w"> </span>remote<span class="w"> </span>-v
+</code></pre></div>
+To push the changes, do the following:
+<div class="highlight"><pre><span></span><code><span class="w">  </span>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>main
+</code></pre></div>
+Now you have created a git repository with an initial commit of this project.
+To proceed, create a new branch and start working in it.
+<div class="highlight"><pre><span></span><code>  git checkout -b name-of-your-branch
+</code></pre></div></p>
+<h3 id="1-create-and-activate-mamba-environment">1. Create and activate mamba environment</h3>
+<p>You can update the <code>environment.yml</code> to include your libraries, or you can 
+update them later as well.
+<div class="highlight"><pre><span></span><code><span class="w">  </span>mamba<span class="w"> </span>env<span class="w"> </span>create
+<span class="w">  </span>mamba<span class="w"> </span>activate<span class="w"> </span>&lt;your-env-name&gt;
+</code></pre></div></p>
+<p>If you have created an environment using the steps above, and would like to 
+update the mamba env after adding new libraries in <code>environment.yml</code>, do this:
+<div class="highlight"><pre><span></span><code><span class="w">  </span>mamba<span class="w"> </span>env<span class="w"> </span>update
+</code></pre></div>
+To reflect these changes in Airflow as well, please restart the services as 
+shown in the next step.</p>
+<h3 id="2-start-the-services">2. Start the services</h3>
+<p>The following command spins up a docker compose containers for Airflow, MLFLow, 
+MinIO and a Jupyter Lab service (not in a container).</p>
+<div class="highlight"><pre><span></span><code>gaiaflow<span class="w"> </span>start<span class="w"> </span>dev<span class="w"> </span>-p<span class="w"> </span>.
+</code></pre></div>
+<p>NOTE: You can always choose which services you want to start using 
+<code>--service</code> flag in the command. </p>
+<p>Check <code>gaiaflow start dev --help</code></p>
+<p>For e.g., if you just want to start a JupyterLab for starters, run:</p>
+<div class="highlight"><pre><span></span><code>gaiaflow<span class="w"> </span>start<span class="w"> </span>dev<span class="w"> </span>-p<span class="w"> </span>.<span class="w"> </span>--service<span class="w"> </span>jupyter
+</code></pre></div>
+<h3 id="3-accessing-the-services">3. Accessing the services</h3>
+<p>Wait for the services to start (usually takes around 5 mins for the first run)</p>
+<ul>
+<li>Airflow UI<ul>
+<li>URL: <a href="http://localhost:8080">http://localhost:8080</a></li>
+<li>username: <code>admin</code></li>
+<li>password: <code>admin</code></li>
+</ul>
+</li>
+<li>Mlflow UI<ul>
+<li>URL: <a href="http://localhost:5000">http://localhost:5000</a></li>
+</ul>
+</li>
+<li>Minio (Local S3)<ul>
+<li>URL: <a href="http://localhost:9000">http://localhost:9000</a></li>
+<li>username: <code>minio</code></li>
+<li>password: <code>minio123</code></li>
+</ul>
+</li>
+<li>JupyterLab<ul>
+<li>URL: Opens up JupyterLab automatically at port <strong>8895</strong> 
+  (unless you change it using the <code>-j</code> flag)</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-development-workflow">4. Development Workflow</h3>
+<hr />
+<h4 id="1-experiment-in-jupyterlab">1. Experiment in JupyterLab</h4>
+<ul>
+<li>When services start, <code>JupyterLab</code> opens automatically in your browser.  </li>
+<li>Navigate to the <code>notebooks/</code> folder and create notebooks to <strong>experiment with 
+data, models, and logging</strong> (metrics, params, and artifacts to MLflow).  </li>
+<li>Starter notebooks are available in the <code>examples/</code> folder:  <ul>
+<li>Learn how to use MLflow for experiment tracking.  </li>
+<li>Perform inference on MLflow-logged models.  </li>
+</ul>
+</li>
+<li>If your data comes from S3 (hosted by BC), it’s best to <strong>download a small 
+sample</strong> and upload it to your local S3 storage (MinIO) for development and testing.
+<em>NOTE: This is recommended because there are egress-costs (costs that occur when 
+the data is pulled out from the AWS ecosystem) for everytime you pull the data.</em></li>
+<li>For local datasets, upload them to MinIO as well. Later, when your workflow
+moves to production, ensure the data is available in S3.<br />
+<code>aws s3 sync /path/to/source /path/to/target --delete</code>
+Use <code>--delete</code> if you want the target to look exactly as the source</li>
+</ul>
+<hr />
+<h4 id="2-refactor-to-production-code">2. Refactor to Production Code</h4>
+<ul>
+<li>Once your logic (data ingestion, preprocessing, training, or post-processing) 
+is ready, <strong>refactor it into production code</strong> inside the Python package directory.  </li>
+<li>Modify the files starting with <code>change_me_*</code>.  </li>
+<li>If you included examples when creating this project, explore files starting 
+with <code>example_*</code> for guidance and delete them later on.  </li>
+<li><strong>Important:</strong> Functions intended to run as tasks in Airflow must:  <ul>
+<li>Accept and return small data (strings, numbers, booleans).  </li>
+<li>Return results wrapped in a <code>dict</code>, so downstream tasks can consume them.  </li>
+</ul>
+</li>
+</ul>
+<hr />
+<h4 id="3-write-tests">3. Write Tests</h4>
+<ul>
+<li>Add tests in the <code>tests/</code> directory to validate:  <ul>
+<li>Data preprocessing methods.  </li>
+<li>Data schemas, transformations, etc.  </li>
+</ul>
+</li>
+<li>Ensure your tests pass (make them green).  </li>
+</ul>
+<hr />
+<h4 id="4-create-your-workflows">4. Create Your Workflows</h4>
+<ul>
+<li>Navigate to the <code>dags/</code> folder and open the <code>change_me_*</code> files.  </li>
+<li>These files include <strong>instructions on how to define DAGs</strong>.  </li>
+<li>If examples are present, check <code>example_*</code> files to learn how DAGs are structured.  </li>
+<li>Workflows are created using the provided <code>create_task</code> function.  </li>
+<li>During early development:  <ul>
+<li>Use <code>mode = "dev"</code>.  </li>
+<li>To pass environment variables, simply add them to your <code>.env</code> file.  </li>
+</ul>
+</li>
+</ul>
+<hr />
+<h4 id="5-run-and-monitor-your-dag">5. Run and Monitor Your DAG</h4>
+<ul>
+<li>Open the <strong>Airflow UI</strong>.  </li>
+<li>Find your DAG and trigger it with the ▶️ <strong>Trigger DAG</strong> button.  </li>
+<li>Monitor execution status and view logs directly in the UI.  </li>
+</ul>
+<hr />
+<h4 id="6-validate-outputs">6. Validate Outputs</h4>
+<ul>
+<li>Check the <strong>MinIO UI</strong> to ensure data and artifacts were generated correctly.  </li>
+</ul>
+<hr />
+<h4 id="7-track-experiments">7. Track Experiments</h4>
+<ul>
+<li>While your model is training, open the <strong>MLflow UI</strong> to track experiments,
+parameters, metrics, and artifacts.  </li>
+</ul>
+<hr />
+<h4 id="8-deploy-your-model">8. Deploy Your Model</h4>
+<ul>
+<li>Once training is complete, deploy your locally to test it using docker or 
+test it directly (see next section for details).   </li>
+</ul>
+<hr />
+<h4 id="9-containerize-for-dev-docker-mode">9. Containerize for Dev-Docker Mode</h4>
+<ul>
+<li>If your DAG works in <code>dev</code> mode, you can containerize your package and test 
+it inside a Docker environment:  </li>
+</ul>
+<div class="highlight"><pre><span></span><code>gaiaflow<span class="w"> </span>dev<span class="w"> </span>dockerize<span class="w"> </span>-p<span class="w"> </span>.
+</code></pre></div>
+<ul>
+<li>This builds an image for your package</li>
+<li>Use the generated image name in the <code>image</code> parameter of <code>create_task</code>.</li>
+<li>Pass environment variables via the <code>env_vars</code> parameter.</li>
+<li>Set <code>mode = "dev_docker"</code> and trigger your workflow again.</li>
+<li>If everything works, you’re ready to test in a <a href="../prod_guide/">production-like setting</a>.</li>
+</ul>
+<p><em>(Note: This step is optional — you can skip directly to production-like testing if preferred.)</em></p>
+<hr />
+<h3 id="5-stopping-the-services">5. Stopping the services</h3>
+<p>You should stop these container services when you're done working with your 
+project, need to free up system resources, or want to apply some 
+updates. To gracefully stop the services, run this in the terminal where you
+started them:</p>
+<div class="highlight"><pre><span></span><code>gaiaflow<span class="w"> </span>dev<span class="w"> </span>stop<span class="w"> </span>-p<span class="w"> </span>.
+</code></pre></div>
+<h3 id="6-cleanup">6. Cleanup</h3>
+<p>When you docker a lot on your local system to build images, it caches the 
+layers that it builds and overtime, this takes up a lot of memory. 
+To remove the cache, run this:</p>
+<div class="highlight"><pre><span></span><code>gaiaflow<span class="w"> </span>dev<span class="w"> </span>cleanup<span class="w"> </span>-p<span class="w"> </span>.
+</code></pre></div>
+<h2 id="mlflow-model-deployment-workflow-locally">MLFlow Model Deployment workflow locally</h2>
+<p>Once you have a model trained, you can deploy it locally either as
+container or serve it directly from MinIO S3.
+We recommend to deploy it as a container as this makes sure that it has its 
+own environment for serving.</p>
+<h3 id="deploying-model-as-a-container-locally">Deploying Model as a Container locally</h3>
+<p>Since we have been working with docker containers so far, all the environment 
+variables have been set for them, but now as we need to deploy them,
+we would need to export a few variables so that MLFLow has access to them and 
+can pull the required models from MinIO S3.</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">MLFLOW_TRACKING_URI</span><span class="o">=</span>http://127.0.0.1:5000<span class="w"> </span>
+<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">MLFLOW_S3_ENDPOINT_URL</span><span class="o">=</span>http://127.0.0.1:9000<span class="w"> </span>
+<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>minio
+<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>minio123
+</code></pre></div>
+<p>Once we have this variables exported, find out the <code>run_id</code> or the <code>s3_path</code> of 
+the model you 
+want to deploy from the MLFlow UI and run the following command:</p>
+<p><div class="highlight"><pre><span></span><code><span class="w">  </span>mlflow<span class="w"> </span>models<span class="w"> </span>build-docker<span class="w"> </span>-m<span class="w"> </span>runs:/&lt;run-id&gt;/model<span class="w"> </span>-n<span class="w"> </span>&lt;name-of-your-container&gt;<span class="w"> </span>--enable-mlserver<span class="w"> </span>--env-manager<span class="w"> </span>conda
+</code></pre></div>
+or 
+<div class="highlight"><pre><span></span><code><span class="w">  </span>mlflow<span class="w"> </span>models<span class="w"> </span>build-docker<span class="w"> </span>-m<span class="w"> </span>&lt;s3_path&gt;<span class="w"> </span>-n<span class="w"> </span>&lt;name-of-your-container&gt;<span class="w"> </span>--enable-mlserver<span class="w"> </span>--env-manager<span class="w"> </span>conda
+</code></pre></div></p>
+<p>After this finishes, you can run the docker container by:</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span>docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span><span class="m">5002</span>:8080<span class="w"> </span>&lt;name-of-your-container&gt;<span class="w"> </span>
+</code></pre></div>
+<p>Now you have an endpoint ready at <code>127.0.0.1:5002</code>.</p>
+<p>Have a look at <code>notebooks/examples/mlflow_local_deploy_inference.ipynb</code> for an 
+example on how to get the predictions.</p>
+<h3 id="deploying-local-inference-server">Deploying local inference server</h3>
+<p>Prerequisites</p>
+<ul>
+<li><a href="https://github.com/pyenv/pyenv-installer">Pyenv</a></li>
+<li>Make sure standard libraries in linux are upto date.
+  <div class="highlight"><pre><span></span><code>sudo apt-get update
+sudo apt-get install -y build-essential
+sudo apt-get install --reinstall libffi-dev
+</code></pre></div></li>
+<li>Run these commands to export the AWS (Local Minio server running)
+  <div class="highlight"><pre><span></span><code><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>minio<span class="w"> </span>
+<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>minio123
+<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">MLFLOW_S3_ENDPOINT_URL</span><span class="o">=</span>http://127.0.0.1:9000
+</code></pre></div></li>
+<li>Now we are ready for local inference server. Run this after replacing the 
+required stuff
+    <div class="highlight"><pre><span></span><code>mlflow<span class="w"> </span>models<span class="w"> </span>serve<span class="w"> </span>-m<span class="w"> </span>s3://mlflow/0/&lt;run_id&gt;/artifacts/&lt;model_name&gt;<span class="w"> </span>-h<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>-p<span class="w"> </span><span class="m">3333</span>
+</code></pre></div></li>
+<li>We can now run inference against this server on the <code>/invocations</code> endpoint,</li>
+<li>Have a look at <code>notebooks/examples/mlflow_local_deploy_inference.ipynb</code> for an 
+example on how to get the predictions.</li>
+</ul>
+<h2 id="testing">Testing</h2>
+<p>The template package comes with an initial template suite of tests. 
+Please update these tests after you update the code in your package.</p>
+<p>To test your dags along with your package, run this:</p>
+<p>In Windows:
+<div class="highlight"><pre><span></span><code><span class="nb">set</span><span class="w"> </span><span class="nv">AIRFLOW_CONFIG</span><span class="o">=</span>%cd%<span class="se">\a</span>irflow_test.cfg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>--ignore<span class="o">=</span>logs
+</code></pre></div></p>
+<p>In Linux:
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">AIRFLOW_CONFIG</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/airflow_test.cfg
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code>pytest
+</code></pre></div>
+<h2 id="code-formatting-practices-while-developing-your-package">Code formatting practices while developing your package</h2>
+<h3 id="ruff-check-linting">Ruff Check (linting)</h3>
+<div class="highlight"><pre><span></span><code>ruff<span class="w"> </span>check<span class="w"> </span>.
+</code></pre></div>
+<h3 id="ruff-check-with-auto-fix-as-much-as-possible">Ruff Check with Auto-fix (as much as possible)</h3>
+<div class="highlight"><pre><span></span><code>ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w">  </span>--fix
+</code></pre></div>
+<h3 id="ruff-format-code-formatting">Ruff Format (Code formatting)</h3>
+<div class="highlight"><pre><span></span><code>ruff<span class="w"> </span>format<span class="w"> </span>.
+</code></pre></div>
+<h3 id="isort-import-sorting">isort (import sorting)</h3>
+<div class="highlight"><pre><span></span><code>isort.<span class="w"> </span>
+</code></pre></div>
+<h2 id="optional-creating-your-python-package-distribution">(Optional) Creating your python package distribution</h2>
+<p>There are two options:</p>
+<ol>
+<li>You can use the provided CI workflow <code>.github/workflows/publish.yml</code> which 
+   is triggered everytime you create a <code>Release</code>. If you choose this method, 
+   please add <code>PYPI_API_TOKEN</code> to the secrets for this repository.
+   (or)</li>
+<li>You can do it manually as shown below:</li>
+</ol>
+<p>First update the <code>pyproject.toml</code> as required for your package.</p>
+<p>Then install the <a href="https://build.pypa.io/en/latest/">PyPi build</a> if you 
+dont have already have it.
+<div class="highlight"><pre><span></span><code><span class="w">  </span>pip<span class="w"> </span>install<span class="w"> </span>build
+</code></pre></div></p>
+<p>Then from the root of this project, run:
+<div class="highlight"><pre><span></span><code><span class="w">  </span>python<span class="w"> </span>-m<span class="w"> </span>build
+</code></pre></div></p>
+<p>Once this command runs successfully, you can install your package using:
+<div class="highlight"><pre><span></span><code><span class="w">  </span>pip<span class="w"> </span>install<span class="w"> </span>dist/your-package
+</code></pre></div></p>
+<p>If you would like to upload your package to PyPi, follow the steps below:
+1. Install <code>twine</code>
+<div class="highlight"><pre><span></span><code><span class="w">  </span>pip<span class="w"> </span>install<span class="w"> </span>twine
+</code></pre></div>
+2. Register yourself at PyPi if you have not already. Create an API token that 
+you will use for uploading it to PyPi
+3. Run this and enter your username and API token when prompted
+<div class="highlight"><pre><span></span><code><span class="w">  </span>twine<span class="w"> </span>upload<span class="w"> </span>dist/*
+</code></pre></div>
+4. Now your package should have been uploaded to PyPi.
+5. You can test it by:
+<div class="highlight"><pre><span></span><code><span class="w">  </span>pip<span class="w"> </span>install<span class="w"> </span>your-package
+</code></pre></div></p>
+<h2 id="accessingviewing-these-services-in-pycharm">Accessing/Viewing these services in Pycharm</h2>
+<p>If you are a Pycharm user, you are amazing!</p>
+<p>If not, please consider using it as it provides a lot of functionalities in 
+its community version.</p>
+<p>Now, let's use one of its features called Services. It is a small hexagonal 
+button
+with the play icon inside it. You will find it in one of the tool windows.</p>
+<p>When you open it, you can add services like Docker and Kubernetes. But for this 
+framework, we only need Docker.</p>
+<p>To view the docker service here, first we need to install the Docker Plugin in 
+Pycharm.</p>
+<p>To do so, <code>PyCharm settings</code> -&gt; <code>Plugins</code> -&gt; Install Docker plugin from 
+marketplace</p>
+<p>Then, reopen the services window, and when you add a new service, you will find 
+Docker.</p>
+<p>Just use the default settings.</p>
+<h2 id="troubleshooting-tips">Troubleshooting Tips</h2>
+<ul>
+<li>If you get Port already in use, change it with -j or free the port.</li>
+<li>Use <code>-v</code> to clean up Docker volumes if service states become inconsistent.</li>
+<li>Logs are saved in the logs/ directory.</li>
+<li>Please make sure that none of the <code>__init__.py</code> files are
+completely empty as this creates some issues with
+mlflow logging. You can literally just add a <code>#</code> to the
+<code>__init__.py</code> file. This is needed because while serializing
+the files, empty files have 0 bytes of content and that
+creates issues with the urllib3 upload to S3 (this
+happens inside MLFlow)</li>
+<li>If there are any errors in using the Minikube manager, try restarting it
+by <code>python minikube_manager.py --restart</code> followed by 
+<code>python mlops_manager.py --restart</code> to make sure that the changes are synced.</li>
+<li>If you face an issue with pyenv as such:
+<code>python-build: defintion not found: 3.12.9</code>
+then update your python-build definitions by:
+<code>cd ~/.pyenv/plugins/python-build &amp;&amp; git pull</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Brockmann Consult
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/bcdev/gaiaflow" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>
