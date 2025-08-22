@@ -49,17 +49,13 @@ def run(
     print(f"Running {func_path} with args: {args} and kwargs :{kwargs}")
     result = func(*args, **kwargs)
     print("Function result:", result)
-    print("mode::::", mode, type(mode))
     if mode == "prod" or mode == "prod_local":
         # This is needed when we use KubernetesPodOperator and want to
         # share information via XCOM.
         _write_xcom_result(result)
     if mode == "dev_docker":
-        print("inside dev_docker condition")
         with open("/tmp/script.out", "wb+") as tmp:
             pickle.dump(result, tmp)
-        # print("printing result now:::")
-        # print(json.dumps(result))
 
     return result
 
