@@ -125,7 +125,7 @@ class DevTaskOperator(BaseTaskOperator):
         from gaiaflow.core.runner import run
 
         args, kwargs = self.resolve_args_kwargs()
-        kwargs["params"] = self.params
+        kwargs["params"] = dict(self.params)
         op_kwargs = {"func_path": self.func_path, "args": args, "kwargs": kwargs}
 
         return ExternalPythonOperator(
@@ -135,6 +135,8 @@ class DevTaskOperator(BaseTaskOperator):
             op_kwargs=op_kwargs,
             do_xcom_push=True,
             retries=self.retries,
+            expect_airflow=False,
+            expect_pendulum=False,
         )
 
 
