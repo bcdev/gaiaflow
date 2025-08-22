@@ -19,7 +19,7 @@ RUN micromamba --version
 USER airflow
 COPY environment.yml .
 
-RUN micromamba env create -f environment.yml -n default_user_env
+RUN micromamba env create -f environment.yml -n default_user_env && rm environment.yml
 RUN micromamba env list
 
 RUN micromamba shell init -s bash

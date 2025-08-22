@@ -5,20 +5,31 @@ import shutil
 import socket
 import subprocess
 from pathlib import Path
+from typing import Set
 
 import fsspec
 import psutil
+import yaml
 from ruamel.yaml import YAML
 
-from gaiaflow.constants import (AIRFLOW_SERVICES, GAIAFLOW_STATE_FILE,
-                                MINIO_SERVICES, MLFLOW_SERVICES, Action,
-                                BaseAction, Service)
+from gaiaflow.constants import (
+    AIRFLOW_SERVICES,
+    GAIAFLOW_STATE_FILE,
+    MINIO_SERVICES,
+    MLFLOW_SERVICES,
+    Action,
+    BaseAction,
+    Service,
+    ExtendedAction,
+)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.utils import (create_directory, delete_project_state,
                                      find_python_packages,
                                      gaiaflow_path_exists_in_state,
                                      handle_error, log_error, log_info, run,
-                                     save_project_state, set_permissions, convert_crlf_to_lf)
+                                     save_project_state, set_permissions, convert_crlf_to_lf,
+                                     env_exists,
+                                     update_micromamba_env_in_docker)
 
 _IMAGES = [
     "docker-compose-airflow-apiserver:latest",
@@ -30,6 +41,13 @@ _IMAGES = [
     "minio/mc:latest",
     "minio/minio:latest",
     "postgres:13",
+]
+
+_AIRFLOW_CONTAINERS = [
+    "airflow-apiserver",
+    "airflow-scheduler",
+    "airflow-dag-processor",
+    "airflow-triggerer"
 ]
 
 _VOLUMES = [
@@ -54,10 +72,16 @@ class MlopsManager(BaseGaiaflowManager):
         force_new: bool = False,
         prune: bool = False,
         prod_local: bool = False,
+        user_env_name: str | None = None,
+        env_tool: str = "mamba",
         **kwargs,
     ):
         if kwargs:
             raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
+        if env_tool not in ("mamba", "conda"):
+            raise ValueError(
+                f"Invalid env_tool: {env_tool}. Must be 'mamba' or 'conda'"
+            )
         self.service = service
         self.cache = cache
         self.jupyter_port = jupyter_port
@@ -67,6 +91,8 @@ class MlopsManager(BaseGaiaflowManager):
         self.project_root = Path(__file__).resolve().parent
         self.fs = fsspec.filesystem("file")
         self.prod_local = prod_local
+        self.user_env_name = user_env_name
+        self.env_tool = env_tool
 
         super().__init__(
             gaiaflow_path=gaiaflow_path,
@@ -89,6 +115,7 @@ class MlopsManager(BaseGaiaflowManager):
             BaseAction.STOP: manager.stop,
             BaseAction.RESTART: manager.restart,
             BaseAction.CLEANUP: manager.cleanup,
+            ExtendedAction.UPDATE_DEPS: manager.update_deps,
         }
 
         try:
@@ -128,6 +155,8 @@ class MlopsManager(BaseGaiaflowManager):
                 "skipping creating new context."
             )
 
+        self._copy_user_env_file()
+
         if self.service == Service.jupyter or self.service == Service.all:
             self._check_port()
 
@@ -137,7 +166,13 @@ class MlopsManager(BaseGaiaflowManager):
                 build_cmd.append("--no-cache")
 
             log_info("Building Docker images")
-            self._docker_compose_action(build_cmd, self.service)
+
+            if self.service == Service.all:
+                self._docker_compose_action(build_cmd, service=None)
+            elif self.service == Service.jupyter:
+                pass
+            else:
+                self._docker_compose_action(build_cmd, self.service)
 
         if self.service == Service.all:
             self._start_jupyter()
@@ -166,6 +201,12 @@ class MlopsManager(BaseGaiaflowManager):
             self._docker_compose_action(down_cmd, self.service)
 
         log_info("Stopped Gaiaflow services successfully")
+
+    @staticmethod
+    def update_deps():
+        log_info("Running update_deps")
+        update_micromamba_env_in_docker(_AIRFLOW_CONTAINERS)
+        log_info("Finished running update_deps")
 
     def _check_port(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -223,9 +264,25 @@ class MlopsManager(BaseGaiaflowManager):
         log_info(f"Running: {' '.join(cmd)}")
         run(cmd, f"Error running docker compose {actions}")
 
+    def get_env_name(self):
+        if self.user_env_name:
+            return self.user_env_name
+
+        ctx_path = Path(self.gaiaflow_path).resolve()
+        env_path = ctx_path / "environment.yml"
+        with open(env_path, "r") as f:
+            env_yml = yaml.safe_load(f)
+        return env_yml.get("name")
+
     def _start_jupyter(self):
-        log_info("Starting Jupyter Lab...")
-        cmd = ["jupyter", "lab", "--ip=0.0.0.0", f"--port={self.jupyter_port}"]
+        env_name = self.get_env_name()
+        if not env_exists(env_name, env_tool=self.env_tool):
+            print(
+                f"Environment {env_name} not found. Run `mamba env create "
+                f"-f environment.yml`?"
+            )
+        cmd = [self.env_tool, "run", "-n", env_name, "jupyter", "lab", "--ip=0.0.0.0", f"--port={self.jupyter_port}"]
+        log_info("Starting Jupyter Lab..." + " ".join(cmd))
         subprocess.Popen(cmd)
 
     def _update_env_file_with_airflow_uid(self, env_path):
@@ -256,6 +313,13 @@ class MlopsManager(BaseGaiaflowManager):
 
         log_info(f"Set AIRFLOW_UID={uid} in {env_path}")
 
+    def _copy_user_env_file(self):
+        log_info("Copying user environment.yml file")
+        shutil.copy(
+            self.user_project_path / "environment.yml",
+            self.gaiaflow_path / "environment.yml",
+        )
+
     def _create_gaiaflow_context(self):
         self.fs.makedirs(self.gaiaflow_path, exist_ok=True)
 
@@ -264,10 +328,7 @@ class MlopsManager(BaseGaiaflowManager):
         # docker_dir = package_dir / "docker_stuff"
 
         shutil.copytree(docker_dir, self.gaiaflow_path / "docker_stuff", dirs_exist_ok=True)
-        shutil.copy(
-            self.user_project_path / "environment.yml",
-            self.gaiaflow_path / "environment.yml",
-        )
+        self._copy_user_env_file()
         log_info(f"Gaiaflow context created at {self.gaiaflow_path}")
 
     def _update_files(self):
@@ -319,6 +380,12 @@ class MlopsManager(BaseGaiaflowManager):
         pyproject_path = (self.user_project_path.resolve()  / "pyproject.toml").as_posix()
         new_volumes.append(f"{pyproject_path}:/opt/airflow/pyproject.toml")
 
+        pyproject_path = (
+            self.user_project_path.resolve() / "environment.yml"
+        ).as_posix()
+
+        new_volumes.append(f"{pyproject_path}:/opt/airflow/environment.yml")
+
         new_volumes.append("/var/run/docker.sock:/var/run/docker.sock")
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes
@@ -334,7 +401,8 @@ class MlopsManager(BaseGaiaflowManager):
 
     def cleanup(self):
         try:
-            log_info("Attempting deleting Gaiaflow context at {self.gaiaflow_path}")
+            log_info(f"Attempting deleting Gaiaflow context at {
+            self.gaiaflow_path}")
             shutil.rmtree(self.gaiaflow_path)
         except FileNotFoundError:
             log_error(f"Gaiaflow context not found at {self.gaiaflow_path}")
@@ -370,3 +438,8 @@ class MlopsManager(BaseGaiaflowManager):
                     f"Error removing volume {volume}",
                 )
         log_info("Gaiaflow cleanup complete!")
+
+    def _get_valid_actions(self) -> Set[Action]:
+        base_actions = super()._get_valid_actions()
+        extra_actions = {ExtendedAction.UPDATE_DEPS}
+        return base_actions | extra_actions

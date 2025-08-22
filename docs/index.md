@@ -215,3 +215,64 @@ Quick rule of thumb:
 - Use `prod_local` for testing end-to-end workflows on production-like settngs.
 - Use `prod` for production pipelines in the real cluster.
 
+## User workflow:
+A typical user workflow could look like this:
+
+```mermaid
+flowchart TD
+    A1[Start]--> A
+    A{Prerequisites installed except template?}-->|Yes| D{Which OS?}
+    A -->|No| STOP[Stop]
+
+    D -->|Windows WSL2| E1[Install template via conda/mamba/miniforge prompt<br/>then create env in WSL2 CLI + install gaiaflow]
+    D -->|Linux| E2[Install template + create env<br/>then install gaiaflow]
+    E1 --> M
+    E2 --> M
+
+    M[Start services in Dev Mode<br/>`gaiaflow start dev -p .`] --> N[Experiment in JupyterLab if needed]
+    
+    N --> P[Refactor to production code<br/>inside Python package and logging experiements to MLFlow and artifacts to S3 MinIO if needed]
+    P --> Q[Write tests in tests/ folder]
+    Q --> R[Create workflows with create_task mode=dev in Airflow]
+    R --> S[Run & monitor DAG in Airflow]
+    S --> T[Track experiments in MLflow & outputs in MinIO]
+    T --> V{Workflow ran successfully in dev mode?}
+    V --> |Yes| V1{Test your package in docker mode?}
+    
+    V1 --> |Yes| V2[Change create_task mode to dev_docker and run gaiaflow dev dockerize -p .]
+    
+    V2 --> V3{Docker mode ran successfully?}
+    V3 --> |Yes| V4{Move to production?}
+    
+    V4 --> |Yes| X1[Start Prod-Local infra<br/>`gaiaflow prod-local start -p .`]
+    
+    V --> |No| V5[Fix bugs]
+    V1 --> |No| STOP[Stop]
+    V3 --> |No| V6[Fix bugs]
+    V4 --> |No| STOP[Stop]
+
+    V5 --> R
+    V6 --> V3
+ 
+    X1 --> X2[Build Docker image<br/>`gaiaflow prod-local dockerize -p .`]
+    X2 --> X3[Configure secrets if needed]
+    X3 --> Y{Prod-Local Success?}
+    Y2 --> Y
+    Y -->|Yes| Y1[Set create_task mode to prod - Local services are not needed anymore]
+    Y1 --> Z[Deploy to Production Cluster ]
+
+    Y -->|No| Y2[Fix the bugs]
+
+    class A,D,U,Y,V,V1,V3,V4 decision;
+    class E1,F1,G1,H1 windows;
+    class E2,G2,H2 linux;
+    class Z prod;
+    class STOP,STOP2 stop;
+
+    classDef decision fill:#FFDD99,stroke:#E67E22,stroke-width:2px;
+    classDef windows fill:#AED6F1,stroke:#2874A6,stroke-width:2px;
+    classDef linux fill:#ABEBC6,stroke:#1E8449,stroke-width:2px;
+    classDef prod fill:#D7BDE2,stroke:#7D3C98,stroke-width:2px;
+    classDef stop fill:#F5B7B1,stroke:#922B21,stroke-width:2px;
+
+```

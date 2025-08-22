@@ -52,11 +52,15 @@ def start(
     jupyter_port: int = typer.Option(
         8895, "--jupyter-port", "-j", help="Port for JupyterLab"
     ),
-    delete_volume: bool = typer.Option(
-        False, "--delete-volume", "-v", help="Delete volumes on shutdown"
-    ),
     docker_build: bool = typer.Option(
         False, "--docker-build", "-b", help="Force Docker image build"
+    ),
+    user_env_name: str = typer.Option(
+        None, "--env", "-e", help="Provide conda/mamba environment name for "
+                                 "Jupyter Lab to run. If not set, it will use the name from your environment.yml file."
+    ),
+    env_tool: "str" = typer.Option(
+        "mamba", "--env-tool", "-t", help="Which tool to use for running your Jupyter lab. Options: mamba, conda",
     ),
 ):
     imports = load_imports()
@@ -84,8 +88,9 @@ def start(
                 service=s,
                 cache=cache,
                 jupyter_port=jupyter_port,
-                delete_volume=delete_volume,
                 docker_build=docker_build,
+                user_env_name=user_env_name,
+                env_tool=env_tool,
             )
     else:
         typer.echo("Running start with all services")
@@ -97,8 +102,9 @@ def start(
             service=Service.all,
             cache=cache,
             jupyter_port=jupyter_port,
-            delete_volume=delete_volume,
             docker_build=docker_build,
+            user_env_name=user_env_name,
+            env_tool=env_tool,
         )
 
 
@@ -265,8 +271,31 @@ def dockerize(
         image_name=image_name
     )
 
+@app.command(help="Update the dependencies for the Airflow tasks. This command "
+                  "synchronizes the running container environments with the project's"
+                  "`environment.yml`. Make sure you have updated "
+                  "`environment.yml` before running"
+                  "this, as the container environments are updated based on "
+                  "its contents.")
+def update_deps(
+    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
+):
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        imports.save_project_state(user_project_path, gaiaflow_path)
+    else:
+        typer.echo(
+            f"Gaiaflow project already exists at {gaiaflow_path}. Skipping "
+            f"saving to the state"
+        )
 
-
-# TODO: To let the user update the current infra with new local packages or
-#  mounts as they want it.
-# def update():
+    typer.echo("Running update_deps")
+    imports.MlopsManager.run(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=imports.ExtendedAction.UPDATE_DEPS,
+    )
