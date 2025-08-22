@@ -1,3 +1,16 @@
+## Version 0.0.3 (in development)
+
+* **Bug fix** - `ExternalPythonOperator` does not need Airflow in external environment now.
+
+* Jupyter Lab can now be started in any conda/mamba environment via Gaiaflow.
+
+* Added user workflow diagram in the `Overview` page of the documentation.
+
+* Added a new subcommand `gaiaflow dev update-deps --help` to update
+  dependencies on the fly in Airflow containers for workflow tasks.
+
+
+
 ## Version 0.0.2
 
 * **Chore**: Update `pyproject.toml` to include `README.md` and necessary links.
