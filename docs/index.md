@@ -216,7 +216,7 @@ Quick rule of thumb:
 - Use `prod` for production pipelines in the real cluster.
 
 ## User workflow:
-A typical userflow could look like this:
+A typical user workflow could look like this:
 
 ```mermaid
 flowchart TD

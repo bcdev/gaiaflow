@@ -207,6 +207,8 @@ This means now you have successfully installed Docker.
 
 ### Gaiaflow Installation
 
+In Windows, install `gaiaflow` using WSL2 terminal in a new mamba/conda environment.
+
 You can install Gaiaflow directly via pip:
 
 `pip install gaiaflow`
