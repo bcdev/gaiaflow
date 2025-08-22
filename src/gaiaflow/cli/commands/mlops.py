@@ -1,6 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List, Literal
+from typing import List
 
 import fsspec
 import typer
