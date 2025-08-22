@@ -5,22 +5,31 @@ import shutil
 import socket
 import subprocess
 from pathlib import Path
+from typing import Set
 
 import fsspec
 import psutil
 import yaml
 from ruamel.yaml import YAML
 
-from gaiaflow.constants import (AIRFLOW_SERVICES, GAIAFLOW_STATE_FILE,
-                                MINIO_SERVICES, MLFLOW_SERVICES, Action,
-                                BaseAction, Service)
+from gaiaflow.constants import (
+    AIRFLOW_SERVICES,
+    GAIAFLOW_STATE_FILE,
+    MINIO_SERVICES,
+    MLFLOW_SERVICES,
+    Action,
+    BaseAction,
+    Service,
+    ExtendedAction,
+)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.utils import (create_directory, delete_project_state,
                                      find_python_packages,
                                      gaiaflow_path_exists_in_state,
                                      handle_error, log_error, log_info, run,
                                      save_project_state, set_permissions, convert_crlf_to_lf,
-                                     env_exists)
+                                     env_exists,
+                                     update_micromamba_env_in_docker)
 
 _IMAGES = [
     "docker-compose-airflow-apiserver:latest",
@@ -32,6 +41,13 @@ _IMAGES = [
     "minio/mc:latest",
     "minio/minio:latest",
     "postgres:13",
+]
+
+_AIRFLOW_CONTAINERS = [
+    "airflow-apiserver",
+    "airflow-scheduler",
+    "airflow-dag-processor",
+    "airflow-triggerer"
 ]
 
 _VOLUMES = [
@@ -99,6 +115,7 @@ class MlopsManager(BaseGaiaflowManager):
             BaseAction.STOP: manager.stop,
             BaseAction.RESTART: manager.restart,
             BaseAction.CLEANUP: manager.cleanup,
+            ExtendedAction.UPDATE_DEPS: manager.update_deps,
         }
 
         try:
@@ -184,6 +201,12 @@ class MlopsManager(BaseGaiaflowManager):
             self._docker_compose_action(down_cmd, self.service)
 
         log_info("Stopped Gaiaflow services successfully")
+
+    @staticmethod
+    def update_deps():
+        log_info("Running update_deps")
+        update_micromamba_env_in_docker(_AIRFLOW_CONTAINERS)
+        log_info("Finished running update_deps")
 
     def _check_port(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -357,6 +380,12 @@ class MlopsManager(BaseGaiaflowManager):
         pyproject_path = (self.user_project_path.resolve()  / "pyproject.toml").as_posix()
         new_volumes.append(f"{pyproject_path}:/opt/airflow/pyproject.toml")
 
+        pyproject_path = (
+            self.user_project_path.resolve() / "environment.yml"
+        ).as_posix()
+
+        new_volumes.append(f"{pyproject_path}:/opt/airflow/environment.yml")
+
         new_volumes.append("/var/run/docker.sock:/var/run/docker.sock")
 
         compose_data["x-airflow-common"]["volumes"] = new_volumes
@@ -372,7 +401,8 @@ class MlopsManager(BaseGaiaflowManager):
 
     def cleanup(self):
         try:
-            log_info("Attempting deleting Gaiaflow context at {self.gaiaflow_path}")
+            log_info(f"Attempting deleting Gaiaflow context at {
+            self.gaiaflow_path}")
             shutil.rmtree(self.gaiaflow_path)
         except FileNotFoundError:
             log_error(f"Gaiaflow context not found at {self.gaiaflow_path}")
@@ -408,3 +438,8 @@ class MlopsManager(BaseGaiaflowManager):
                     f"Error removing volume {volume}",
                 )
         log_info("Gaiaflow cleanup complete!")
+
+    def _get_valid_actions(self) -> Set[Action]:
+        base_actions = super()._get_valid_actions()
+        extra_actions = {ExtendedAction.UPDATE_DEPS}
+        return base_actions | extra_actions

@@ -271,8 +271,31 @@ def dockerize(
         image_name=image_name
     )
 
+@app.command(help="Update the dependencies for the Airflow tasks. This command "
+                  "synchronizes the running container environments with the project's"
+                  "`environment.yml`. Make sure you have updated "
+                  "`environment.yml` before running"
+                  "this, as the container environments are updated based on "
+                  "its contents.")
+def update_deps(
+    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
+):
+    imports = load_imports()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        imports.save_project_state(user_project_path, gaiaflow_path)
+    else:
+        typer.echo(
+            f"Gaiaflow project already exists at {gaiaflow_path}. Skipping "
+            f"saving to the state"
+        )
 
-
-# TODO: To let the user update the current infra with new local packages or
-#  mounts as they want it.
-# def update():
+    typer.echo("Running update_deps")
+    imports.MlopsManager.run(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=imports.ExtendedAction.UPDATE_DEPS,
+    )

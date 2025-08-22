@@ -59,15 +59,13 @@ class MinikubeManager(BaseGaiaflowManager):
         )
 
     def _get_valid_actions(self) -> Set[Action]:
-        return {
-            BaseAction.START,
-            BaseAction.STOP,
-            BaseAction.RESTART,
-            BaseAction.CLEANUP,
+        base_actions = super()._get_valid_actions()
+        extra_actions = {
             ExtendedAction.DOCKERIZE,
             ExtendedAction.CREATE_CONFIG,
             ExtendedAction.CREATE_SECRET,
         }
+        return base_actions | extra_actions
 
     @classmethod
     def run(cls, **kwargs):

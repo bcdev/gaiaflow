@@ -19,6 +19,7 @@ class ExtendedAction:
     DOCKERIZE = Action("dockerize")
     CREATE_CONFIG = Action("create_config")
     CREATE_SECRET = Action("create_secret")
+    UPDATE_DEPS = Action("update_deps")
 
 
 GAIAFLOW_CONFIG_DIR = Path.home() / ".gaiaflow"

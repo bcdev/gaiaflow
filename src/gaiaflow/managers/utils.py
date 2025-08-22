@@ -1,7 +1,10 @@
+import docker
 import json
 import subprocess
 import sys
 import tempfile
+from concurrent.futures._base import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
@@ -267,3 +270,40 @@ def env_exists(env_name, env_tool="mamba"):
     )
     envs = json.loads(result.stdout).get("envs", [])
     return any(env_name in env for env in envs)
+
+def update_micromamba_env_in_docker(
+        containers: list[str],
+        env_name: str = "default_user_env",
+        max_workers: int = 4,
+    ):
+    client = docker.from_env()
+
+    def _update_one(cname: str):
+        try:
+            container = client.containers.get(cname)
+        except docker.errors.NotFound:
+            log_error(f"Container '{cname}' not found. Skipping.")
+            return
+
+        cmd = f"micromamba install -y -n {env_name} -f /opt/airflow/environment.yml"
+        log_info(f"[{cname}] Running command: {cmd}")
+        exit_code, output = container.exec_run(cmd)
+
+        if exit_code != 0:
+            log_error(f"[{cname}] micromamba failed: {output.decode()}")
+            return
+
+        log_info(f"[{cname}] Updated successfully.")
+        log_info(output.decode())
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_update_one, cname): cname for cname in containers
+        }
+
+        for future in as_completed(futures):
+            cname = futures[future]
+            try:
+                future.result()
+            except Exception as e:
+                log_error(f"[{cname}] Unexpected error: {e}")
