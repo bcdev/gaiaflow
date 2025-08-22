@@ -1,6 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List
+from typing import List, Literal
 
 import fsspec
 import typer
@@ -52,11 +52,15 @@ def start(
     jupyter_port: int = typer.Option(
         8895, "--jupyter-port", "-j", help="Port for JupyterLab"
     ),
-    delete_volume: bool = typer.Option(
-        False, "--delete-volume", "-v", help="Delete volumes on shutdown"
-    ),
     docker_build: bool = typer.Option(
         False, "--docker-build", "-b", help="Force Docker image build"
+    ),
+    user_env_name: str = typer.Option(
+        None, "--env", "-e", help="Provide conda/mamba environment name for "
+                                 "Jupyter Lab to run. If not set, it will use the name from your environment.yml file."
+    ),
+    env_tool: "str" = typer.Option(
+        "mamba", "--env-tool", "-t", help="Which tool to use for running your Jupyter lab. Options: mamba, conda",
     ),
 ):
     imports = load_imports()
@@ -84,8 +88,9 @@ def start(
                 service=s,
                 cache=cache,
                 jupyter_port=jupyter_port,
-                delete_volume=delete_volume,
                 docker_build=docker_build,
+                user_env_name=user_env_name,
+                env_tool=env_tool,
             )
     else:
         typer.echo("Running start with all services")
@@ -97,8 +102,9 @@ def start(
             service=Service.all,
             cache=cache,
             jupyter_port=jupyter_port,
-            delete_volume=delete_volume,
             docker_build=docker_build,
+            user_env_name=user_env_name,
+            env_tool=env_tool,
         )
 
 

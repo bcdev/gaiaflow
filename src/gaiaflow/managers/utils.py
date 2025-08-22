@@ -260,3 +260,10 @@ def is_wsl() -> bool:
             return "microsoft" in f.read().lower()
     except FileNotFoundError:
         return False
+
+def env_exists(env_name, env_tool="mamba"):
+    result = subprocess.run(
+        [env_tool, "env", "list", "--json"], capture_output=True, text=True
+    )
+    envs = json.loads(result.stdout).get("envs", [])
+    return any(env_name in env for env in envs)
