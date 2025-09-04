@@ -40,3 +40,6 @@ def docker_network_gateway() -> str | None:
     except FileNotFoundError:
         print("Docker command not found. Is Docker installed and in your PATH?")
         return None
+
+if __name__ == "__main__":
+    docker_network_gateway()

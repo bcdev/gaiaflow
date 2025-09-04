@@ -1,3 +1,6 @@
+## Version 0.0.4 (in development)
+
+
 ## Version 0.0.3
 
 * **Bug fix** - `ExternalPythonOperator` does not need Airflow in external environment now.

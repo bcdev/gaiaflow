@@ -144,6 +144,7 @@ class JupyterHelper:
         env_name = self.get_env_name()
         if not env_exists(env_name, env_tool=self.env_tool):
             print(f"Environment {env_name} not found. Run `mamba env create -f environment.yml`?")
+            return
         cmd = [
             self.env_tool, "run", "-n", env_name,
             "jupyter", "lab", "--ip=0.0.0.0", f"--port={self.port}"
