@@ -122,16 +122,31 @@ class BaseTaskOperator:
 
 class DevTaskOperator(BaseTaskOperator):
     def create_task(self):
-        from gaiaflow.core.runner import run
+        import os
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
 
         args, kwargs = self.resolve_args_kwargs()
         kwargs["params"] = dict(self.params)
-        op_kwargs = {"func_path": self.func_path, "args": args, "kwargs": kwargs}
+        op_kwargs = {"func_path": self.func_path, "args": args, "kwargs":
+            kwargs, "current_dir": current_dir}
+
+        def run_wrapper(**op_kwargs):
+            import sys
+
+            sys.path.append(op_kwargs.get("current_dir", ""))
+            from runner import run
+
+            return run(
+                func_path=op_kwargs.get("func_path"),
+                args=op_kwargs.get("args"),
+                kwargs=op_kwargs.get("kwargs"),
+            )
 
         return ExternalPythonOperator(
             task_id=self.task_id,
             python="/home/airflow/.local/share/mamba/envs/default_user_env/bin/python",
-            python_callable=run,
+            python_callable=run_wrapper,
             op_kwargs=op_kwargs,
             do_xcom_push=True,
             retries=self.retries,
@@ -216,7 +231,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             do_xcom_push=True,
             retries=self.retries,
             params=self.params,
-            container_resources=resources,
+            # container_resources=resources,
         )
 
 
