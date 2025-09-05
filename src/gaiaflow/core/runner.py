@@ -9,6 +9,7 @@ import os
 import pickle
 from typing import Any
 
+
 def run(
     func_path: str | None = None,
     args: list | None = None,
@@ -39,22 +40,25 @@ def _extract_params_from_env(prefix="PARAMS_") -> dict[str, str]:
         if k.startswith(prefix)
     }
 
-def _resolve_inputs(func_path: str, args: list[Any], kwargs: dict[Any],
-                   mode: str):
+
+def _resolve_inputs(func_path: str, args: list[Any], kwargs: dict[Any], mode: str):
     if mode == "dev":
         return func_path, args or [], kwargs or {}
-    else: # all other modes (dev_docker, prod_local and prod)
+    else:  # all other modes (dev_docker, prod_local and prod)
         func_path = os.environ.get("FUNC_PATH", func_path)
         args = json.loads(os.environ.get("FUNC_ARGS", "[]"))
         kwargs = json.loads(os.environ.get("FUNC_KWARGS", "{}"))
         kwargs["params"] = _extract_params_from_env()
         return func_path, args, kwargs
 
+
 def _import_function(func_path: str):
     import importlib
+
     module_path, func_name = func_path.rsplit(":", 1)
     module = importlib.import_module(module_path)
     return getattr(module, func_name)
+
 
 def _write_result(result, mode):
     if mode == "prod" or mode == "prod_local":
@@ -62,6 +66,7 @@ def _write_result(result, mode):
     if mode == "dev_docker":
         with open("/tmp/script.out", "wb+") as tmp:
             pickle.dump(result, tmp)
+
 
 def _write_xcom_result(result: Any) -> None:
     try:

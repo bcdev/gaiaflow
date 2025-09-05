@@ -8,13 +8,24 @@ from typing import Any, Set
 
 import yaml
 
-from gaiaflow.constants import (AIRFLOW_SERVICES, MINIO_SERVICES,
-                                MLFLOW_SERVICES, Action, BaseAction,
-                                ExtendedAction)
+from gaiaflow.constants import (
+    AIRFLOW_SERVICES,
+    MINIO_SERVICES,
+    MLFLOW_SERVICES,
+    Action,
+    BaseAction,
+    ExtendedAction,
+)
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
 from gaiaflow.managers.mlops_manager import MlopsManager
-from gaiaflow.managers.utils import (find_python_packages, log_error, log_info,
-                                     run, set_permissions, is_wsl)
+from gaiaflow.managers.utils import (
+    find_python_packages,
+    is_wsl,
+    log_error,
+    log_info,
+    run,
+    set_permissions,
+)
 
 
 @contextmanager
@@ -26,6 +37,7 @@ def temporary_copy(src: Path, dest: Path):
     finally:
         if dest.exists():
             dest.unlink()
+
 
 class MinikubeHelper:
     def __init__(self, profile: str = "airflow"):
@@ -66,11 +78,17 @@ class MinikubeHelper:
 
     def stop(self):
         log_info(f"Stopping minikube profile [{self.profile}]...")
-        run(["minikube", "stop", "--profile", self.profile], f"Error stopping minikube profile [{self.profile}]")
+        run(
+            ["minikube", "stop", "--profile", self.profile],
+            f"Error stopping minikube profile [{self.profile}]",
+        )
 
     def cleanup(self):
         log_info(f"Deleting minikube profile: {self.profile}")
-        run(["minikube", "delete", "--profile", self.profile], f"Error deleting minikube profile [{self.profile}]")
+        run(
+            ["minikube", "delete", "--profile", self.profile],
+            f"Error deleting minikube profile [{self.profile}]",
+        )
 
     def run_cmd(self, args: list[str], **kwargs):
         full_cmd = ["minikube", "-p", self.profile] + args
@@ -78,7 +96,13 @@ class MinikubeHelper:
 
 
 class DockerHelper:
-    def __init__(self, image_name: str, project_path: Path, local: bool, minikube_helper: MinikubeHelper):
+    def __init__(
+        self,
+        image_name: str,
+        project_path: Path,
+        local: bool,
+        minikube_helper: MinikubeHelper,
+    ):
         self.image_name = image_name
         self.project_path = project_path
         self.local = local
@@ -109,17 +133,35 @@ class DockerHelper:
     def _build_local(self, dockerfile_path: Path):
         log_info(f"Building Docker image [{self.image_name}] locally")
         run(
-            ["docker", "build", "-t", self.image_name, "-f", dockerfile_path, self.project_path],
+            [
+                "docker",
+                "build",
+                "-t",
+                self.image_name,
+                "-f",
+                dockerfile_path,
+                self.project_path,
+            ],
             "Error building Docker image locally",
         )
         set_permissions("/var/run/docker.sock", 0o666)
 
     def _build_minikube(self, dockerfile_path: Path):
         log_info(f"Building Docker image [{self.image_name}] in Minikube context")
-        result = self.minikube_helper.run_cmd(["docker-env", "--shell", "bash"], stdout=subprocess.PIPE, check=True)
+        result = self.minikube_helper.run_cmd(
+            ["docker-env", "--shell", "bash"], stdout=subprocess.PIPE, check=True
+        )
         env = self._parse_minikube_env(result.stdout.decode())
         run(
-            ["docker", "build", "-t", self.image_name, "-f", dockerfile_path, self.project_path],
+            [
+                "docker",
+                "build",
+                "-t",
+                self.image_name,
+                "-f",
+                dockerfile_path,
+                self.project_path,
+            ],
             "Error building Docker image inside Minikube",
             env=env,
         )
@@ -176,6 +218,7 @@ class DockerHelper:
 
         print("Dockerfile updated with COPY statements.")
 
+
 class KubeConfigHelper:
     def __init__(self, gaiaflow_path: Path, os_type: str):
         self.gaiaflow_path = gaiaflow_path
@@ -213,7 +256,9 @@ class KubeConfigHelper:
             if self.os_type == "windows":
                 server = cluster_info.get("server", "")
                 if "127.0.0.1" in server or "localhost" in server:
-                    cluster_info["server"] = server.replace("127.0.0.1", "host.docker.internal").replace("localhost", "host.docker.internal")
+                    cluster_info["server"] = server.replace(
+                        "127.0.0.1", "host.docker.internal"
+                    ).replace("localhost", "host.docker.internal")
                     cluster_info["insecure-skip-tls-verify"] = True
             elif is_wsl():
                 cluster_info["server"] = "https://192.168.49.2:8443"
@@ -227,11 +272,21 @@ class KubeConfigHelper:
         log_info("Creating kube config inline file...")
         with open(filename, "w") as f:
             subprocess.call(
-                ["minikube", "kubectl", "--", "config", "view", "--flatten", "--minify", "--raw"],
+                [
+                    "minikube",
+                    "kubectl",
+                    "--",
+                    "config",
+                    "view",
+                    "--flatten",
+                    "--minify",
+                    "--raw",
+                ],
                 cwd=self.gaiaflow_path / "docker_stuff",
                 stdout=f,
             )
         log_info(f"Created kube config inline file {filename}")
+
 
 class MinikubeManager(BaseGaiaflowManager):
     def __init__(

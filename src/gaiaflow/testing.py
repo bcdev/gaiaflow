@@ -1,7 +1,7 @@
 import os
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Callable
-from collections.abc import Generator
 
 
 @contextmanager

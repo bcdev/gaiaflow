@@ -19,17 +19,26 @@ from gaiaflow.constants import (
     MLFLOW_SERVICES,
     Action,
     BaseAction,
-    Service,
     ExtendedAction,
+    Service,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
-from gaiaflow.managers.utils import (create_directory, delete_project_state,
-                                     find_python_packages,
-                                     gaiaflow_path_exists_in_state,
-                                     handle_error, log_error, log_info, run,
-                                     save_project_state, set_permissions, convert_crlf_to_lf,
-                                     env_exists,
-                                     update_micromamba_env_in_docker)
+from gaiaflow.managers.utils import (
+    convert_crlf_to_lf,
+    create_directory,
+    delete_project_state,
+    env_exists,
+    find_python_packages,
+    gaiaflow_path_exists_in_state,
+    handle_error,
+    log_error,
+    log_info,
+    run,
+    save_project_state,
+    set_permissions,
+    update_micromamba_env_in_docker,
+)
+
 
 class DockerResources:
     IMAGES = [
@@ -48,7 +57,7 @@ class DockerResources:
         "airflow-apiserver",
         "airflow-scheduler",
         "airflow-dag-processor",
-        "airflow-triggerer"
+        "airflow-triggerer",
     ]
 
     VOLUMES = [
@@ -61,6 +70,7 @@ class DockerResources:
         "mlflow": MLFLOW_SERVICES,
         "minio": MINIO_SERVICES,
     }
+
 
 class DockerHelper:
     def __init__(self, gaiaflow_path: Path, is_prod_local: bool):
@@ -101,10 +111,16 @@ class DockerHelper:
     @staticmethod
     def prune():
         prune_cmds = [
-            (["docker", "builder", "prune", "-a", "-f"], "Error pruning docker build cache"),
+            (
+                ["docker", "builder", "prune", "-a", "-f"],
+                "Error pruning docker build cache",
+            ),
             (["docker", "system", "prune", "-a", "-f"], "Error pruning docker system"),
             (["docker", "volume", "prune", "-a", "-f"], "Error pruning docker volumes"),
-            (["docker", "network", "rm", "docker-compose_ml-network"], "Error removing docker network"),
+            (
+                ["docker", "network", "rm", "docker-compose_ml-network"],
+                "Error removing docker network",
+            ),
         ]
         for cmd, msg in prune_cmds:
             run(cmd, msg)
@@ -116,7 +132,9 @@ class DockerHelper:
 
 
 class JupyterHelper:
-    def __init__(self, port: int, env_tool: str, user_env_name: str | None, gaiaflow_path: Path):
+    def __init__(
+        self, port: int, env_tool: str, user_env_name: str | None, gaiaflow_path: Path
+    ):
         self.port = port
         self.env_tool = env_tool
         self.user_env_name = user_env_name
@@ -143,11 +161,19 @@ class JupyterHelper:
     def start(self):
         env_name = self.get_env_name()
         if not env_exists(env_name, env_tool=self.env_tool):
-            print(f"Environment {env_name} not found. Run `mamba env create -f environment.yml`?")
+            print(
+                f"Environment {env_name} not found. Run `mamba env create -f environment.yml`?"
+            )
             return
         cmd = [
-            self.env_tool, "run", "-n", env_name,
-            "jupyter", "lab", "--ip=0.0.0.0", f"--port={self.port}"
+            self.env_tool,
+            "run",
+            "-n",
+            env_name,
+            "jupyter",
+            "lab",
+            "--ip=0.0.0.0",
+            f"--port={self.port}",
         ]
         log_info("Starting Jupyter Lab..." + " ".join(cmd))
         subprocess.Popen(cmd)
@@ -159,6 +185,7 @@ class JupyterHelper:
         with open(env_path, "r") as f:
             env_yml = yaml.safe_load(f)
         return env_yml.get("name")
+
 
 class MlopsManager(BaseGaiaflowManager):
     """Manager class to Start/Stop/Restart MLOps Docker services."""
@@ -270,8 +297,7 @@ class MlopsManager(BaseGaiaflowManager):
 
     def cleanup(self):
         try:
-            log_info(f"Attempting deleting Gaiaflow context at {
-            self.gaiaflow_path}")
+            log_info(f"Attempting deleting Gaiaflow context at {self.gaiaflow_path}")
             shutil.rmtree(self.gaiaflow_path)
         except FileNotFoundError:
             log_error(f"Gaiaflow context not found at {self.gaiaflow_path}")
@@ -379,7 +405,9 @@ class MlopsManager(BaseGaiaflowManager):
         package_dir = Path(__file__).parent.parent.resolve()
         docker_dir = package_dir.parent / "docker_stuff"
 
-        shutil.copytree(docker_dir, self.gaiaflow_path / "docker_stuff", dirs_exist_ok=True)
+        shutil.copytree(
+            docker_dir, self.gaiaflow_path / "docker_stuff", dirs_exist_ok=True
+        )
         log_info(f"Gaiaflow context created at {self.gaiaflow_path}")
 
     def _collect_volumes(self, compose_data: dict) -> list[str]:
@@ -417,13 +445,14 @@ class MlopsManager(BaseGaiaflowManager):
 
         # Add special mounts for prod_local mode
         kube_config = (
-            (self.gaiaflow_path.resolve() / "docker_stuff" / "kube_config_inline")
-            .as_posix()
-        )
+            self.gaiaflow_path.resolve() / "docker_stuff" / "kube_config_inline"
+        ).as_posix()
         entrypoint = (
-            (self.gaiaflow_path.resolve() / "docker_stuff" / "docker-compose" / "entrypoint.sh")
-            .as_posix()
-        )
+            self.gaiaflow_path.resolve()
+            / "docker_stuff"
+            / "docker-compose"
+            / "entrypoint.sh"
+        ).as_posix()
         pyproject = (self.user_project_path.resolve() / "pyproject.toml").as_posix()
         env_file = (self.user_project_path.resolve() / "environment.yml").as_posix()
 
@@ -442,7 +471,10 @@ class MlopsManager(BaseGaiaflowManager):
         yaml.preserve_quotes = True
 
         compose_path = (
-            self.gaiaflow_path / "docker_stuff" / "docker-compose" / "docker-compose.yml"
+            self.gaiaflow_path
+            / "docker_stuff"
+            / "docker-compose"
+            / "docker-compose.yml"
         )
 
         with open(compose_path) as f:
@@ -461,6 +493,4 @@ class MlopsManager(BaseGaiaflowManager):
         convert_crlf_to_lf(entrypoint_path)
 
     def _get_valid_actions(self) -> Set[Action]:
-        return super()._get_valid_actions() | {
-            ExtendedAction.UPDATE_DEPS
-        }
+        return super()._get_valid_actions() | {ExtendedAction.UPDATE_DEPS}

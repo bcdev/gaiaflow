@@ -5,7 +5,7 @@ from typing import List
 import fsspec
 import typer
 
-from gaiaflow.constants import Service, DEFAULT_IMAGE_NAME
+from gaiaflow.constants import DEFAULT_IMAGE_NAME, Service
 
 app = typer.Typer()
 fs = fsspec.filesystem("file")
@@ -13,11 +13,13 @@ fs = fsspec.filesystem("file")
 
 def load_imports():
     from gaiaflow.constants import BaseAction, ExtendedAction
-    from gaiaflow.managers.mlops_manager import MlopsManager
     from gaiaflow.managers.minikube_manager import MinikubeManager
-    from gaiaflow.managers.utils import (create_gaiaflow_context_path,
-                                         gaiaflow_path_exists_in_state,
-                                         save_project_state)
+    from gaiaflow.managers.mlops_manager import MlopsManager
+    from gaiaflow.managers.utils import (
+        create_gaiaflow_context_path,
+        gaiaflow_path_exists_in_state,
+        save_project_state,
+    )
 
     return SimpleNamespace(
         BaseAction=BaseAction,
@@ -56,11 +58,17 @@ def start(
         False, "--docker-build", "-b", help="Force Docker image build"
     ),
     user_env_name: str = typer.Option(
-        None, "--env", "-e", help="Provide conda/mamba environment name for "
-                                 "Jupyter Lab to run. If not set, it will use the name from your environment.yml file."
+        None,
+        "--env",
+        "-e",
+        help="Provide conda/mamba environment name for "
+        "Jupyter Lab to run. If not set, it will use the name from your environment.yml file.",
     ),
     env_tool: "str" = typer.Option(
-        "mamba", "--env-tool", "-t", help="Which tool to use for running your Jupyter lab. Options: mamba, conda",
+        "mamba",
+        "--env-tool",
+        "-t",
+        help="Which tool to use for running your Jupyter lab. Options: mamba, conda",
     ),
 ):
     imports = load_imports()
@@ -242,12 +250,12 @@ def cleanup(
     )
 
 
-
 @app.command(help="Containerize your package into a docker image locally.")
 def dockerize(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
-    image_name: str = typer.Option(DEFAULT_IMAGE_NAME, "--image-name", "-i",
-                                   help=("Name of your image.")),
+    image_name: str = typer.Option(
+        DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of your image.")
+    ),
 ):
     imports = load_imports()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
@@ -268,15 +276,18 @@ def dockerize(
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
         local=True,
-        image_name=image_name
+        image_name=image_name,
     )
 
-@app.command(help="Update the dependencies for the Airflow tasks. This command "
-                  "synchronizes the running container environments with the project's"
-                  "`environment.yml`. Make sure you have updated "
-                  "`environment.yml` before running"
-                  "this, as the container environments are updated based on "
-                  "its contents.")
+
+@app.command(
+    help="Update the dependencies for the Airflow tasks. This command "
+    "synchronizes the running container environments with the project's"
+    "`environment.yml`. Make sure you have updated "
+    "`environment.yml` before running"
+    "this, as the container environments are updated based on "
+    "its contents."
+)
 def update_deps(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
