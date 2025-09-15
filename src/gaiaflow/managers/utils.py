@@ -225,7 +225,9 @@ def set_permissions(path, mode=0o777):
         fs.chmod(path, mode)
         log_info(f"Set permissions for {path}")
     except Exception:
-        log_info(f"Warning: Could not set permissions for {path}")
+        log_error(f"Warning: Could not set permissions for {path}")
+        log_error(f"Try running this command manually:\n  chmod -R {mode:o} {path}")
+        log_info("Continuing...")
 
 
 def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
@@ -304,3 +306,21 @@ def update_micromamba_env_in_docker(
                 future.result()
             except Exception as e:
                 log_error(f"[{cname}] Unexpected error: {e}")
+
+
+def update_entrypoint_install_path(script_path: str | Path, new_path: str) -> str:
+    """Update the micromamba pip install path in the given bash script."""
+    script_path = Path(script_path)
+    lines = script_path.read_text().splitlines()
+
+    new_lines = []
+    for line in lines:
+        if line.strip().startswith("micromamba run -n default_user_env pip install -e"):
+            line = f'micromamba run -n default_user_env pip install -e {new_path}'
+        new_lines.append(line)
+
+    updated_text = "\n".join(new_lines) + "\n"
+
+    script_path.write_text(updated_text)
+
+    return updated_text

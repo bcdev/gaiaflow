@@ -37,6 +37,7 @@ from gaiaflow.managers.utils import (
     save_project_state,
     set_permissions,
     update_micromamba_env_in_docker,
+    update_entrypoint_install_path,
 )
 
 
@@ -422,24 +423,11 @@ class MlopsManager(BaseGaiaflowManager):
                 )
                 new_volumes.append(f"{src_path}:{dst}")
 
-        # Collect User Python packages from their project directory to mount
-        # them to docker containers
-        existing_mounts = {Path(v.split(":", 1)[0]).name for v in new_volumes}
-        python_packages = find_python_packages(self.user_project_path)
-
         # Set permissions so that docker containers can execute the code in
         # their package
-        for package in python_packages:
-            set_permissions(package, 0o755)
+        set_permissions(self.user_project_path, 0o755)
 
-        for child in self.user_project_path.iterdir():
-            if (
-                child.is_dir()
-                and child.name not in existing_mounts
-                and child.name in python_packages
-            ):
-                dst_path = f"/opt/airflow/{child.name}"
-                new_volumes.append(f"{child.resolve().as_posix()}:{dst_path}")
+        new_volumes.append(f"{self.user_project_path.resolve().as_posix()}:/opt/airflow/{self.user_project_path.name}")
 
         # Add special mounts for prod_local mode
         kube_config = (
@@ -484,6 +472,8 @@ class MlopsManager(BaseGaiaflowManager):
         entrypoint_path = (
             self.gaiaflow_path / "_docker" / "docker-compose" / "entrypoint.sh"
         )
+        update_entrypoint_install_path(entrypoint_path,
+                                       str(self.user_project_path.name))
         set_permissions(entrypoint_path)
         convert_crlf_to_lf(entrypoint_path)
 
