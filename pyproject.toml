@@ -1,7 +1,7 @@
 [project]
 name = "gaiaflow"
 requires-python = ">= 3.11"
-version = "0.0.3"
+version = "0.0.4dev0"
 description = "Local-first MLOps infrastructure python tool that simplifies the process of building, testing, and deploying ML workflows."
 authors = [{name = "Yogesh Kumar Baljeet Singh", email = "yogesh.baljeetsingh@brockmann-consult.de"}]
 dependencies = [

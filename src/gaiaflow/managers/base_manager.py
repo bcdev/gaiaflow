@@ -17,7 +17,7 @@ class BaseGaiaflowManager(ABC):
         valid_actions = self._get_valid_actions()
         if action not in valid_actions:
             valid_names = sorted([a.name for a in valid_actions])
-            raise ValueError(f"Invalid action '{action.name}'. Valid: {valid_names}")
+            raise ValueError(f"Invalid action '{action}'. Valid: {valid_names}")
 
         self.gaiaflow_path = gaiaflow_path
         self.user_project_path = user_project_path

@@ -2,15 +2,15 @@ import json
 import platform
 from datetime import datetime
 
-from airflow.providers.cncf.kubernetes.operators.pod import \
-    KubernetesPodOperator
+from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.providers.standard.operators.python import ExternalPythonOperator
-from kubernetes.client import V1ResourceRequirements
 
-from gaiaflow.constants import (DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
-                                DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
-                                RESOURCE_PROFILES)
+from gaiaflow.constants import (
+    DEFAULT_MINIO_AWS_ACCESS_KEY_ID,
+    DEFAULT_MINIO_AWS_SECRET_ACCESS_KEY,
+    RESOURCE_PROFILES,
+)
 
 from .utils import build_env_from_secrets, inject_params_as_env_vars
 
@@ -122,16 +122,35 @@ class BaseTaskOperator:
 
 class DevTaskOperator(BaseTaskOperator):
     def create_task(self):
-        from gaiaflow.core.runner import run
+        import os
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
 
         args, kwargs = self.resolve_args_kwargs()
         kwargs["params"] = dict(self.params)
-        op_kwargs = {"func_path": self.func_path, "args": args, "kwargs": kwargs}
+        op_kwargs = {
+            "func_path": self.func_path,
+            "args": args,
+            "kwargs": kwargs,
+            "current_dir": current_dir,
+        }
+
+        def run_wrapper(**op_kwargs):
+            import sys
+
+            sys.path.append(op_kwargs.get("current_dir", ""))
+            from runner import run
+
+            return run(
+                func_path=op_kwargs.get("func_path"),
+                args=op_kwargs.get("args"),
+                kwargs=op_kwargs.get("kwargs"),
+            )
 
         return ExternalPythonOperator(
             task_id=self.task_id,
             python="/home/airflow/.local/share/mamba/envs/default_user_env/bin/python",
-            python_callable=run,
+            python_callable=run_wrapper,
             op_kwargs=op_kwargs,
             do_xcom_push=True,
             retries=self.retries,
@@ -191,17 +210,17 @@ class ProdLocalTaskOperator(BaseTaskOperator):
         if profile is None:
             raise ValueError(f"Unknown resource profile: {profile_name}")
 
-        resources = V1ResourceRequirements(
-            requests={
-                "cpu": profile["request_cpu"],
-                "memory": profile["request_memory"],
-            },
-            limits={
-                "cpu": profile["limit_cpu"],
-                "memory": profile["limit_memory"],
-                # "gpu": profile.get["limit_gpu"],
-            },
-        )
+        # resources = V1ResourceRequirements(
+        #     requests={
+        #         "cpu": profile["request_cpu"],
+        #         "memory": profile["request_memory"],
+        #     },
+        #     limits={
+        #         "cpu": profile["limit_cpu"],
+        #         "memory": profile["limit_memory"],
+        #         # "gpu": profile.get["limit_gpu"],
+        #     },
+        # )
 
         return KubernetesPodOperator(
             task_id=self.task_id,
@@ -216,7 +235,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             do_xcom_push=True,
             retries=self.retries,
             params=self.params,
-            container_resources=resources,
+            # container_resources=resources,
         )
 
 

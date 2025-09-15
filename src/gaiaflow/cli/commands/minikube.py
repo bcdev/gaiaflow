@@ -12,11 +12,12 @@ fs = fsspec.filesystem("file")
 
 def load_imports():
     from gaiaflow.constants import BaseAction
-    from gaiaflow.managers.minikube_manager import (ExtendedAction,
-                                                    MinikubeManager)
-    from gaiaflow.managers.utils import (create_gaiaflow_context_path,
-                                         gaiaflow_path_exists_in_state,
-                                         parse_key_value_pairs)
+    from gaiaflow.managers.minikube_manager import ExtendedAction, MinikubeManager
+    from gaiaflow.managers.utils import (
+        create_gaiaflow_context_path,
+        gaiaflow_path_exists_in_state,
+        parse_key_value_pairs,
+    )
 
     return SimpleNamespace(
         BaseAction=BaseAction,
@@ -101,12 +102,14 @@ def restart(
     )
 
 
-@app.command(help="Containerize your package into a docker image inside the "
-                  "minikube cluster.")
+@app.command(
+    help="Containerize your package into a docker image inside the minikube cluster."
+)
 def dockerize(
     project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
-    image_name: str = typer.Option(DEFAULT_IMAGE_NAME, "--image-name", "-i",
-                                   help=("Name of your image.")),
+    image_name: str = typer.Option(
+        DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of your image.")
+    ),
 ):
     imports = load_imports()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
@@ -121,7 +124,7 @@ def dockerize(
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
         local=False,
-        image_name=image_name
+        image_name=image_name,
     )
 
 

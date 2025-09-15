@@ -2382,8 +2382,8 @@ packages:
   timestamp: 1741505873840
 - pypi: ./
   name: gaiaflow
-  version: 0.0.3.dev0
-  sha256: 64847b19a8e8c898e9c712054f2aecbdc022c3a2a8a6584fa7995cb5f7d69067
+  version: 0.0.4.dev0
+  sha256: 5e3ceaa3916b7d3961eb01d16f9b1ee62a9c146a0ae379f3aab37f3fe54b1b78
   requires_dist:
   - typer>=0.16.0,<0.17
   - fsspec>=2025.7.0,<2026

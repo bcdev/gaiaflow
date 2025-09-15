@@ -1,4 +1,3 @@
-import docker
 import json
 import subprocess
 import sys
@@ -8,6 +7,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
+import docker
 import fsspec
 import typer
 
@@ -16,7 +16,7 @@ from gaiaflow.constants import GAIAFLOW_STATE_FILE
 fs = fsspec.filesystem("file")
 
 
-def get_gaialfow_version() -> str:
+def get_gaiaflow_version() -> str:
     try:
         from importlib.metadata import version
 
@@ -44,7 +44,10 @@ def log_info(message: str):
 
 
 def log_error(message: str):
-    print(f"\033[0;31mERROR:\033[0m {message}", file=sys.stderr)
+    print(
+        f"\033[0;31m[{datetime.now().strftime('%H:%M:%S')}]ERROR:\033[0m {message}",
+        file=sys.stderr,
+    )
 
 
 def run(command: list, error_message: str, env=None):
@@ -173,7 +176,7 @@ def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) ->
 
 def delete_project_state(gaiaflow_path: Path):
     state_file = get_state_file()
-    print("state_file", state_file)
+    log_info("state_file: " + str(state_file))
     if not state_file.exists():
         log_error(
             "State file not found at ~/.gaiaflow/state.json. Please run the services."
@@ -184,13 +187,13 @@ def delete_project_state(gaiaflow_path: Path):
         with open(state_file, "r") as f:
             state = json.load(f)
 
-        print("found!", state.get("gaiaflow_path"), state)
+        log_info("found! " + str(state.get("gaiaflow_path")) + str(state))
         key = str(gaiaflow_path)
         if key in state:
             del state[key]
             with open(state_file, "w") as f:
                 json.dump(state, f, indent=2)
-    except (json.JSONDecodeError, FileNotFoundError, Exception):
+    except (json.JSONDecodeError, FileNotFoundError, AttributeError, Exception):
         raise
 
 
@@ -229,22 +232,16 @@ def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
     user_project_path = Path(project_path).resolve()
     if not user_project_path.exists():
         raise FileNotFoundError(f"{user_project_path} not found")
-    version = get_gaialfow_version()
+    version = get_gaiaflow_version()
     # project_name = str(user_project_path).split("/")[-1]
     project_name = user_project_path.name
     tmp_dir = Path(tempfile.gettempdir())
-    gaiaflow_path =  tmp_dir / f"gaiaflow-{version}-{project_name}"
+    gaiaflow_path = tmp_dir / f"gaiaflow-{version}-{project_name}"
 
     return gaiaflow_path, user_project_path
 
 
 def convert_crlf_to_lf(file_path: str):
-    """
-    Converts a file from Windows-style CRLF line endings to Unix-style LF line endings.
-
-    Args:
-        file_path (str): Path to the file to convert.
-    """
     with open(file_path, "rb") as f:
         content = f.read()
 
@@ -264,6 +261,7 @@ def is_wsl() -> bool:
     except FileNotFoundError:
         return False
 
+
 def env_exists(env_name, env_tool="mamba"):
     result = subprocess.run(
         [env_tool, "env", "list", "--json"], capture_output=True, text=True
@@ -271,11 +269,12 @@ def env_exists(env_name, env_tool="mamba"):
     envs = json.loads(result.stdout).get("envs", [])
     return any(env_name in env for env in envs)
 
+
 def update_micromamba_env_in_docker(
-        containers: list[str],
-        env_name: str = "default_user_env",
-        max_workers: int = 4,
-    ):
+    containers: list[str],
+    env_name: str = "default_user_env",
+    max_workers: int = 4,
+):
     client = docker.from_env()
 
     def _update_one(cname: str):
@@ -297,9 +296,7 @@ def update_micromamba_env_in_docker(
         log_info(output.decode())
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(_update_one, cname): cname for cname in containers
-        }
+        futures = {executor.submit(_update_one, cname): cname for cname in containers}
 
         for future in as_completed(futures):
             cname = futures[future]

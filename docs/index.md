@@ -215,7 +215,7 @@ Quick rule of thumb:
 - Use `prod_local` for testing end-to-end workflows on production-like settngs.
 - Use `prod` for production pipelines in the real cluster.
 
-## User workflow:
+## User workflow
 A typical user workflow could look like this:
 
 ```mermaid

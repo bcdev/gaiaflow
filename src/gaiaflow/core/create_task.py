@@ -1,7 +1,11 @@
 from enum import Enum
 
-from .operators import (DevTaskOperator, DockerTaskOperator,
-                        ProdLocalTaskOperator, ProdTaskOperator)
+from .operators import (
+    DevTaskOperator,
+    DockerTaskOperator,
+    ProdLocalTaskOperator,
+    ProdTaskOperator,
+)
 
 
 class GaiaflowMode(Enum):
