@@ -268,7 +268,7 @@ class KubeConfigHelper:
             yaml.dump(config_data, f)
 
     def _write_inline(self, kube_config: Path):
-        filename = self.gaiaflow_path / "docker_stuff" / "kube_config_inline"
+        filename = self.gaiaflow_path / "_docker" / "kube_config_inline"
         log_info("Creating kube config inline file...")
         with open(filename, "w") as f:
             subprocess.call(
@@ -282,7 +282,7 @@ class KubeConfigHelper:
                     "--minify",
                     "--raw",
                 ],
-                cwd=self.gaiaflow_path / "docker_stuff",
+                cwd=self.gaiaflow_path / "_docker",
                 stdout=f,
             )
         log_info(f"Created kube config inline file {filename}")
@@ -393,7 +393,7 @@ class MinikubeManager(BaseGaiaflowManager):
 
     def build_docker_image(self):
         dockerfile_path = (
-            self.gaiaflow_path / "docker_stuff" / "user-package" / "Dockerfile"
+            self.gaiaflow_path / "_docker" / "user-package" / "Dockerfile"
         )
         self.docker_helper.build_image(dockerfile_path)
 

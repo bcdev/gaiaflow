@@ -16,7 +16,7 @@ class TestUtils(unittest.TestCase):
         self.gaiaflow_path.mkdir()
 
         required_structure = {
-            "docker_stuff": {
+            "_docker": {
                 "docker-compose": [
                     "docker-compose.yml",
                     "docker-compose-minikube-network.yml",
@@ -29,9 +29,9 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        self.gaiaflow_project_path = self.gaiaflow_path / "docker_stuff"
+        self.gaiaflow_project_path = self.gaiaflow_path / "_docker"
         self.gaiaflow_project_path.mkdir(exist_ok=True)
-        for folder, contents in required_structure["docker_stuff"].items():
+        for folder, contents in required_structure["_docker"].items():
             if folder != "_files_":
                 folder_path = self.gaiaflow_project_path / folder
                 folder_path.mkdir(parents=True, exist_ok=True)

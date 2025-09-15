@@ -31,12 +31,12 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/gaiaflow", "src/docker_stuff"]
+packages = ["src/gaiaflow", "src/_docker"]
 
 [tool.hatch.build]
 include = [
   "src/gaiaflow",
-  "src/docker_stuff",
+  "src/_docker",
 ]
 
 [tool.mypy]

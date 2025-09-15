@@ -29,13 +29,13 @@ class TestMlopsManager(TestCase):
         (self.user_project / "dummy_package" / "__init__.py").write_text("")
 
         self.gaiaflow_context = self.base_path / "gaiaflow"
-        docker_dir = self.gaiaflow_context / "docker_stuff" / "docker-compose"
+        docker_dir = self.gaiaflow_context / "_docker" / "docker-compose"
         docker_dir.mkdir(parents=True)
         (docker_dir / "docker-compose.yml").write_text(
             yaml.dump({"x-airflow-common": {"volumes": ["./logs:/opt/airflow/logs"]}})
         )
         (docker_dir / "entrypoint.sh").write_text("#!/bin/bash\necho hi")
-        (self.gaiaflow_context / "docker_stuff" / "kube_config_inline").write_text("kube")
+        (self.gaiaflow_context / "_docker" / "kube_config_inline").write_text("kube")
         (self.gaiaflow_context / "environment.yml").write_text("name: test-env")
 
         self.manager = MlopsManager(
@@ -264,7 +264,7 @@ class TestMlopsManager(TestCase):
         with patch("gaiaflow.managers.mlops_manager.find_python_packages", return_value=["dummy_package"]), \
              patch("gaiaflow.managers.mlops_manager.set_permissions"):
             self.manager._update_files()
-        compose_path = self.gaiaflow_context / "docker_stuff" / "docker-compose" / "docker-compose.yml"
+        compose_path = self.gaiaflow_context / "_docker" / "docker-compose" / "docker-compose.yml"
         data = yaml.safe_load(compose_path.read_text())
         vols = data["x-airflow-common"]["volumes"]
         self.assertTrue(any("dummy_package" in v for v in vols))

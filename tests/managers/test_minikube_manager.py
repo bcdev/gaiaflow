@@ -251,7 +251,7 @@ class TestKubeConfigHelper(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.gaia_path = Path(self.tmpdir.name)
-        (self.gaia_path / "docker_stuff").mkdir()
+        (self.gaia_path / "_docker").mkdir()
         self.helper = KubeConfigHelper(gaiaflow_path=self.gaia_path, os_type="linux")
 
     def tearDown(self):
@@ -269,7 +269,7 @@ class TestKubeConfigHelper(unittest.TestCase):
     def test_write_inline_creates_file(self, _):
         kube_config = self._write_kube_config({"clusters": []})
         self.helper._write_inline(kube_config)
-        out_file = self.gaia_path / "docker_stuff" / "kube_config_inline"
+        out_file = self.gaia_path / "_docker" / "kube_config_inline"
         self.assertTrue(out_file.exists())
 
     def test_backup_and_patch_config(self):
@@ -291,7 +291,7 @@ class TestKubeConfigHelper(unittest.TestCase):
         self._write_kube_config({"clusters": [{"cluster": {"server": "127.0.0.1"}}]})
         helper.create_inline()
         self.assertTrue(
-            (self.gaia_path / "docker_stuff" / "kube_config_inline").exists()
+            (self.gaia_path / "_docker" / "kube_config_inline").exists()
         )
 
     @patch("gaiaflow.managers.minikube_manager.is_wsl", return_value=False)

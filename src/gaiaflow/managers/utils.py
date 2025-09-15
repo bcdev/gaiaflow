@@ -140,7 +140,7 @@ def check_structure(base_path: Path, structure: dict) -> bool:
 
 def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) -> bool:
     REQUIRED_STRUCTURE = {
-        "docker_stuff": {
+        "_docker": {
             "docker-compose": [
                 "docker-compose.yml",
                 "docker-compose-minikube-network.yml",

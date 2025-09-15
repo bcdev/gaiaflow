@@ -2,7 +2,7 @@ x-airflow-common:
   &airflow-common
   build:
     context: ../../
-    dockerfile: "./docker_stuff/airflow/Dockerfile"
+    dockerfile: "./_docker/airflow/Dockerfile"
   environment:
     &airflow-common-env
     # NOTE: The following secret can be commited to .git as it is only for local development.
@@ -75,7 +75,7 @@ services:
   mlflow:
     build:
       context: ..
-      dockerfile: "../docker_stuff/mlflow/Dockerfile"
+      dockerfile: "../_docker/mlflow/Dockerfile"
     container_name: mlflow
     ports:
       - 5000:5000

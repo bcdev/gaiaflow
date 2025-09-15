@@ -82,12 +82,12 @@ class DockerHelper:
             "docker",
             "compose",
             "-f",
-            f"{self.gaiaflow_path}/docker_stuff/docker-compose/docker-compose.yml",
+            f"{self.gaiaflow_path}/_docker/docker-compose/docker-compose.yml",
         ]
         if self.is_prod_local:
             base += [
                 "-f",
-                f"{self.gaiaflow_path}/docker_stuff/docker-compose/docker-compose-minikube-network.yml",
+                f"{self.gaiaflow_path}/_docker/docker-compose/docker-compose-minikube-network.yml",
             ]
         return base
 
@@ -403,10 +403,10 @@ class MlopsManager(BaseGaiaflowManager):
         self.fs.makedirs(self.gaiaflow_path, exist_ok=True)
 
         package_dir = Path(__file__).parent.parent.resolve()
-        docker_dir = package_dir.parent / "docker_stuff"
+        docker_dir = package_dir.parent / "_docker"
 
         shutil.copytree(
-            docker_dir, self.gaiaflow_path / "docker_stuff", dirs_exist_ok=True
+            docker_dir, self.gaiaflow_path / "_docker", dirs_exist_ok=True
         )
         log_info(f"Gaiaflow context created at {self.gaiaflow_path}")
 
@@ -445,11 +445,11 @@ class MlopsManager(BaseGaiaflowManager):
 
         # Add special mounts for prod_local mode
         kube_config = (
-            self.gaiaflow_path.resolve() / "docker_stuff" / "kube_config_inline"
+            self.gaiaflow_path.resolve() / "_docker" / "kube_config_inline"
         ).as_posix()
         entrypoint = (
             self.gaiaflow_path.resolve()
-            / "docker_stuff"
+            / "_docker"
             / "docker-compose"
             / "entrypoint.sh"
         ).as_posix()
@@ -472,7 +472,7 @@ class MlopsManager(BaseGaiaflowManager):
 
         compose_path = (
             self.gaiaflow_path
-            / "docker_stuff"
+            / "_docker"
             / "docker-compose"
             / "docker-compose.yml"
         )
@@ -487,7 +487,7 @@ class MlopsManager(BaseGaiaflowManager):
             yaml.dump(compose_data, f)
 
         entrypoint_path = (
-            self.gaiaflow_path / "docker_stuff" / "docker-compose" / "entrypoint.sh"
+            self.gaiaflow_path / "_docker" / "docker-compose" / "entrypoint.sh"
         )
         set_permissions(entrypoint_path)
         convert_crlf_to_lf(entrypoint_path)
