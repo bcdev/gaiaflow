@@ -34,7 +34,6 @@ def load_imports():
 
 @app.command(help="Start Gaiaflow development services")
 def start(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     force_new: bool = typer.Option(
         False,
         "--force-new",
@@ -72,6 +71,7 @@ def start(
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     typer.echo(f"Selected Gaiaflow services: {service}")
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
@@ -118,7 +118,6 @@ def start(
 
 @app.command(help="Stop Gaiaflow development services")
 def stop(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     service: List[Service] = typer.Option(
         ["all"],
         "--service",
@@ -131,6 +130,7 @@ def stop(
 ):
     """"""
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -160,7 +160,6 @@ def stop(
 
 @app.command(help="Restart Gaiaflow development services")
 def restart(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     force_new: bool = typer.Option(
         False,
         "--force-new",
@@ -189,6 +188,7 @@ def restart(
 ):
     """"""
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -230,12 +230,12 @@ def restart(
     "also remove the state for this project."
 )
 def cleanup(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     prune: bool = typer.Option(
         False, "--prune", help="Prune Docker image, network and cache"
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -252,15 +252,16 @@ def cleanup(
 
 @app.command(help="Containerize your package into a docker image locally.")
 def dockerize(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     image_name: str = typer.Option(
         DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of your image.")
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
+
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         imports.save_project_state(user_project_path, gaiaflow_path)
@@ -289,9 +290,9 @@ def dockerize(
     "its contents."
 )
 def update_deps(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )

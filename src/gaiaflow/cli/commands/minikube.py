@@ -31,7 +31,6 @@ def load_imports():
 
 @app.command(help="Start Gaiaflow production-like services.")
 def start(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     force_new: bool = typer.Option(
         False,
         "--force-new",
@@ -42,6 +41,7 @@ def start(
 ):
     """"""
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -59,9 +59,9 @@ def start(
 
 @app.command(help="Stop Gaiaflow production-like services.")
 def stop(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -78,7 +78,6 @@ def stop(
 
 @app.command(help="Restart Gaiaflow production-like services.")
 def restart(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     force_new: bool = typer.Option(
         False,
         "--force-new",
@@ -88,6 +87,7 @@ def restart(
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -99,6 +99,7 @@ def restart(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.BaseAction.RESTART,
+        force_new=force_new
     )
 
 
@@ -106,12 +107,12 @@ def restart(
     help="Containerize your package into a docker image inside the minikube cluster."
 )
 def dockerize(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     image_name: str = typer.Option(
         DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of your image.")
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -133,9 +134,9 @@ def dockerize(
     "cluster. To be used only when debugging required."
 )
 def create_config(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -152,13 +153,13 @@ def create_config(
 
 @app.command(help="Create secrets to provide to the production-like environment.")
 def create_secret(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     name: str = typer.Option(..., "--name", help="Name of the secret"),
     data: list[str] = typer.Option(
         ..., "--data", help="Secret data as key=value pairs"
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     secret_data = imports.parse_key_value_pairs(data)
     print(secret_data, name)
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
@@ -179,12 +180,11 @@ def create_secret(
 
 @app.command(
     help="Clean Gaiaflow production-like services. This will only remove the "
-    "minikube speicifc things. To remove local docker stuff, use the dev mode."
+    "minikube specific things. To remove local docker stuff, use the dev mode."
 )
-def cleanup(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
-):
+def cleanup():
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
