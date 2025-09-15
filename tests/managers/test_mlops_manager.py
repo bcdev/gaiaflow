@@ -11,7 +11,7 @@ from gaiaflow.constants import BaseAction, Service
 from gaiaflow.managers.mlops_manager import (
     MlopsManager,
     JupyterHelper,
-    DockerHelper,
+    DockerComposeHelper,
     DockerResources,
 )
 
@@ -316,14 +316,14 @@ class TestMlopsManager(TestCase):
         mock_popen.assert_not_called()
 
     def test_docker_helper_builds_command(self):
-        helper = DockerHelper(self.manager.gaiaflow_path, is_prod_local=False)
+        helper = DockerComposeHelper(self.manager.gaiaflow_path, is_prod_local=False)
         cmd = helper._base_cmd()
         self.assertIn("docker", cmd)
         self.assertIn("compose", cmd)
         self.assertEqual(cmd.count("-f"), 1)
 
     def test_docker_helper_builds_command_prod_local(self):
-        helper = DockerHelper(self.manager.gaiaflow_path, is_prod_local=True)
+        helper = DockerComposeHelper(self.manager.gaiaflow_path, is_prod_local=True)
         cmd = helper._base_cmd()
         self.assertIn("docker", cmd)
         self.assertIn("compose", cmd)
@@ -331,7 +331,7 @@ class TestMlopsManager(TestCase):
 
 
     def test_docker_services_for_known_and_unknown(self):
-        helper = DockerHelper(Path("/tmp"), False)
+        helper = DockerComposeHelper(Path("/tmp"), False)
         self.assertIn("mlflow", helper.docker_services_for("mlflow"))
         self.assertEqual(helper.docker_services_for("unknown"), [])
 

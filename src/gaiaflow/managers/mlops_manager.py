@@ -72,7 +72,7 @@ class DockerResources:
     }
 
 
-class DockerHelper:
+class DockerComposeHelper:
     def __init__(self, gaiaflow_path: Path, is_prod_local: bool):
         self.gaiaflow_path = gaiaflow_path
         self.is_prod_local = is_prod_local
@@ -224,7 +224,7 @@ class MlopsManager(BaseGaiaflowManager):
         self.user_env_name = user_env_name
         self.env_tool = env_tool
 
-        self.docker = DockerHelper(gaiaflow_path, prod_local)
+        self.docker = DockerComposeHelper(gaiaflow_path, prod_local)
         self.jupyter = JupyterHelper(
             jupyter_port, env_tool, user_env_name, gaiaflow_path
         )
@@ -405,9 +405,7 @@ class MlopsManager(BaseGaiaflowManager):
         package_dir = Path(__file__).parent.parent.resolve()
         docker_dir = package_dir.parent / "_docker"
 
-        shutil.copytree(
-            docker_dir, self.gaiaflow_path / "_docker", dirs_exist_ok=True
-        )
+        shutil.copytree(docker_dir, self.gaiaflow_path / "_docker", dirs_exist_ok=True)
         log_info(f"Gaiaflow context created at {self.gaiaflow_path}")
 
     def _collect_volumes(self, compose_data: dict) -> list[str]:
@@ -471,10 +469,7 @@ class MlopsManager(BaseGaiaflowManager):
         yaml.preserve_quotes = True
 
         compose_path = (
-            self.gaiaflow_path
-            / "_docker"
-            / "docker-compose"
-            / "docker-compose.yml"
+            self.gaiaflow_path / "_docker" / "docker-compose" / "docker-compose.yml"
         )
 
         with open(compose_path) as f:

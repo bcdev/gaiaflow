@@ -392,9 +392,7 @@ class MinikubeManager(BaseGaiaflowManager):
         self.kube_helper.create_inline()
 
     def build_docker_image(self):
-        dockerfile_path = (
-            self.gaiaflow_path / "_docker" / "user-package" / "Dockerfile"
-        )
+        dockerfile_path = self.gaiaflow_path / "_docker" / "user-package" / "Dockerfile"
         self.docker_helper.build_image(dockerfile_path)
 
     def create_secrets(self, secret_name: str, secret_data: dict[str, Any]):
