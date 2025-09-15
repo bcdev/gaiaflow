@@ -1,9 +1,11 @@
 # Gaiaflow
 
 ![PyPI - Version](https://img.shields.io/pypi/v/gaiaflow)
+[![codecov](https://codecov.io/gh/bcdev/gaiaflow/graph/badge.svg?token=pc9DfJx6bu)](https://codecov.io/gh/bcdev/gaiaflow)
 [![Pixi Badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json)](https://pixi.sh)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json)](https://github.com/charliermarsh/ruff)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://bcdev.github.io/gaiaflow/)
+
 ![Static Badge](https://img.shields.io/badge/Airflow-3.0-8A2BE2?logo=apacheairflow)
 ![Static Badge](https://img.shields.io/badge/MLFlow-darkblue?logo=mlflow)
 ![Static Badge](https://img.shields.io/badge/MinIO-red?logo=minio)
