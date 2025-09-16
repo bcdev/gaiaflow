@@ -5,6 +5,7 @@ import fsspec
 import typer
 
 from gaiaflow.constants import DEFAULT_IMAGE_NAME
+from gaiaflow.managers.helpers import DockerHandlerMode
 
 app = typer.Typer()
 fs = fsspec.filesystem("file")
@@ -110,8 +111,7 @@ def dockerize(
         DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of your image.")
     ),
     dockerfile_path: Path = typer.Option(
-        None, "--dockerfile-path", "-d", help=("Path to your custom "
-                                               "Dockerfile")
+        None, "--dockerfile-path", "-d", help=("Path to your custom Dockerfile")
     ),
 ):
     imports = load_imports()
@@ -134,6 +134,47 @@ def dockerize(
         docker_build_mode=docker_build_mode,
         image_name=image_name,
         dockerfile_path=dockerfile_path,
+    )
+
+
+@app.command(help="List all the docker images in your system")
+def list_images():
+    imports = load_imports()
+    project_path = Path.cwd()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        typer.echo("Please create a project with Gaiaflow before running this command.")
+        return
+    imports.MinikubeManager.run(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=imports.ExtendedAction.LIST_IMAGES,
+        docker_handler_mode=DockerHandlerMode.MINIKUBE,
+    )
+
+@app.command(help="Delete a docker image from your system")
+def remove_image(image_name: str = typer.Option(
+        DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of image "
+                                                        "to be deleted.")
+    ),):
+    imports = load_imports()
+    project_path = Path.cwd()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        typer.echo("Please create a project with Gaiaflow before running this command.")
+        return
+    imports.MinikubeManager.run(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=imports.ExtendedAction.REMOVE_IMAGE,
+        image_name=image_name,
+        docker_handler_mode=DockerHandlerMode.MINIKUBE,
     )
 
 

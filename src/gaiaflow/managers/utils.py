@@ -98,7 +98,6 @@ def save_project_state(project_path: Path, gaiaflow_path: Path):
 
 def load_project_state() -> dict | None:
     state_file = get_state_file()
-    print("state_file", state_file)
     if not state_file.exists():
         return None
 

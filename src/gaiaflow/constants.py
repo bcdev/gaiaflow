@@ -20,6 +20,8 @@ class ExtendedAction:
     CREATE_CONFIG = Action("create_config")
     CREATE_SECRET = Action("create_secret")
     UPDATE_DEPS = Action("update_deps")
+    LIST_IMAGES = Action("list-images")
+    REMOVE_IMAGE = Action("remove-image")
 
 
 GAIAFLOW_CONFIG_DIR = Path.home() / ".gaiaflow"

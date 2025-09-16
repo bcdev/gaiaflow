@@ -2,191 +2,37 @@ import json
 import os
 import platform
 import shutil
-import socket
-import subprocess
 from pathlib import Path
 from typing import Set
 
 import fsspec
-import psutil
-import yaml
 from ruamel.yaml import YAML
 
 from gaiaflow.constants import (
-    AIRFLOW_SERVICES,
     GAIAFLOW_STATE_FILE,
-    MINIO_SERVICES,
-    MLFLOW_SERVICES,
     Action,
     BaseAction,
     ExtendedAction,
     Service,
 )
 from gaiaflow.managers.base_manager import BaseGaiaflowManager
+from gaiaflow.managers.helpers import (
+    DockerComposeHelper,
+    DockerResources,
+    JupyterHelper,
+)
 from gaiaflow.managers.utils import (
     convert_crlf_to_lf,
     create_directory,
     delete_project_state,
-    env_exists,
     gaiaflow_path_exists_in_state,
-    handle_error,
     log_error,
     log_info,
-    run,
     save_project_state,
     set_permissions,
     update_entrypoint_install_path,
     update_micromamba_env_in_docker,
 )
-
-
-class DockerResources:
-    IMAGES = [
-        "docker-compose-airflow-apiserver:latest",
-        "docker-compose-airflow-scheduler:latest",
-        "docker-compose-airflow-dag-processor:latest",
-        "docker-compose-airflow-triggerer:latest",
-        "docker-compose-airflow-init:latest",
-        "docker-compose-mlflow:latest",
-        "minio/mc:latest",
-        "minio/minio:latest",
-        "postgres:13",
-        "alpine/socat",
-    ]
-
-    AIRFLOW_CONTAINERS = [
-        "airflow-apiserver",
-        "airflow-scheduler",
-        "airflow-dag-processor",
-        "airflow-triggerer",
-        "docker-proxy"
-    ]
-
-    VOLUMES = [
-        "docker-compose_postgres-db-volume-airflow",
-        "docker-compose_postgres-db-volume-mlflow",
-    ]
-
-    SERVICES = {
-        "airflow": AIRFLOW_SERVICES,
-        "mlflow": MLFLOW_SERVICES,
-        "minio": MINIO_SERVICES,
-    }
-
-
-class DockerComposeHelper:
-    def __init__(self, gaiaflow_path: Path, is_prod_local: bool):
-        self.gaiaflow_path = gaiaflow_path
-        self.is_prod_local = is_prod_local
-
-    def _base_cmd(self) -> list[str]:
-        base = [
-            "docker",
-            "compose",
-            "-f",
-            f"{self.gaiaflow_path}/_docker/docker-compose/docker-compose.yml",
-        ]
-        if self.is_prod_local:
-            base += [
-                "-f",
-                f"{self.gaiaflow_path}/_docker/docker-compose/docker-compose-minikube-network.yml",
-            ]
-        return base
-
-    @staticmethod
-    def docker_services_for(component: str) -> list[str]:
-        return DockerResources.SERVICES.get(component, [])
-
-    def run_compose(self, actions: list[str], service: str | None = None):
-        cmd = self._base_cmd()
-        if service:
-            services = self.docker_services_for(service)
-            if not services:
-                handle_error(f"Unknown service: {service}")
-            cmd += actions + services
-        else:
-            cmd += actions
-
-        log_info(f"Running: {' '.join(cmd)}")
-        run(cmd, f"Error running docker compose {actions}")
-
-    @staticmethod
-    def prune():
-        prune_cmds = [
-            (
-                ["docker", "builder", "prune", "-a", "-f"],
-                "Error pruning docker build cache",
-            ),
-            (["docker", "system", "prune", "-a", "-f"], "Error pruning docker system"),
-            (["docker", "volume", "prune", "-a", "-f"], "Error pruning docker volumes"),
-            (
-                ["docker", "network", "rm", "docker-compose_ml-network"],
-                "Error removing docker network",
-            ),
-        ]
-        for cmd, msg in prune_cmds:
-            run(cmd, msg)
-
-        for image in DockerResources.IMAGES:
-            run(["docker", "rmi", "-f", image], f"Error deleting image {image}")
-        for volume in DockerResources.VOLUMES:
-            run(["docker", "volume", "rm", volume], f"Error removing volume {volume}")
-
-
-class JupyterHelper:
-    def __init__(
-        self, port: int, env_tool: str, user_env_name: str | None, gaiaflow_path: Path
-    ):
-        self.port = port
-        self.env_tool = env_tool
-        self.user_env_name = user_env_name
-        self.gaiaflow_path = gaiaflow_path
-
-    def check_port(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            if sock.connect_ex(("127.0.0.1", self.port)) == 0:
-                handle_error(f"Port {self.port} is already in use.")
-
-    def stop(self):
-        log_info(f"Attempting to stop Jupyter processes on port {self.port}")
-        for proc in psutil.process_iter(attrs=["pid", "name", "cmdline"]):
-            try:
-                cmdline = proc.info.get("cmdline") or []
-                name = proc.info.get("name") or ""
-                if "jupyter" in name or any("jupyter-lab" in arg for arg in cmdline):
-                    log_info(f"Terminating process {proc.pid} ({name})")
-                    proc.terminate()
-                    proc.wait(timeout=5)
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                continue
-
-    def start(self):
-        env_name = self.get_env_name()
-        if not env_exists(env_name, env_tool=self.env_tool):
-            print(
-                f"Environment {env_name} not found. Run `mamba env create -f environment.yml`?"
-            )
-            return
-        cmd = [
-            self.env_tool,
-            "run",
-            "-n",
-            env_name,
-            "jupyter",
-            "lab",
-            "--ip=0.0.0.0",
-            f"--port={self.port}",
-        ]
-        log_info("Starting Jupyter Lab..." + " ".join(cmd))
-        subprocess.Popen(cmd)
-
-    def get_env_name(self):
-        if self.user_env_name:
-            return self.user_env_name
-        env_path = Path(self.gaiaflow_path).resolve() / "environment.yml"
-        with open(env_path, "r") as f:
-            env_yml = yaml.safe_load(f)
-        return env_yml.get("name")
 
 
 class MlopsManager(BaseGaiaflowManager):

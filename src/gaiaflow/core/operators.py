@@ -158,7 +158,7 @@ class DevTaskOperator(BaseTaskOperator):
             retries=self.retries,
             expect_airflow=False,
             expect_pendulum=False,
-            **self.op_kwargs
+            **self.op_kwargs,
         )
 
 
@@ -307,7 +307,7 @@ class DockerTaskOperator(ProdLocalTaskOperator):
             auto_remove="success",
             command=command,
             # docker_url="unix://var/run/docker.sock",
-            docker_url='tcp://docker-proxy:2375',
+            docker_url="tcp://docker-proxy:2375",
             # docker_url="tcp://host.docker.internal:2375",
             environment=combined_env,
             network_mode="docker-compose_ml-network",
