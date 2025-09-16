@@ -11,7 +11,7 @@ from gaiaflow.constants import BaseAction, Service
 from gaiaflow.managers.mlops_manager import (
     MlopsManager,
     JupyterHelper,
-    DockerHelper,
+    DockerComposeHelper,
     DockerResources,
 )
 
@@ -29,13 +29,13 @@ class TestMlopsManager(TestCase):
         (self.user_project / "dummy_package" / "__init__.py").write_text("")
 
         self.gaiaflow_context = self.base_path / "gaiaflow"
-        docker_dir = self.gaiaflow_context / "docker_stuff" / "docker-compose"
+        docker_dir = self.gaiaflow_context / "_docker" / "docker-compose"
         docker_dir.mkdir(parents=True)
         (docker_dir / "docker-compose.yml").write_text(
             yaml.dump({"x-airflow-common": {"volumes": ["./logs:/opt/airflow/logs"]}})
         )
         (docker_dir / "entrypoint.sh").write_text("#!/bin/bash\necho hi")
-        (self.gaiaflow_context / "docker_stuff" / "kube_config_inline").write_text("kube")
+        (self.gaiaflow_context / "_docker" / "kube_config_inline").write_text("kube")
         (self.gaiaflow_context / "environment.yml").write_text("name: test-env")
 
         self.manager = MlopsManager(
@@ -56,9 +56,9 @@ class TestMlopsManager(TestCase):
         with self.assertRaises(TypeError):
             MlopsManager(self.gaiaflow_context, self.user_project, BaseAction.START, bad_kwarg=True)
 
-    @patch("gaiaflow.managers.mlops_manager.run")
-    @patch("gaiaflow.managers.mlops_manager.subprocess.Popen")
-    @patch("gaiaflow.managers.mlops_manager.env_exists")
+    @patch("gaiaflow.managers.helpers.run")
+    @patch("gaiaflow.managers.helpers.subprocess.Popen")
+    @patch("gaiaflow.managers.helpers.env_exists")
     def test_run_dispatches_start(self, mock_env_exists, mock_popen,
                                   mock_run):
         mock_env_exists.return_value = True
@@ -87,9 +87,9 @@ class TestMlopsManager(TestCase):
         self.assertIn("--port=8895", args[0])
         self.assertIn("mamba", args[0])
 
-    @patch("gaiaflow.managers.mlops_manager.run")
-    @patch("gaiaflow.managers.mlops_manager.subprocess.Popen")
-    @patch("gaiaflow.managers.mlops_manager.env_exists")
+    @patch("gaiaflow.managers.helpers.run")
+    @patch("gaiaflow.managers.helpers.subprocess.Popen")
+    @patch("gaiaflow.managers.helpers.env_exists")
     def test_run_dispatches_start_jupyter_custom_values(self, mock_env_exists,
                                               mock_popen,
                                     mock_run):
@@ -129,16 +129,16 @@ class TestMlopsManager(TestCase):
                 action="not-an-action",
             )
 
-    @patch("gaiaflow.managers.mlops_manager.env_exists")
-    @patch("gaiaflow.managers.mlops_manager.subprocess.Popen")
+    @patch("gaiaflow.managers.helpers.env_exists")
+    @patch("gaiaflow.managers.helpers.subprocess.Popen")
     def test_start_force_new(self, mock_popen, mock_env_exists):
         self.manager.force_new = True
         with patch.object(self.manager, "cleanup") as mock_cleanup:
             self.manager.start()
             mock_cleanup.assert_called_once()
 
-    @patch("gaiaflow.managers.mlops_manager.env_exists")
-    @patch("gaiaflow.managers.mlops_manager.subprocess.Popen")
+    @patch("gaiaflow.managers.helpers.env_exists")
+    @patch("gaiaflow.managers.helpers.subprocess.Popen")
     def test_start_service_jupyter(self, mock_popen, mock_env_exists):
         self.manager.service = Service.jupyter
         with patch.object(self.manager.jupyter, "check_port") as mock_check, \
@@ -167,7 +167,7 @@ class TestMlopsManager(TestCase):
             )
         self.assertIn("Missing required argument 'action'", str(ctx.exception))
 
-    @patch("gaiaflow.managers.mlops_manager.run")
+    @patch("gaiaflow.managers.helpers.run")
     @patch.object(MlopsManager, "_build_docker_images")
     def test_start_triggers_build_docker_images(self, mock_build, mock_run):
         self.manager.docker_build = True
@@ -261,42 +261,19 @@ class TestMlopsManager(TestCase):
         self.assertNotIn("9999", content)
 
     def test_update_files_rewrites_compose(self):
-        with patch("gaiaflow.managers.mlops_manager.find_python_packages", return_value=["dummy_package"]), \
-             patch("gaiaflow.managers.mlops_manager.set_permissions"):
+        with patch("gaiaflow.managers.mlops_manager.set_permissions"):
             self.manager._update_files()
-        compose_path = self.gaiaflow_context / "docker_stuff" / "docker-compose" / "docker-compose.yml"
+        compose_path = self.gaiaflow_context / "_docker" / "docker-compose" / "docker-compose.yml"
         data = yaml.safe_load(compose_path.read_text())
         vols = data["x-airflow-common"]["volumes"]
-        self.assertTrue(any("dummy_package" in v for v in vols))
+        print(vols)
+        self.assertTrue(any("project" in v for v in vols))
         self.assertTrue(any("/var/run/docker.sock" in v for v in vols))
 
     @patch("gaiaflow.managers.mlops_manager.update_micromamba_env_in_docker")
     def test_update_deps_calls_update_and_logs(self, mock_update):
         MlopsManager.update_deps()
         mock_update.assert_called_once_with(DockerResources.AIRFLOW_CONTAINERS)
-
-    def test_jupyter_port_in_use(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(("127.0.0.1", 0))
-        port = sock.getsockname()[1]
-        sock.listen(1)
-
-        helper = JupyterHelper(port, "mamba", None, self.manager.gaiaflow_path)
-        with self.assertRaises(SystemExit):
-            helper.check_port()
-        sock.close()
-
-    def test_jupyter_get_env_name(self):
-        helper = JupyterHelper(8895, "mamba", None, self.manager.gaiaflow_path)
-        name = helper.get_env_name()
-        self.assertEqual(name, "test-env")
-
-    def test_jupyter_start_runs_subprocess(self):
-        helper = JupyterHelper(8895, "mamba", "custom-env", self.manager.gaiaflow_path)
-        with patch("subprocess.Popen") as mock_popen, \
-             patch("gaiaflow.managers.mlops_manager.env_exists", return_value=True):
-            helper.start()
-            mock_popen.assert_called()
 
     @patch("psutil.process_iter")
     def test_stop_jupyter_processes(self, mock_iter):
@@ -307,7 +284,7 @@ class TestMlopsManager(TestCase):
         proc_mock.terminate.assert_called_once()
         proc_mock.wait.assert_called_once_with(timeout=5)
 
-    @patch("gaiaflow.managers.mlops_manager.env_exists", return_value=False)
+    @patch("gaiaflow.managers.helpers.env_exists", return_value=False)
     @patch("subprocess.Popen")
     def test_start_jupyter_env_not_exists(self, mock_popen, mock_env):
         env_name = "test-env"
@@ -316,14 +293,14 @@ class TestMlopsManager(TestCase):
         mock_popen.assert_not_called()
 
     def test_docker_helper_builds_command(self):
-        helper = DockerHelper(self.manager.gaiaflow_path, is_prod_local=False)
+        helper = DockerComposeHelper(self.manager.gaiaflow_path, is_prod_local=False)
         cmd = helper._base_cmd()
         self.assertIn("docker", cmd)
         self.assertIn("compose", cmd)
         self.assertEqual(cmd.count("-f"), 1)
 
     def test_docker_helper_builds_command_prod_local(self):
-        helper = DockerHelper(self.manager.gaiaflow_path, is_prod_local=True)
+        helper = DockerComposeHelper(self.manager.gaiaflow_path, is_prod_local=True)
         cmd = helper._base_cmd()
         self.assertIn("docker", cmd)
         self.assertIn("compose", cmd)
@@ -331,12 +308,12 @@ class TestMlopsManager(TestCase):
 
 
     def test_docker_services_for_known_and_unknown(self):
-        helper = DockerHelper(Path("/tmp"), False)
+        helper = DockerComposeHelper(Path("/tmp"), False)
         self.assertIn("mlflow", helper.docker_services_for("mlflow"))
         self.assertEqual(helper.docker_services_for("unknown"), [])
 
-    @patch("gaiaflow.managers.mlops_manager.handle_error")
-    @patch("gaiaflow.managers.mlops_manager.run")
+    @patch("gaiaflow.managers.helpers.handle_error")
+    @patch("gaiaflow.managers.helpers.run")
     def test_run_compose_with_service_and_unknown_service(self, mock_run, mock_handle):
         with patch.object(self.manager.docker, "docker_services_for",
                           return_value=[]):
@@ -345,6 +322,6 @@ class TestMlopsManager(TestCase):
 
     def test_docker_prune(self):
         helper = self.manager.docker
-        with patch("gaiaflow.managers.mlops_manager.run") as mock_run:
+        with patch("gaiaflow.managers.helpers.run") as mock_run:
             helper.prune()
             self.assertGreaterEqual(mock_run.call_count, len(DockerResources.IMAGES))

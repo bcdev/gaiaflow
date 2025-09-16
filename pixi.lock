@@ -2383,7 +2383,7 @@ packages:
 - pypi: ./
   name: gaiaflow
   version: 0.0.4.dev0
-  sha256: 5e3ceaa3916b7d3961eb01d16f9b1ee62a9c146a0ae379f3aab37f3fe54b1b78
+  sha256: ccd33e40228db9872b498169a03a16977eeb05cb1e99d6f744f061e879c36529
   requires_dist:
   - typer>=0.16.0,<0.17
   - fsspec>=2025.7.0,<2026

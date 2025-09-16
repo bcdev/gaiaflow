@@ -16,7 +16,7 @@ class TestUtils(unittest.TestCase):
         self.gaiaflow_path.mkdir()
 
         required_structure = {
-            "docker_stuff": {
+            "_docker": {
                 "docker-compose": [
                     "docker-compose.yml",
                     "docker-compose-minikube-network.yml",
@@ -29,9 +29,9 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        self.gaiaflow_project_path = self.gaiaflow_path / "docker_stuff"
+        self.gaiaflow_project_path = self.gaiaflow_path / "_docker"
         self.gaiaflow_project_path.mkdir(exist_ok=True)
-        for folder, contents in required_structure["docker_stuff"].items():
+        for folder, contents in required_structure["_docker"].items():
             if folder != "_files_":
                 folder_path = self.gaiaflow_project_path / folder
                 folder_path.mkdir(parents=True, exist_ok=True)
@@ -203,13 +203,13 @@ class TestUtils(unittest.TestCase):
         self.assertFalse(self.state_file.exists())
 
     def test_delete_raises_jsondecodeerror(self):
-        self.state_file.write_text("{ invalid_data }")
+        self.state_file.write_text("{ invalid_data: '1' }")
         with self.assertRaises(json.JSONDecodeError):
             utils.delete_project_state(self.gaiaflow_path)
 
     def test_delete_raises_when_state_is_string(self):
         self.state_file.write_text(json.dumps("invalid_data"))
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(AssertionError):
             utils.delete_project_state(self.gaiaflow_path)
 
     def test_update_project_state(self):

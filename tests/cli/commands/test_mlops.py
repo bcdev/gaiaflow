@@ -7,6 +7,8 @@ from typer.testing import CliRunner
 from gaiaflow.constants import Service, DEFAULT_IMAGE_NAME, BaseAction, \
     ExtendedAction
 from gaiaflow.cli.commands.mlops import app, load_imports
+from gaiaflow.managers.helpers import DockerHandlerMode
+
 
 class TestGaiaflowCLI(unittest.TestCase):
     def setUp(self):
@@ -32,14 +34,10 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "start",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
 
-        self.mock_imports.create_gaiaflow_context_path.assert_called_once_with(
-            self.test_project_path
-        )
         self.mock_imports.gaiaflow_path_exists_in_state.assert_called_once_with(
             self.test_gaiaflow_path, True
         )
@@ -63,7 +61,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "start",
-            "--path", str(self.test_project_path),
             "--service", "jupyter",
             "--service", "airflow",
             "--cache",
@@ -112,7 +109,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "start",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
@@ -126,7 +122,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "stop",
-            "--path", str(self.test_project_path),
             "--delete-volume"
         ])
 
@@ -146,7 +141,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "stop",
-            "--path", str(self.test_project_path),
             "--service", "jupyter"
         ])
 
@@ -166,7 +160,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "restart",
-            "--path", str(self.test_project_path),
             "--force-new",
             "--cache",
             "--jupyter-port", "9001",
@@ -196,8 +189,6 @@ class TestGaiaflowCLI(unittest.TestCase):
             app,
             [
                 "restart",
-                "--path",
-                str(self.test_project_path),
                 "--service",
                 "jupyter",
                 "--service",
@@ -241,7 +232,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "cleanup",
-            "--path", str(self.test_project_path),
             "--prune"
         ])
 
@@ -261,7 +251,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "dockerize",
-            "--path", str(self.test_project_path),
             "--image-name", "custom-image"
         ])
 
@@ -275,9 +264,43 @@ class TestGaiaflowCLI(unittest.TestCase):
             gaiaflow_path=self.test_gaiaflow_path,
             user_project_path=self.test_project_path,
             action=ExtendedAction.DOCKERIZE,
-            local=True,
+            docker_build_mode=DockerHandlerMode.LOCAL,
             image_name="custom-image"
         )
+
+    @patch("gaiaflow.cli.commands.mlops.load_imports")
+    def test_list_images_command(self, mock_load_imports):
+        mock_load_imports.return_value = self.mock_imports
+
+        result = self.runner.invoke(app, ["list-images"])
+
+        self.assertEqual(result.exit_code, 0)
+
+        self.mock_imports.MinikubeManager.run.assert_called_once_with(
+            gaiaflow_path=self.test_gaiaflow_path,
+            user_project_path=self.test_project_path,
+            action=ExtendedAction.LIST_IMAGES,
+            docker_handler_mode=DockerHandlerMode.LOCAL,
+        )
+
+    @patch("gaiaflow.cli.commands.mlops.load_imports")
+    def test_remove_image_command(self, mock_load_imports):
+        mock_load_imports.return_value = self.mock_imports
+
+        result = self.runner.invoke(
+            app, ["remove-image", "--image-name", "my-custom-image"]
+        )
+
+        self.assertEqual(result.exit_code, 0)
+
+        self.mock_imports.MinikubeManager.run.assert_called_once_with(
+            gaiaflow_path=self.test_gaiaflow_path,
+            user_project_path=self.test_project_path,
+            action=ExtendedAction.REMOVE_IMAGE,
+            docker_handler_mode=DockerHandlerMode.LOCAL,
+            image_name="my-custom-image",
+        )
+
 
     @patch('gaiaflow.cli.commands.mlops.load_imports')
     def test_dockerize_command_with_default_image_name(self, mock_load_imports):
@@ -285,7 +308,6 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "dockerize",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
@@ -299,7 +321,7 @@ class TestGaiaflowCLI(unittest.TestCase):
         mock_load_imports.return_value = self.mock_imports
 
         result = self.runner.invoke(
-            app, ["update-deps", "--path", str(self.test_project_path)]
+            app, ["update-deps"]
         )
 
         self.assertEqual(result.exit_code, 0)
@@ -321,7 +343,6 @@ class TestGaiaflowCLI(unittest.TestCase):
             with self.subTest(command=command):
                 result = self.runner.invoke(app, [
                     command,
-                    "--path", str(self.test_project_path)
                 ])
 
                 self.assertEqual(result.exit_code, 0)
@@ -347,14 +368,12 @@ class TestGaiaflowCLI(unittest.TestCase):
 
         result = self.runner.invoke(app, [
             "start",
-            "--path", "/some/string/path"
         ])
 
         self.assertEqual(result.exit_code, 0)
 
         call_args = self.mock_imports.create_gaiaflow_context_path.call_args
         self.assertIsInstance(call_args[0][0], Path)
-        self.assertEqual(str(call_args[0][0]), "/some/string/path")
 
 
 if __name__ == '__main__':

@@ -60,6 +60,7 @@ class BaseTaskOperator:
         retries: int,
         params: dict,
         mode: str,
+        **op_kwargs,
     ):
         self.task_id = task_id
         self.func_path = func_path
@@ -69,6 +70,7 @@ class BaseTaskOperator:
         self.retries = retries
         self.params = params
         self.mode = mode
+        self.op_kwargs = op_kwargs
 
         (
             self.func_args,
@@ -156,6 +158,7 @@ class DevTaskOperator(BaseTaskOperator):
             retries=self.retries,
             expect_airflow=False,
             expect_pendulum=False,
+            **self.op_kwargs,
         )
 
 
@@ -222,10 +225,14 @@ class ProdLocalTaskOperator(BaseTaskOperator):
         #     },
         # )
 
+        command = self.op_kwargs.pop("cmds", None)
+        if command is None:
+            command = ["python", "-m", "runner"]
+
         return KubernetesPodOperator(
             task_id=self.task_id,
             image=self.image,
-            cmds=["python", "-m", "runner"],
+            cmds=command,
             env_vars=all_env_vars,
             env_from=env_from,
             get_logs=True,
@@ -235,6 +242,7 @@ class ProdLocalTaskOperator(BaseTaskOperator):
             do_xcom_push=True,
             retries=self.retries,
             params=self.params,
+            **self.op_kwargs,
             # container_resources=resources,
         )
 
@@ -282,6 +290,10 @@ class DockerTaskOperator(ProdLocalTaskOperator):
 
         safe_image_name = self.image.replace(":", "_").replace("/", "_")
 
+        command = self.op_kwargs.pop("command", None)
+        if command is None:
+            command = ["python", "-m", "runner"]
+
         return DockerOperator(
             task_id=self.task_id,
             image=self.image,
@@ -293,8 +305,9 @@ class DockerTaskOperator(ProdLocalTaskOperator):
             + "_container",
             api_version="auto",
             auto_remove="success",
-            command=["python", "-m", "runner"],
-            docker_url="unix://var/run/docker.sock",
+            command=command,
+            # docker_url="unix://var/run/docker.sock",
+            docker_url="tcp://docker-proxy:2375",
             # docker_url="tcp://host.docker.internal:2375",
             environment=combined_env,
             network_mode="docker-compose_ml-network",
@@ -303,4 +316,5 @@ class DockerTaskOperator(ProdLocalTaskOperator):
             retrieve_output=True,
             retrieve_output_path="/tmp/script.out",
             xcom_all=False,
+            **self.op_kwargs,
         )

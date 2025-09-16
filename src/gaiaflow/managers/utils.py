@@ -50,9 +50,9 @@ def log_error(message: str):
     )
 
 
-def run(command: list, error_message: str, env=None):
+def run(command: list, error_message: str, **kwargs):
     try:
-        subprocess.call(command, env=env)
+        subprocess.call(command, **kwargs)
     except Exception:
         log_error(error_message)
         raise
@@ -98,7 +98,6 @@ def save_project_state(project_path: Path, gaiaflow_path: Path):
 
 def load_project_state() -> dict | None:
     state_file = get_state_file()
-    print("state_file", state_file)
     if not state_file.exists():
         return None
 
@@ -140,7 +139,7 @@ def check_structure(base_path: Path, structure: dict) -> bool:
 
 def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) -> bool:
     REQUIRED_STRUCTURE = {
-        "docker_stuff": {
+        "_docker": {
             "docker-compose": [
                 "docker-compose.yml",
                 "docker-compose-minikube-network.yml",
@@ -176,7 +175,7 @@ def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) ->
 
 def delete_project_state(gaiaflow_path: Path):
     state_file = get_state_file()
-    log_info("state_file: " + str(state_file))
+    log_info("found gaiaflow state file: " + str(state_file))
     if not state_file.exists():
         log_error(
             "State file not found at ~/.gaiaflow/state.json. Please run the services."
@@ -187,13 +186,14 @@ def delete_project_state(gaiaflow_path: Path):
         with open(state_file, "r") as f:
             state = json.load(f)
 
-        log_info("found! " + str(state.get("gaiaflow_path")) + str(state))
+        assert isinstance(state, dict)
+
         key = str(gaiaflow_path)
         if key in state:
             del state[key]
             with open(state_file, "w") as f:
                 json.dump(state, f, indent=2)
-    except (json.JSONDecodeError, FileNotFoundError, AttributeError, Exception):
+    except (json.JSONDecodeError, FileNotFoundError, AssertionError, Exception):
         raise
 
 
@@ -225,7 +225,9 @@ def set_permissions(path, mode=0o777):
         fs.chmod(path, mode)
         log_info(f"Set permissions for {path}")
     except Exception:
-        log_info(f"Warning: Could not set permissions for {path}")
+        log_error(f"Warning: Could not set permissions for {path}")
+        log_error(f"Try running this command manually:\n  chmod -R {mode:o} {path}")
+        log_info("Continuing...")
 
 
 def create_gaiaflow_context_path(project_path: Path) -> tuple[Path, Path]:
@@ -304,3 +306,21 @@ def update_micromamba_env_in_docker(
                 future.result()
             except Exception as e:
                 log_error(f"[{cname}] Unexpected error: {e}")
+
+
+def update_entrypoint_install_path(script_path: str | Path, new_path: str) -> str:
+    """Update the micromamba pip install path in the given bash script."""
+    script_path = Path(script_path)
+    lines = script_path.read_text().splitlines()
+
+    new_lines = []
+    for line in lines:
+        if line.strip().startswith("micromamba run -n default_user_env pip install -e"):
+            line = f"micromamba run -n default_user_env pip install -e {new_path}"
+        new_lines.append(line)
+
+    updated_text = "\n".join(new_lines) + "\n"
+
+    script_path.write_text(updated_text)
+
+    return updated_text

@@ -2,7 +2,7 @@ x-airflow-common:
   &airflow-common
   build:
     context: ../../
-    dockerfile: "./docker_stuff/airflow/Dockerfile"
+    dockerfile: "./_docker/airflow/Dockerfile"
   environment:
     &airflow-common-env
     # NOTE: The following secret can be commited to .git as it is only for local development.
@@ -54,6 +54,17 @@ x-airflow-common:
     - ml-network
 
 services:
+  docker-proxy:
+    image: alpine/socat
+    container_name: docker-proxy
+    command: "TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock"
+    ports:
+      - "2376:2375"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ml-network
+
 
   postgres-mlflow:
     image: postgres:13
@@ -75,7 +86,7 @@ services:
   mlflow:
     build:
       context: ..
-      dockerfile: "../docker_stuff/mlflow/Dockerfile"
+      dockerfile: "../_docker/mlflow/Dockerfile"
     container_name: mlflow
     ports:
       - 5000:5000

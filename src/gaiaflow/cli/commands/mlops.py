@@ -6,6 +6,7 @@ import fsspec
 import typer
 
 from gaiaflow.constants import DEFAULT_IMAGE_NAME, Service
+from gaiaflow.managers.helpers import DockerHandlerMode
 
 app = typer.Typer()
 fs = fsspec.filesystem("file")
@@ -34,7 +35,6 @@ def load_imports():
 
 @app.command(help="Start Gaiaflow development services")
 def start(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     force_new: bool = typer.Option(
         False,
         "--force-new",
@@ -72,6 +72,7 @@ def start(
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     typer.echo(f"Selected Gaiaflow services: {service}")
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
@@ -118,7 +119,6 @@ def start(
 
 @app.command(help="Stop Gaiaflow development services")
 def stop(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     service: List[Service] = typer.Option(
         ["all"],
         "--service",
@@ -131,6 +131,7 @@ def stop(
 ):
     """"""
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -160,7 +161,6 @@ def stop(
 
 @app.command(help="Restart Gaiaflow development services")
 def restart(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     force_new: bool = typer.Option(
         False,
         "--force-new",
@@ -189,6 +189,7 @@ def restart(
 ):
     """"""
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -230,12 +231,12 @@ def restart(
     "also remove the state for this project."
 )
 def cleanup(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     prune: bool = typer.Option(
         False, "--prune", help="Prune Docker image, network and cache"
     ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
@@ -252,15 +253,19 @@ def cleanup(
 
 @app.command(help="Containerize your package into a docker image locally.")
 def dockerize(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
     image_name: str = typer.Option(
         DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of your image.")
     ),
+    dockerfile_path: Path = typer.Option(
+        None, "--dockerfile-path", "-d", help=("Path to your custom Dockerfile")
+    ),
 ):
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )
+
     gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
     if not gaiaflow_path_exists:
         imports.save_project_state(user_project_path, gaiaflow_path)
@@ -269,16 +274,60 @@ def dockerize(
             f"Gaiaflow project already exists at {gaiaflow_path}. Skipping "
             f"saving to the state"
         )
-
+    if dockerfile_path:
+        docker_build_mode = "local-user"
+    else:
+        docker_build_mode = "local"
     typer.echo("Running dockerize")
     imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
-        local=True,
+        docker_build_mode=docker_build_mode,
         image_name=image_name,
     )
 
+
+
+@app.command(help="List all the docker images in your system")
+def list_images():
+    imports = load_imports()
+    project_path = Path.cwd()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        typer.echo("Please create a project with Gaiaflow before running this command.")
+        return
+    imports.MinikubeManager.run(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=imports.ExtendedAction.LIST_IMAGES,
+        docker_handler_mode=DockerHandlerMode.LOCAL,
+    )
+
+@app.command(help="Delete a docker image from your system")
+def remove_image(image_name: str = typer.Option(
+        DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of image "
+                                                        "to be deleted.")
+    ),):
+    imports = load_imports()
+    project_path = Path.cwd()
+    gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
+        project_path
+    )
+    gaiaflow_path_exists = imports.gaiaflow_path_exists_in_state(gaiaflow_path, True)
+    if not gaiaflow_path_exists:
+        typer.echo("Please create a project with Gaiaflow before running this command.")
+        return
+    imports.MinikubeManager.run(
+        gaiaflow_path=gaiaflow_path,
+        user_project_path=user_project_path,
+        action=imports.ExtendedAction.REMOVE_IMAGE,
+        image_name=image_name,
+        docker_handler_mode=DockerHandlerMode.LOCAL,
+    )
 
 @app.command(
     help="Update the dependencies for the Airflow tasks. This command "
@@ -288,10 +337,9 @@ def dockerize(
     "this, as the container environments are updated based on "
     "its contents."
 )
-def update_deps(
-    project_path: Path = typer.Option(..., "--path", "-p", help="Path to your project"),
-):
+def update_deps():
     imports = load_imports()
+    project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
         project_path
     )

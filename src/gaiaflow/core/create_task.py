@@ -34,6 +34,7 @@ def create_task(
     env_vars: dict | None = None,
     retries: int = 3,
     dag=None,
+    **op_kwargs,
 ):
     """It is a high-level abstraction on top of Apache Airflow operators.
 
@@ -69,6 +70,7 @@ def create_task(
         retries=retries,
         params=dag_params,
         mode=gaiaflow_mode,
+        **op_kwargs,
     )
 
     return operator.create_task()

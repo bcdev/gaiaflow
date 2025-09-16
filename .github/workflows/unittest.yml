@@ -34,10 +34,11 @@ jobs:
 
       - name: Install and Test
         run:
-          pixi run test --cov=gaiaflow --cov-report=xml
+          pixi run test --cov=gaiaflow --cov-branch --cov-report=xml
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: bcdev/gaiaflow
