@@ -236,88 +236,60 @@ class TestKubeConfigHelper(unittest.TestCase):
         self.tmpdir.cleanup()
 
     def _write_kube_config(self, data):
-        kube_dir = Path.home() / ".kube"
-        kube_dir.mkdir(exist_ok=True)
-        kube_config = kube_dir / "config"
-        with open(kube_config, "w") as f:
-            yaml.dump(data, f)
-        return kube_config
+        inline_file = self.gaia_path / "_docker" / "kube_config_inline"
+        inline_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(inline_file, "w") as f:
+            yaml.safe_dump(data, f)
+        return inline_file
 
     @patch("subprocess.call", return_value=0)
-    def test_write_inline_creates_file(self, _):
-        kube_config = self._write_kube_config({"clusters": []})
-        self.helper._write_inline(kube_config)
-        out_file = self.gaia_path / "_docker" / "kube_config_inline"
-        self.assertTrue(out_file.exists())
+    def test_write_inline_creates_file(self, mock_call):
+        inline_file = self.gaia_path / "_docker" / "kube_config_inline"
+        self.helper._write_inline(inline_file)
+        self.assertTrue(inline_file.exists())
+        mock_call.assert_called_once()
 
-    def test_backup_and_patch_config(self):
-        kube_config = self._write_kube_config(
-            {"clusters": [{"cluster": {"server": "127.0.0.1"}}]}
-        )
-        backup = kube_config.with_suffix(".backup")
-        self.helper._backup_kube_config(kube_config, backup)
-        self.assertTrue(backup.exists())
-
-        self.helper._patch_kube_config(kube_config)
-        patched = yaml.safe_load(open(kube_config))
-        self.assertIn("clusters", patched)
 
     @patch("subprocess.call", return_value=0)
     @patch("gaiaflow.managers.helpers.is_wsl", return_value=False)
-    def test_create_inline_linux(self, *_):
-        helper = KubeConfigHelper(self.gaia_path, os_type="linux")
-        self._write_kube_config({"clusters": [{"cluster": {"server": "127.0.0.1"}}]})
-        helper.create_inline()
-        self.assertTrue(
-            (self.gaia_path / "_docker" / "kube_config_inline").exists()
-        )
+    def test_create_inline_linux(self, mock_is_wsl, mock_call):
+        fake_data = {"clusters": [{"cluster": {"server": "127.0.0.1"}}]}
+        with patch.object(
+            self.helper,
+            "_write_inline",
+            side_effect=lambda f: self._write_kube_config(fake_data),
+        ):
+            self.helper.create_inline()
+            inline_file = self.gaia_path / "_docker" / "kube_config_inline"
+            self.assertTrue(inline_file.exists())
+            data = yaml.safe_load(open(inline_file))
+            self.assertEqual(data["clusters"][0]["cluster"]["server"], "127.0.0.1")
 
+    @patch("subprocess.call", return_value=0)
     @patch("gaiaflow.managers.helpers.is_wsl", return_value=False)
-    def test_create_inline_windows_branch(self, _):
+    def test_patch_windows_branch(self, *_):
         helper = KubeConfigHelper(self.gaia_path, os_type="windows")
-        kube_config = self._write_kube_config({"clusters": []})
-        backup_config = kube_config.with_suffix(".backup")
-        backup_config.write_text("backup")
+        kube_config = self._write_kube_config({"clusters": [{"cluster": {"server": "127.0.0.1"}}]})
+        helper._patch_kube_config(yaml.safe_load(open(kube_config)), kube_config)
+        data = yaml.safe_load(open(kube_config))
+        cluster = data["clusters"][0]["cluster"]
+        self.assertEqual(cluster["server"], "host.docker.internal")
+        self.assertTrue(cluster["insecure-skip-tls-verify"])
 
-        with (
-            patch("shutil.copy") as mock_copy,
-            patch.object(Path, "unlink") as mock_unlink,
-        ):
-            helper.create_inline()
 
-        mock_copy.assert_called_once_with(backup_config, kube_config)
-        mock_unlink.assert_called_once()
-
+    @patch("subprocess.call", return_value=0)
     @patch("gaiaflow.managers.helpers.is_wsl", return_value=True)
-    def test_create_inline_wsl_branch(self, _):
+    def test_patch_wsl_branch(self, *_):
         helper = KubeConfigHelper(self.gaia_path, os_type="linux")
-        kube_config = self._write_kube_config({"clusters": []})
-        backup_config = kube_config.with_suffix(".backup")
-        backup_config.write_text("backup")
+        inline_file = self._write_kube_config(
+            {"clusters": [{"cluster": {"server": "localhost"}}]}
+        )
+        helper._patch_kube_config(yaml.safe_load(open(inline_file)), inline_file)
+        data = yaml.safe_load(open(inline_file))
+        cluster = data["clusters"][0]["cluster"]
+        self.assertEqual(cluster["server"], "https://192.168.49.2:8443")
+        self.assertTrue(cluster["insecure-skip-tls-verify"])
 
-        with (
-            patch("shutil.copy") as mock_copy,
-            patch.object(Path, "unlink") as mock_unlink,
-        ):
-            helper.create_inline()
-
-        mock_copy.assert_called_once_with(backup_config, kube_config)
-        mock_unlink.assert_called_once()
-
-    @patch("gaiaflow.managers.helpers.is_wsl", return_value=True)
-    def test_patch_wsl(self, _):
-        helper = KubeConfigHelper(self.gaia_path, os_type="linux")
-        config = self._write_kube_config({"clusters": [{"cluster": {"server": "localhost"}}]})
-        helper._patch_kube_config(config)
-        data = yaml.safe_load(open(config))
-        assert data["clusters"][0]["cluster"]["insecure-skip-tls-verify"]
-
-    def test_patch_windows(self):
-        helper = KubeConfigHelper(self.gaia_path, os_type="windows")
-        config = self._write_kube_config({"clusters": [{"cluster": {"server": "127.0.0.1"}}]})
-        helper._patch_kube_config(config)
-        data = yaml.safe_load(open(config))
-        assert data["clusters"][0]["cluster"]["server"] == "host.docker.internal"
 
 class TestBaseDockerHandler(unittest.TestCase):
     def setUp(self):

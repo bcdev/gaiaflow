@@ -56,6 +56,7 @@ ruff = "*"
 
 [tool.pixi.tasks]
 test = "pytest tests"
+cov = "pytest --cov=gaiaflow --cov-report=html"
 format = "isort src/gaiaflow && ruff format src/gaiaflow"
 check = "ruff check src/gaiaflow"
 check_fix = "ruff check src/gaiaflow --fix"

@@ -477,31 +477,24 @@ class KubeConfigHelper:
 
     def create_inline(self):
         kube_config = Path.home() / ".kube" / "config"
-        backup_config = kube_config.with_suffix(".backup")
-
-        self._backup_kube_config(kube_config, backup_config)
-        self._patch_kube_config(kube_config)
-        self._write_inline(kube_config)
-
-        if backup_config.exists():
-            shutil.copy(backup_config, kube_config)
-            backup_config.unlink()
-            log_info("Reverted kube config to original state.")
-
-    def _backup_kube_config(self, kube_config: Path, backup_config: Path):
-        if kube_config.exists():
-            with open(kube_config, "r") as f:
-                config_data = yaml.safe_load(f)
-            with open(backup_config, "w") as f:
-                yaml.dump(config_data, f)
-
-    def _patch_kube_config(self, kube_config: Path):
         if not kube_config.exists():
+            log_info("No kube config found, skipping inline creation.")
             return
 
-        with open(kube_config, "r") as f:
-            config_data = yaml.safe_load(f)
+        filename = self.gaiaflow_path / "_docker" / "kube_config_inline"
+        self._write_inline(filename)
 
+        with open(filename, "r") as f:
+            try:
+                config_data = yaml.safe_load(f) or {}
+            except yaml.YAMLError as e:
+                log_error(f"Failed to parse kube config: {e}")
+                return
+
+        self._patch_kube_config(config_data, filename)
+
+    def _patch_kube_config(self, config_data: dict, filename: Path) -> dict:
+        log_info("Patching kube config file...")
         for cluster in config_data.get("clusters", []):
             cluster_info = cluster.get("cluster", {})
             if self.os_type == "windows":
@@ -515,11 +508,11 @@ class KubeConfigHelper:
                 cluster_info["server"] = "https://192.168.49.2:8443"
                 cluster_info["insecure-skip-tls-verify"] = True
 
-        with open(kube_config, "w") as f:
+        with open(filename, "w") as f:
             yaml.dump(config_data, f)
+        log_info(f"Patched file written to {filename}")
 
-    def _write_inline(self, kube_config: Path):
-        filename = self.gaiaflow_path / "_docker" / "kube_config_inline"
+    def _write_inline(self, filename: Path):
         log_info("Creating kube config inline file...")
         with open(filename, "w") as f:
             subprocess.call(
