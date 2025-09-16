@@ -42,6 +42,7 @@ AIRFLOW_SERVICES = [
     "airflow-dag-processor",
     "airflow-triggerer",
     "postgres-airflow",
+    "docker-proxy",
 ]
 
 MLFLOW_SERVICES = ["mlflow", "postgres-mlflow"]
