@@ -139,8 +139,8 @@ class MinikubeManager(BaseGaiaflowManager):
     def create_kube_config_inline(self):
         self.kube_helper.create_inline()
 
-    def build_docker_image(self, dockerfile_path: str):
-        if not dockerfile_path:
+    def build_docker_image(self, dockerfile_path: str = ""):
+        if dockerfile_path != "":
             dockerfile_path = (
                 self.gaiaflow_path / "_docker" / "user-package" / "Dockerfile"
             )
@@ -202,6 +202,3 @@ class MinikubeManager(BaseGaiaflowManager):
 
     def remove_image(self, image_name: str):
         self.docker_helper.remove_image(image_name)
-
-    def prune_images(self):
-        self.docker_helper.prune_images()

@@ -335,7 +335,7 @@ class TestOperators(unittest.TestCase):
         args, kwargs = mock_ext_op.call_args
         self.assertEqual(kwargs["image"], "random_image:v1")
         self.assertEqual(kwargs["command"], ["python", "-m", "runner"])
-        self.assertEqual(kwargs["docker_url"], "unix://var/run/docker.sock")
+        self.assertEqual(kwargs["docker_url"], "tcp://docker-proxy:2375")
         self.assertEqual(kwargs["retrieve_output"], True)
         self.assertEqual(kwargs["retrieve_output_path"], "/tmp/script.out")
         self.assertEqual(
@@ -376,7 +376,7 @@ class TestOperators(unittest.TestCase):
         args, kwargs = mock_ext_op.call_args
         self.assertEqual(kwargs["image"], "random_image:v1")
         self.assertEqual(kwargs["command"], ["python", "-m", "runner"])
-        self.assertEqual(kwargs["docker_url"], "unix://var/run/docker.sock")
+        self.assertEqual(kwargs["docker_url"], "tcp://docker-proxy:2375")
         self.assertEqual(kwargs["retrieve_output"], True)
         self.assertEqual(kwargs["retrieve_output_path"], "/tmp/script.out")
         self.assertEqual(

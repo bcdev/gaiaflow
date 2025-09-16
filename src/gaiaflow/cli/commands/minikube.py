@@ -124,14 +124,14 @@ def dockerize(
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
     if dockerfile_path:
-        docker_build_mode = "minikube-user"
+        docker_handler_mode = "minikube-user"
     else:
-        docker_build_mode = "minikube"
+        docker_handler_mode = "minikube"
     imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
-        docker_build_mode=docker_build_mode,
+        docker_handler_mode=docker_handler_mode,
         image_name=image_name,
         dockerfile_path=dockerfile_path,
     )

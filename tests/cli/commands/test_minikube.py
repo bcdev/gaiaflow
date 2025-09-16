@@ -8,6 +8,8 @@ from gaiaflow.constants import DEFAULT_IMAGE_NAME, BaseAction, \
     ExtendedAction
 from gaiaflow.cli.commands.minikube import app as prod_app
 from gaiaflow.cli.commands.minikube import load_imports
+from gaiaflow.managers.helpers import DockerHandlerMode
+
 
 class TestGaiaflowProdCLI(unittest.TestCase):
     def setUp(self):
@@ -32,15 +34,11 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "start",
-            "--path", str(self.test_project_path),
             "--force-new"
         ])
 
         self.assertEqual(result.exit_code, 0)
 
-        self.mock_imports.create_gaiaflow_context_path.assert_called_once_with(
-            self.test_project_path
-        )
         self.mock_imports.gaiaflow_path_exists_in_state.assert_called_once_with(
             self.test_gaiaflow_path, True
         )
@@ -59,7 +57,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "start",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
@@ -73,7 +70,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "stop",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
@@ -90,7 +86,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "restart",
-            "--path", str(self.test_project_path),
             "--force-new"
         ])
 
@@ -100,6 +95,7 @@ class TestGaiaflowProdCLI(unittest.TestCase):
             gaiaflow_path=self.test_gaiaflow_path,
             user_project_path=self.test_project_path,
             action=BaseAction.RESTART,
+            force_new=True
         )
 
     @patch('gaiaflow.cli.commands.minikube.load_imports')
@@ -108,7 +104,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "dockerize",
-            "--path", str(self.test_project_path),
             "--image-name", "my-custom-image"
         ])
 
@@ -118,8 +113,42 @@ class TestGaiaflowProdCLI(unittest.TestCase):
             gaiaflow_path=self.test_gaiaflow_path,
             user_project_path=self.test_project_path,
             action=ExtendedAction.DOCKERIZE,
-            local=False,
-            image_name="my-custom-image"
+            docker_handler_mode=DockerHandlerMode.MINIKUBE,
+            image_name="my-custom-image", dockerfile_path=None
+        )
+
+    @patch("gaiaflow.cli.commands.minikube.load_imports")
+    def test_list_images_command(self, mock_load_imports):
+        mock_load_imports.return_value = self.mock_imports
+
+        result = self.runner.invoke(
+            prod_app, ["list-images"]
+        )
+
+        self.assertEqual(result.exit_code, 0)
+
+        self.mock_imports.MinikubeManager.run.assert_called_once_with(
+            gaiaflow_path=self.test_gaiaflow_path,
+            user_project_path=self.test_project_path,
+            action=ExtendedAction.LIST_IMAGES,
+            docker_handler_mode=DockerHandlerMode.MINIKUBE,
+        )
+
+    @patch("gaiaflow.cli.commands.minikube.load_imports")
+    def test_remove_image_command(self, mock_load_imports):
+        mock_load_imports.return_value = self.mock_imports
+
+        result = self.runner.invoke(prod_app, ["remove-image", "--image-name",
+                                               "my-custom-image"])
+
+        self.assertEqual(result.exit_code, 0)
+
+        self.mock_imports.MinikubeManager.run.assert_called_once_with(
+            gaiaflow_path=self.test_gaiaflow_path,
+            user_project_path=self.test_project_path,
+            action=ExtendedAction.REMOVE_IMAGE,
+            docker_handler_mode=DockerHandlerMode.MINIKUBE,
+            image_name="my-custom-image",
         )
 
     @patch('gaiaflow.cli.commands.minikube.load_imports')
@@ -128,7 +157,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "dockerize",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
@@ -143,7 +171,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "create-config",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
@@ -160,7 +187,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "create-secret",
-            "--path", str(self.test_project_path),
             "--name", "my-secret",
             "--data", "key1=value1",
             "--data", "key2=value2"
@@ -186,7 +212,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "cleanup",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)
@@ -203,14 +228,13 @@ class TestGaiaflowProdCLI(unittest.TestCase):
         self.mock_imports.gaiaflow_path_exists_in_state.return_value = False
 
         commands_and_args = [
-            ["start", "--path", str(self.test_project_path)],
-            ["stop", "--path", str(self.test_project_path)],
-            ["restart", "--path", str(self.test_project_path)],
-            ["dockerize", "--path", str(self.test_project_path)],
-            ["create-config", "--path", str(self.test_project_path)],
-            ["create-secret", "--path", str(self.test_project_path),
-             "--name", "test", "--data", "key=value"],
-            ["cleanup", "--path", str(self.test_project_path)],
+            ["start"],
+            ["stop"],
+            ["restart"],
+            ["dockerize"],
+            ["create-config"],
+            ["create-secret", "--name", "test", "--data", "key=value"],
+            ["cleanup"],
         ]
 
         for command_args in commands_and_args:
@@ -244,7 +268,6 @@ class TestGaiaflowProdCLI(unittest.TestCase):
 
         result = self.runner.invoke(prod_app, [
             "start",
-            "--path", str(self.test_project_path)
         ])
 
         self.assertEqual(result.exit_code, 0)

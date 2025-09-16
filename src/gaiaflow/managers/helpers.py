@@ -476,18 +476,17 @@ class KubeConfigHelper:
         self.os_type = os_type
 
     def create_inline(self):
-        if self.os_type == "linux" or is_wsl():
-            kube_config = Path.home() / ".kube" / "config"
-            backup_config = kube_config.with_suffix(".backup")
+        kube_config = Path.home() / ".kube" / "config"
+        backup_config = kube_config.with_suffix(".backup")
 
-            self._backup_kube_config(kube_config, backup_config)
-            self._patch_kube_config(kube_config)
-            self._write_inline(kube_config)
+        self._backup_kube_config(kube_config, backup_config)
+        self._patch_kube_config(kube_config)
+        self._write_inline(kube_config)
 
-            if backup_config.exists():
-                shutil.copy(backup_config, kube_config)
-                backup_config.unlink()
-                log_info("Reverted kube config to original state.")
+        if backup_config.exists():
+            shutil.copy(backup_config, kube_config)
+            backup_config.unlink()
+            log_info("Reverted kube config to original state.")
 
     def _backup_kube_config(self, kube_config: Path, backup_config: Path):
         if kube_config.exists():
