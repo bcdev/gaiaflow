@@ -289,8 +289,7 @@ def dockerize(
     "this, as the container environments are updated based on "
     "its contents."
 )
-def update_deps(
-):
+def update_deps():
     imports = load_imports()
     project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(

@@ -316,7 +316,7 @@ def update_entrypoint_install_path(script_path: str | Path, new_path: str) -> st
     new_lines = []
     for line in lines:
         if line.strip().startswith("micromamba run -n default_user_env pip install -e"):
-            line = f'micromamba run -n default_user_env pip install -e {new_path}'
+            line = f"micromamba run -n default_user_env pip install -e {new_path}"
         new_lines.append(line)
 
     updated_text = "\n".join(new_lines) + "\n"

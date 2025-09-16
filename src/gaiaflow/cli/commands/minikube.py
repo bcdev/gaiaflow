@@ -58,8 +58,7 @@ def start(
 
 
 @app.command(help="Stop Gaiaflow production-like services.")
-def stop(
-):
+def stop():
     imports = load_imports()
     project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
@@ -99,7 +98,7 @@ def restart(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.BaseAction.RESTART,
-        force_new=force_new
+        force_new=force_new,
     )
 
 
@@ -133,8 +132,7 @@ def dockerize(
     help="Create a config file for Airflow to talk to Kubernetes "
     "cluster. To be used only when debugging required."
 )
-def create_config(
-):
+def create_config():
     imports = load_imports()
     project_path = Path.cwd()
     gaiaflow_path, user_project_path = imports.create_gaiaflow_context_path(
