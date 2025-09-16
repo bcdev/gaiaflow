@@ -175,7 +175,7 @@ def gaiaflow_path_exists_in_state(gaiaflow_path: Path, check_fs: bool = True) ->
 
 def delete_project_state(gaiaflow_path: Path):
     state_file = get_state_file()
-    log_info("state_file: " + str(state_file))
+    log_info("found gaiaflow state file: " + str(state_file))
     if not state_file.exists():
         log_error(
             "State file not found at ~/.gaiaflow/state.json. Please run the services."
@@ -186,13 +186,14 @@ def delete_project_state(gaiaflow_path: Path):
         with open(state_file, "r") as f:
             state = json.load(f)
 
-        log_info("found! " + str(state.get("gaiaflow_path")) + str(state))
+        assert isinstance(state, dict)
+
         key = str(gaiaflow_path)
         if key in state:
             del state[key]
             with open(state_file, "w") as f:
                 json.dump(state, f, indent=2)
-    except (json.JSONDecodeError, FileNotFoundError, AttributeError, Exception):
+    except (json.JSONDecodeError, FileNotFoundError, AssertionError, Exception):
         raise
 
 
