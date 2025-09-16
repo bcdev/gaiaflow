@@ -51,6 +51,7 @@ class DockerResources:
         "minio/mc:latest",
         "minio/minio:latest",
         "postgres:13",
+        "alpine/socat",
     ]
 
     AIRFLOW_CONTAINERS = [
@@ -58,6 +59,7 @@ class DockerResources:
         "airflow-scheduler",
         "airflow-dag-processor",
         "airflow-triggerer",
+        "docker-proxy"
     ]
 
     VOLUMES = [
