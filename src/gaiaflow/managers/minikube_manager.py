@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Set
+from typing import Any, Set, Literal
 
 import yaml
 
@@ -95,75 +95,108 @@ class MinikubeHelper:
         return subprocess.run(full_cmd, **kwargs)
 
 
+class BaseDockerBuilder:
+    """Abstract docker builder with optional hooks."""
+
+    @classmethod
+    def get_docker_builder(cls, mode: str, **kwargs):
+        builder_cls = BUILDER_REGISTRY.get(mode)
+        if not builder_cls:
+            raise ValueError(f"Unknown Docker build mode: {mode}")
+        return builder_cls(**kwargs)
+
+    def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        """Override this if you want a different or no pre_build"""
+        log_info(f"Updating Dockerfile at {dockerfile_path}")
+        DockerHelper._add_copy_statements_to_dockerfile(
+            str(dockerfile_path), find_python_packages(project_path)
+        )
+        runner_src = Path(__file__).parent.parent.resolve() / "core" / "runner.py"
+        runner_dest = project_path / "runner.py"
+        return temporary_copy(runner_src, runner_dest)
+
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        raise NotImplementedError
+
+    def post_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        pass
+
+class LocalDockerBuilder(BaseDockerBuilder):
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info(f"Building Docker image [{image_name}] locally")
+        run(
+            ["docker", "build", "-t", image_name, "-f", str(dockerfile_path), str(project_path)],
+            "Error building Docker image locally",
+        )
+
+class MinikubeDockerBuilder(BaseDockerBuilder):
+    def __init__(self, minikube_helper: MinikubeHelper):
+        self.minikube_helper = minikube_helper
+
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info(f"Building Docker image [{image_name}] in Minikube context")
+        result = self.minikube_helper.run_cmd(
+            ["docker-env", "--shell", "bash"], stdout=subprocess.PIPE, check=True
+        )
+        env = DockerHelper._parse_minikube_env(result.stdout.decode())
+        run(
+            ["docker", "build", "-t", image_name, "-f", str(dockerfile_path), str(project_path)],
+            "Error building Docker image inside Minikube",
+            env=env,
+        )
+
+class LocalUserCustomImageDockerBuilder(LocalDockerBuilder):
+    def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        pass
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info("Building user provided dockerfile")
+        super().build(image_name, dockerfile_path, project_path)
+
+class MinikubeUserCustomImageDockerBuilder(MinikubeDockerBuilder):
+    def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        pass
+
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info("Building user provided dockerfile")
+        super().build(image_name, dockerfile_path, project_path)
+
+BUILDER_REGISTRY = {
+    "local": LocalDockerBuilder,
+    "minikube": MinikubeDockerBuilder,
+    "local-user": LocalUserCustomImageDockerBuilder,
+    "minikube-user": MinikubeUserCustomImageDockerBuilder
+}
+
 class DockerHelper:
     def __init__(
         self,
         image_name: str,
         project_path: Path,
-        local: bool,
-        minikube_helper: MinikubeHelper,
+        builder: BaseDockerBuilder
     ):
         self.image_name = image_name
         self.project_path = project_path
-        self.local = local
-        self.minikube_helper = minikube_helper
+        self.builder = builder
 
     def build_image(self, dockerfile_path: Path):
         if not dockerfile_path.exists():
             log_error(f"Dockerfile not found at {dockerfile_path}")
             return
 
-        log_info(f"Updating Dockerfile at {dockerfile_path}")
-        self._update_dockerfile(dockerfile_path)
+        pre_build_ctx = self.builder.pre_build(
+            self.image_name, dockerfile_path, self.project_path
+        )
+        if pre_build_ctx:
+            with pre_build_ctx:
+                self.builder.build(self.image_name, dockerfile_path, self.project_path)
+        else:
+            self.builder.build(self.image_name, dockerfile_path, self.project_path)
 
-        runner_src = Path(__file__).parent.parent.resolve() / "core" / "runner.py"
-        runner_dest = self.project_path / "runner.py"
-
-        with temporary_copy(runner_src, runner_dest):
-            if self.local:
-                self._build_local(dockerfile_path)
-            else:
-                self._build_minikube(dockerfile_path)
+        self.builder.post_build(self.image_name, dockerfile_path, self.project_path)
 
     def _update_dockerfile(self, dockerfile_path: Path):
         DockerHelper._add_copy_statements_to_dockerfile(
             str(dockerfile_path), find_python_packages(self.project_path)
-        )
-
-    def _build_local(self, dockerfile_path: Path):
-        log_info(f"Building Docker image [{self.image_name}] locally")
-        run(
-            [
-                "docker",
-                "build",
-                "-t",
-                self.image_name,
-                "-f",
-                dockerfile_path,
-                self.project_path,
-            ],
-            "Error building Docker image locally",
-        )
-        set_permissions("/var/run/docker.sock", 0o666)
-
-    def _build_minikube(self, dockerfile_path: Path):
-        log_info(f"Building Docker image [{self.image_name}] in Minikube context")
-        result = self.minikube_helper.run_cmd(
-            ["docker-env", "--shell", "bash"], stdout=subprocess.PIPE, check=True
-        )
-        env = self._parse_minikube_env(result.stdout.decode())
-        run(
-            [
-                "docker",
-                "build",
-                "-t",
-                self.image_name,
-                "-f",
-                dockerfile_path,
-                self.project_path,
-            ],
-            "Error building Docker image inside Minikube",
-            env=env,
         )
 
     @staticmethod
@@ -225,17 +258,18 @@ class KubeConfigHelper:
         self.os_type = os_type
 
     def create_inline(self):
-        kube_config = Path.home() / ".kube" / "config"
-        backup_config = kube_config.with_suffix(".backup")
+        if self.os_type == "linux" or is_wsl():
+            kube_config = Path.home() / ".kube" / "config"
+            backup_config = kube_config.with_suffix(".backup")
 
-        self._backup_kube_config(kube_config, backup_config)
-        self._patch_kube_config(kube_config)
-        self._write_inline(kube_config)
+            self._backup_kube_config(kube_config, backup_config)
+            self._patch_kube_config(kube_config)
+            self._write_inline(kube_config)
 
-        if (self.os_type == "windows" or is_wsl()) and backup_config.exists():
-            shutil.copy(backup_config, kube_config)
-            backup_config.unlink()
-            log_info("Reverted kube config to original state.")
+            if backup_config.exists():
+                shutil.copy(backup_config, kube_config)
+                backup_config.unlink()
+                log_info("Reverted kube config to original state.")
 
     def _backup_kube_config(self, kube_config: Path, backup_config: Path):
         if kube_config.exists():
@@ -289,6 +323,7 @@ class KubeConfigHelper:
 
 
 class MinikubeManager(BaseGaiaflowManager):
+    allowed_kwargs = {"secret_name", "secret_data", "dockerfile_path"}
     def __init__(
         self,
         gaiaflow_path: Path,
@@ -296,26 +331,29 @@ class MinikubeManager(BaseGaiaflowManager):
         action: Action,
         force_new: bool = False,
         prune: bool = False,
-        local: bool = False,
+        docker_build_mode: Literal["local", "minikube"] = "local",
         image_name: str = "",
         **kwargs,
     ):
-        # if kwargs:
-        #     raise TypeError(f"Unexpected keyword arguments: {list(kwargs.keys())}")
+        if kwargs:
+            for key in kwargs:
+                if key not in self.allowed_kwargs:
+                    raise TypeError(f"Unexpected keyword argument: {key}")
+
         self.minikube_profile = "airflow"
         # TODO: get the docker image name automatically
         #  For CI, get the package name, version and create repository. See
         #  in test-airflow-ci test_ecr_push.yml
         self.os_type = platform.system().lower()
-        self.local = local
         self.image_name = image_name
 
         self.minikube_helper = MinikubeHelper()
+        builder = BaseDockerBuilder.get_docker_builder(docker_build_mode,
+                                                       minikube_helper=self.minikube_helper)
         self.docker_helper = DockerHelper(
             image_name=image_name,
             project_path=user_project_path,
-            local=local,
-            minikube_helper=self.minikube_helper,
+            builder=builder,
         )
         self.kube_helper = KubeConfigHelper(
             gaiaflow_path=gaiaflow_path, os_type=self.os_type
@@ -338,7 +376,7 @@ class MinikubeManager(BaseGaiaflowManager):
 
     @classmethod
     def run(cls, **kwargs):
-        action = kwargs.get("action")
+        action = kwargs.get("action", None)
         if action is None:
             raise ValueError("Missing required argument 'action'")
 
@@ -349,7 +387,8 @@ class MinikubeManager(BaseGaiaflowManager):
             BaseAction.STOP: manager.stop,
             BaseAction.RESTART: manager.restart,
             BaseAction.CLEANUP: manager.cleanup,
-            ExtendedAction.DOCKERIZE: manager.build_docker_image,
+            ExtendedAction.DOCKERIZE: lambda: manager.build_docker_image(
+                kwargs["dockerfile_path"]),
             ExtendedAction.CREATE_CONFIG: manager.create_kube_config_inline,
             ExtendedAction.CREATE_SECRET: lambda: manager.create_secrets(
                 kwargs["secret_name"], kwargs["secret_data"]
@@ -391,8 +430,9 @@ class MinikubeManager(BaseGaiaflowManager):
     def create_kube_config_inline(self):
         self.kube_helper.create_inline()
 
-    def build_docker_image(self):
-        dockerfile_path = self.gaiaflow_path / "_docker" / "user-package" / "Dockerfile"
+    def build_docker_image(self, dockerfile_path: str):
+        if not dockerfile_path:
+            dockerfile_path = self.gaiaflow_path / "_docker" / "user-package" / "Dockerfile"
         self.docker_helper.build_image(dockerfile_path)
 
     def create_secrets(self, secret_name: str, secret_data: dict[str, Any]):

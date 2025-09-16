@@ -109,6 +109,10 @@ def dockerize(
     image_name: str = typer.Option(
         DEFAULT_IMAGE_NAME, "--image-name", "-i", help=("Name of your image.")
     ),
+    dockerfile_path: Path = typer.Option(
+        None, "--dockerfile-path", "-d", help=("Path to your custom "
+                                               "Dockerfile")
+    ),
 ):
     imports = load_imports()
     project_path = Path.cwd()
@@ -119,12 +123,17 @@ def dockerize(
     if not gaiaflow_path_exists:
         typer.echo("Please create a project with Gaiaflow before running this command.")
         return
+    if dockerfile_path:
+        docker_build_mode = "minikube-user"
+    else:
+        docker_build_mode = "minikube"
     imports.MinikubeManager.run(
         gaiaflow_path=gaiaflow_path,
         user_project_path=user_project_path,
         action=imports.ExtendedAction.DOCKERIZE,
-        local=False,
+        docker_build_mode=docker_build_mode,
         image_name=image_name,
+        dockerfile_path=dockerfile_path,
     )
 
 
