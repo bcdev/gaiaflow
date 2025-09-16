@@ -95,20 +95,20 @@ class MinikubeHelper:
         return subprocess.run(full_cmd, **kwargs)
 
 
-class BaseDockerBuilder:
-    """Abstract docker builder with optional hooks."""
+class BaseDockerHandler:
+    """Abstract docker handler with optional hooks."""
 
     @classmethod
-    def get_docker_builder(cls, mode: str, **kwargs):
-        builder_cls = BUILDER_REGISTRY.get(mode)
-        if not builder_cls:
+    def get_docker_handler(cls, mode: str, **kwargs):
+        handler_cls = HANDLER_REGISTRY.get(mode)
+        if not handler_cls:
             raise ValueError(f"Unknown Docker build mode: {mode}")
-        return builder_cls(**kwargs)
+        return handler_cls(**kwargs)
 
     def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
         """Override this if you want a different or no pre_build"""
         log_info(f"Updating Dockerfile at {dockerfile_path}")
-        DockerHelper._add_copy_statements_to_dockerfile(
+        BaseDockerHandler._add_copy_statements_to_dockerfile(
             str(dockerfile_path), find_python_packages(project_path)
         )
         runner_src = Path(__file__).parent.parent.resolve() / "core" / "runner.py"
@@ -121,95 +121,19 @@ class BaseDockerBuilder:
     def post_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
         pass
 
-class LocalDockerBuilder(BaseDockerBuilder):
-    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
-        log_info(f"Building Docker image [{image_name}] locally")
-        run(
-            ["docker", "build", "-t", image_name, "-f", str(dockerfile_path), str(project_path)],
-            "Error building Docker image locally",
-        )
+    def list_images(self):
+        raise NotImplementedError
 
-class MinikubeDockerBuilder(BaseDockerBuilder):
-    def __init__(self, minikube_helper: MinikubeHelper):
-        self.minikube_helper = minikube_helper
+    def remove_image(self, image_name: str):
+        raise NotImplementedError
 
-    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
-        log_info(f"Building Docker image [{image_name}] in Minikube context")
-        result = self.minikube_helper.run_cmd(
-            ["docker-env", "--shell", "bash"], stdout=subprocess.PIPE, check=True
-        )
-        env = DockerHelper._parse_minikube_env(result.stdout.decode())
-        run(
-            ["docker", "build", "-t", image_name, "-f", str(dockerfile_path), str(project_path)],
-            "Error building Docker image inside Minikube",
-            env=env,
-        )
-
-class LocalUserCustomImageDockerBuilder(LocalDockerBuilder):
-    def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
-        pass
-    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
-        log_info("Building user provided dockerfile")
-        super().build(image_name, dockerfile_path, project_path)
-
-class MinikubeUserCustomImageDockerBuilder(MinikubeDockerBuilder):
-    def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
-        pass
-
-    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
-        log_info("Building user provided dockerfile")
-        super().build(image_name, dockerfile_path, project_path)
-
-BUILDER_REGISTRY = {
-    "local": LocalDockerBuilder,
-    "minikube": MinikubeDockerBuilder,
-    "local-user": LocalUserCustomImageDockerBuilder,
-    "minikube-user": MinikubeUserCustomImageDockerBuilder
-}
-
-class DockerHelper:
-    def __init__(
-        self,
-        image_name: str,
-        project_path: Path,
-        builder: BaseDockerBuilder
-    ):
-        self.image_name = image_name
-        self.project_path = project_path
-        self.builder = builder
-
-    def build_image(self, dockerfile_path: Path):
-        if not dockerfile_path.exists():
-            log_error(f"Dockerfile not found at {dockerfile_path}")
-            return
-
-        pre_build_ctx = self.builder.pre_build(
-            self.image_name, dockerfile_path, self.project_path
-        )
-        if pre_build_ctx:
-            with pre_build_ctx:
-                self.builder.build(self.image_name, dockerfile_path, self.project_path)
-        else:
-            self.builder.build(self.image_name, dockerfile_path, self.project_path)
-
-        self.builder.post_build(self.image_name, dockerfile_path, self.project_path)
+    def prune_images(self):
+        raise NotImplementedError
 
     def _update_dockerfile(self, dockerfile_path: Path):
-        DockerHelper._add_copy_statements_to_dockerfile(
+        BaseDockerHandler._add_copy_statements_to_dockerfile(
             str(dockerfile_path), find_python_packages(self.project_path)
         )
-
-    @staticmethod
-    def _parse_minikube_env(output: str) -> dict:
-        env = os.environ.copy()
-        for line in output.splitlines():
-            if line.startswith("export "):
-                try:
-                    key, value = line.replace("export ", "").split("=", 1)
-                    env[key.strip()] = value.strip('"')
-                except ValueError:
-                    continue
-        return env
 
     @staticmethod
     def _add_copy_statements_to_dockerfile(
@@ -250,6 +174,126 @@ class DockerHelper:
             f.writelines(updated_lines)
 
         print("Dockerfile updated with COPY statements.")
+
+class LocalDockerHandler(BaseDockerHandler):
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info(f"Building Docker image [{image_name}] locally")
+        run(
+            ["docker", "build", "-t", image_name, "-f", str(dockerfile_path), str(project_path)],
+            "Error building Docker image locally",
+        )
+
+    def list_images(self):
+        run(["docker", "image", "ls"], "Error listing Docker images locally")
+
+    def remove_image(self, image_name: str):
+        run(["docker", "rmi", "-f", image_name], f"Error removing Docker image {image_name} "
+                                                 "locally")
+
+    def prune_images(self):
+        run(["docker", "image", "prune", "-f"], "Error pruning Docker images "
+                                                "locally")
+
+class MinikubeDockerHandler(BaseDockerHandler):
+    def __init__(self, minikube_helper: MinikubeHelper):
+        self.minikube_helper = minikube_helper
+        self.env = self._get_minikube_env()
+
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info(f"Building Docker image [{image_name}] in Minikube context")
+        run(
+            ["docker", "build", "-t", image_name, "-f", str(dockerfile_path), str(project_path)],
+            "Error building Docker image inside Minikube",
+            env=self.env,
+        )
+
+    def list_images(self):
+        run(["docker", "image", "ls"],"Error listing Docker images inside Minikube", env=self.env)
+
+    def remove_image(self, image_name: str):
+        run(["docker", "rmi", "-f", image_name], f"Error removing Docker image {image_name} "
+                                                 "inside Minikube", env=self.env)
+
+    def prune_images(self):
+        run(["docker", "image", "prune", "-f"], "Error pruning Docker images "
+                                                "inside Minikube", env=self.env)
+
+    def _get_minikube_env(self):
+        result = self.minikube_helper.run_cmd(
+            ["docker-env", "--shell", "bash"], stdout=subprocess.PIPE, check=True
+        )
+        return MinikubeDockerHandler._parse_minikube_env(result.stdout.decode())
+
+    @staticmethod
+    def _parse_minikube_env(output: str) -> dict:
+        env = os.environ.copy()
+        for line in output.splitlines():
+            if line.startswith("export "):
+                try:
+                    key, value = line.replace("export ", "").split("=", 1)
+                    env[key.strip()] = value.strip('"')
+                except ValueError:
+                    continue
+        return env
+
+class LocalUserCustomImageDockerHandler(LocalDockerHandler):
+    def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        pass
+
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info("Building user provided dockerfile")
+        super().build(image_name, dockerfile_path, project_path)
+
+class MinikubeUserCustomImageDockerHandler(MinikubeDockerHandler):
+    def pre_build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        pass
+
+    def build(self, image_name: str, dockerfile_path: Path, project_path: Path):
+        log_info("Building user provided dockerfile")
+        super().build(image_name, dockerfile_path, project_path)
+
+HANDLER_REGISTRY = {
+    "local": LocalDockerHandler,
+    "minikube": MinikubeDockerHandler,
+    "local-user": LocalUserCustomImageDockerHandler,
+    "minikube-user": MinikubeUserCustomImageDockerHandler
+}
+
+class DockerHelper:
+    def __init__(
+        self,
+        image_name: str,
+        project_path: Path,
+        builder: BaseDockerHandler
+    ):
+        self.image_name = image_name
+        self.project_path = project_path
+        self.builder = builder
+
+    def build_image(self, dockerfile_path: Path):
+        if not dockerfile_path.exists():
+            log_error(f"Dockerfile not found at {dockerfile_path}")
+            return
+
+        pre_build_ctx = self.builder.pre_build(
+            self.image_name, dockerfile_path, self.project_path
+        )
+        if pre_build_ctx:
+            with pre_build_ctx:
+                self.builder.build(self.image_name, dockerfile_path, self.project_path)
+        else:
+            self.builder.build(self.image_name, dockerfile_path, self.project_path)
+
+        self.builder.post_build(self.image_name, dockerfile_path, self.project_path)
+
+    def list_images(self):
+        self.builder.list_images()
+
+    def remove_image(self, image_name: str):
+        self.builder.remove_image(image_name)
+
+    def prune_images(self):
+        self.builder.prune_images()
 
 
 class KubeConfigHelper:
@@ -348,7 +392,7 @@ class MinikubeManager(BaseGaiaflowManager):
         self.image_name = image_name
 
         self.minikube_helper = MinikubeHelper()
-        builder = BaseDockerBuilder.get_docker_builder(docker_build_mode,
+        builder = BaseDockerHandler.get_docker_builder(docker_build_mode,
                                                        minikube_helper=self.minikube_helper)
         self.docker_helper = DockerHelper(
             image_name=image_name,

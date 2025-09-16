@@ -50,9 +50,9 @@ def log_error(message: str):
     )
 
 
-def run(command: list, error_message: str, env=None):
+def run(command: list, error_message: str, **kwargs):
     try:
-        subprocess.call(command, env=env)
+        subprocess.call(command, **kwargs)
     except Exception:
         log_error(error_message)
         raise
